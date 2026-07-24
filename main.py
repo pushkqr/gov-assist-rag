@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from google import genai
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
+from qdrant_client import models
 
 from ingestion import run_ingestion
 from retrieval import run_retrieval
@@ -23,6 +24,9 @@ def main():
     # ==========================================
     RUN_INGESTION = False
     RUN_RETRIEVAL = True
+    
+    # Choose between parsing PDFs locally via PyMuPDF or remotely via Gemini File API
+    USE_LOCAL_PARSER = True
     
     if RUN_INGESTION:
         print("\n" + "="*50)
@@ -51,7 +55,7 @@ def main():
         )
         
         # We can pass the target directory
-        records = run_ingestion(client, docs_dir="docs")
+        records = run_ingestion(client, docs_dir="docs", use_local_parser=USE_LOCAL_PARSER)
         
         if records:
             print(f"\n[Database Hook] -> Upserting {len(records)} chunks into Qdrant...")
@@ -69,7 +73,7 @@ def main():
         print("\n" + "="*50)
         print("MODULE: RETRIEVAL & GENERATION PIPELINE (INTERACTIVE MODE)")
         print("="*50)
-        print("Type 'exit' or 'quit' to stop testing.")
+        print("Type 'exit' or 'quit' to stop testing. Type 'clear' to reset conversation history.")
         
         chat_history = []
         
@@ -79,6 +83,10 @@ def main():
                 if query.strip().lower() in ['exit', 'quit']:
                     print("Exiting GovAssist...")
                     break
+                if query.strip().lower() == 'clear':
+                    chat_history.clear()
+                    print("[Memory] Conversation history cleared!")
+                    continue
                 if not query.strip():
                     continue
                     

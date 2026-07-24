@@ -7,6 +7,7 @@ ENV/
 env.bak/
 venv.bak/
 temp/
+*.csv
 
 # Qdrant Database
 local_qdrant_db/

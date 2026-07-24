@@ -23,14 +23,16 @@ def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, quer
         ctx_prompt = (
             "Given the following conversation history and the user's latest question, rephrase the latest question "
             "to be a standalone question that can be understood without the context of the conversation. "
-            "Do NOT answer the question, just reformulate it. If it is already standalone, return it exactly as is.\n\n"
+            "CRITICAL INSTRUCTION: If the latest question introduces a completely new topic or is clearly unrelated to the "
+            "conversation history, do NOT merge or carry over constraints (like years, document names, or specific rules) "
+            "from the history. Treat it as a completely new query. If it is already standalone, return it exactly as is.\n\n"
             f"Conversation History:\n{history_text}\n\n"
             f"Latest Question: {query}\n\nStandalone Question:"
         )
         try:
             ctx_response = generate_content_safe(
                 gemini_client,
-                model='gemini-3.5-flash-lite',
+                model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
                 contents=ctx_prompt,
                 config=types.GenerateContentConfig(temperature=0.0)
             )
@@ -45,7 +47,7 @@ def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, quer
         task_type="RETRIEVAL_QUERY", # Note the different task type for queries!
         output_dimensionality=1536
     )
-    model_name = os.getenv("MODEL_NAME", "text-embedding-004")
+    model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
     
     print("Generating query embedding...")
     response = embed_content_safe(
@@ -69,7 +71,7 @@ Output ONLY a valid JSON object, e.g., {{"year": 2025}} or {{}}"""
     try:
         filter_response = generate_content_safe(
             gemini_client,
-            model='gemini-3.5-flash-lite',
+            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
             contents=filter_prompt,
             config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json")
         )
@@ -189,7 +191,7 @@ User Question:
     
     answer_response = generate_content_safe(
         gemini_client,
-        model='gemini-3.5-flash-lite',
+        model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
         contents=prompt
     )
     

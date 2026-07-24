@@ -3,7 +3,6 @@ import glob
 import uuid
 from google import genai
 from google.genai import types
-from docling.document_converter import DocumentConverter
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from utils import generate_content_safe, embed_content_safe
 
@@ -38,7 +37,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
         task_type="RETRIEVAL_DOCUMENT",
         output_dimensionality=1536
     )
-    model_name = os.getenv("MODEL_NAME", "text-embedding-004")
+    model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
     
     for parent_doc in parent_docs:
         parent_context = parent_doc.page_content
@@ -61,16 +60,22 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             
         enriched_child_texts = [f"Context: {full_context_prefix}\n\nContent: {child_text}" for child_text in child_texts]
         
-        dense_response = embed_content_safe(
-            client,
-            model=model_name,
-            contents=enriched_child_texts,
-            config=config
-        )
         sparse_embeddings = list(sparse_model.embed(child_texts))
             
         for i, child_text in enumerate(child_texts):
-            dense_vector = dense_response.embeddings[i].values
+            # Embed Dense Vector Individually
+            dense_response = embed_content_safe(
+                client,
+                model=model_name,
+                contents=enriched_child_texts[i],
+                config=config
+            )
+            
+            if not hasattr(dense_response, 'embeddings') or not dense_response.embeddings:
+                print(f"Warning: Failed to generate dense vector for chunk {i}, skipping.")
+                continue
+                
+            dense_vector = dense_response.embeddings[0].values
             sparse_vec = sparse_embeddings[i]
             
             vector_dict = {
@@ -98,7 +103,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             
     return database_payload
 
-def run_ingestion(client: genai.Client, docs_dir: str = "docs", target_files: list = None):
+def run_ingestion(client: genai.Client, docs_dir: str = "docs", target_files: list = None, use_local_parser: bool = False):
     """
     Main entry point for the ingestion module.
     """
@@ -119,59 +124,77 @@ def run_ingestion(client: genai.Client, docs_dir: str = "docs", target_files: li
             continue
             
         print(f"\n--- Automating ingestion for: {target_file} ---")
-        print(f"Uploading {target_file} to Gemini API for high-quality Markdown extraction...")
         
-        # Upload the PDF directly to Google's servers
-        uploaded_file = client.files.upload(file=target_file)
-        print(f"Upload complete (File URI: {uploaded_file.uri}). Waiting for processing...", end="", flush=True)
+        target_md = None
         
-        import time
-        try:
-            # Wait for the file to finish processing on Google's end
-            while uploaded_file.state == "PROCESSING":
-                print(".", end="", flush=True)
-                time.sleep(3)
-                uploaded_file = client.files.get(name=uploaded_file.name)
-                
-            print("\nProcessing complete! Generating markdown...")
-                
-            if uploaded_file.state == "FAILED":
-                print(f"\nError: Gemini failed to process the PDF: {target_file}")
+        if use_local_parser:
+            print(f"Running LOCAL PyMuPDF parser on {target_file}...")
+            try:
+                import pymupdf4llm
+                target_md = pymupdf4llm.to_markdown(target_file)
+                print(f"Local PyMuPDF Extraction complete! Markdown length: {len(target_md)} characters.\n")
+            except Exception as e:
+                print(f"Error extracting markdown via Local PyMuPDF for {target_file}: {e}")
                 continue
+        else:
+            print(f"Uploading {target_file} to Gemini API for high-quality Markdown extraction...")
+            # Upload the PDF directly to Google's servers
+            uploaded_file = client.files.upload(file=target_file)
+            print(f"Upload complete (File URI: {uploaded_file.uri}). Waiting for processing...", end="", flush=True)
+            
+            import time
+            try:
+                # Wait for the file to finish processing on Google's end
+                while uploaded_file.state == "PROCESSING":
+                    print(".", end="", flush=True)
+                    time.sleep(3)
+                    uploaded_file = client.files.get(name=uploaded_file.name)
+                    
+                print("\nProcessing complete! Generating markdown...")
+                    
+                if uploaded_file.state == "FAILED":
+                    print(f"\nError: Gemini failed to process the PDF: {target_file}")
+                    continue
+                    
+                prompt = (
+                    "Extract the entire text from this document into clean, structural Markdown. "
+                    "Preserve all headers (use #, ##, ###), tables, and lists exactly as they appear "
+                    "in the original layout. Do not summarize or skip anything. Output ONLY the markdown text."
+                )
                 
-            prompt = (
-                "Extract the entire text from this document into clean, structural Markdown. "
-                "Preserve all headers (use #, ##, ###), tables, and lists exactly as they appear "
-                "in the original layout. Do not summarize or skip anything. Output ONLY the markdown text."
-            )
-            
-            # Using the latest cheap model requested with zero temperature for perfectly consistent structure
-            response = generate_content_safe(
-                client,
-                model='gemini-3.5-flash-lite',
-                contents=[uploaded_file, prompt],
-                config=types.GenerateContentConfig(temperature=0.0)
-            )
-            
-            target_md = response.text
-            if target_md is None:
-                 print(f"Error: Gemini returned an empty response for {target_file}.")
-                 continue
-                 
-            print(f"Extraction complete! Markdown length: {len(target_md)} characters.\n")
-        except Exception as e:
-            print(f"Error extracting markdown via Gemini for {target_file}: {e}")
-            continue
-        finally:
-            # Clean up the file from Google's servers to save your quota storage
-            client.files.delete(name=uploaded_file.name)
-            print(f"Cleaned up {target_file} from Gemini storage.")
+                # Using the latest cheap model requested with zero temperature for perfectly consistent structure
+                response = generate_content_safe(
+                    client,
+                    model=os.getenv("SPEC_MODEL_NAME", "gemini-3.1-flash-lite"),
+                    contents=[uploaded_file, prompt],
+                    config=types.GenerateContentConfig(temperature=0.0)
+                )
+                
+                target_md = response.text
+                if target_md is None:
+                     print(f"Error: Gemini returned an empty response for {target_file}.")
+                     continue
+                     
+                print(f"Extraction complete! Markdown length: {len(target_md)} characters.\n")
+            except Exception as e:
+                print(f"Error extracting markdown via Gemini for {target_file}: {e}")
+                continue
+            finally:
+                # Clean up the file from Google's servers to save your quota storage
+                client.files.delete(name=uploaded_file.name)
+                print(f"Cleaned up {target_file} from Gemini storage.")
 
+        if not target_md:
+            continue
             
+        import re
+        year_match = re.search(r'\b(19|20)\d{2}\b', target_md[:2000])
+        doc_year = int(year_match.group(0)) if year_match else 2025
+        
         global_metadata = {
             "doc_type": "PDF Document",
             "issuing_authority": "Government",
-            "year": 2025,
+            "year": doc_year,
             "doc_number": os.path.basename(target_file)
         }
         
