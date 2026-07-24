@@ -1,0 +1,56 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+temp/
+
+# Qdrant Database
+local_qdrant_db/
+
+# Local Output & Processing Dirs
+marker_output/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Gemini/IDE Artifacts
+.gemini/
+brain/
+scratch/
+
+# Testing and Logs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS Generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
