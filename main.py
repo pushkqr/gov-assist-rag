@@ -90,12 +90,23 @@ def main():
                 if not query.strip():
                     continue
                     
-                answer = run_retrieval(client, qdrant, query, collection_name, chat_history)
-                print(f"\n{'-'*50}\nAssistant Response:\n{answer}\n{'-'*50}")
+                answer_stream = run_retrieval(client, qdrant, query, collection_name, chat_history)
+                
+                print(f"\n{'-'*50}\nAssistant Response:\n")
+                full_answer = ""
+                if answer_stream is None:
+                    full_answer = "I couldn't find any relevant documents to answer your question."
+                    print(full_answer)
+                else:
+                    for chunk in answer_stream:
+                        if chunk.text:
+                            print(chunk.text, end="", flush=True)
+                            full_answer += chunk.text
+                print(f"\n{'-'*50}")
                 
                 # Append to history memory
                 chat_history.append({"role": "user", "text": query})
-                chat_history.append({"role": "model", "text": answer})
+                chat_history.append({"role": "model", "text": full_answer})
                 
             except KeyboardInterrupt:
                 print("\nExiting GovAssist...")

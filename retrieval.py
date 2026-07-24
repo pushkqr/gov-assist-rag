@@ -2,7 +2,7 @@ import os
 from google import genai
 from google.genai import types
 from qdrant_client import QdrantClient
-from utils import generate_content_safe, embed_content_safe
+from utils import generate_content_safe, embed_content_safe, generate_content_stream_safe
 
 def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, query: str, collection_name: str = "gov_docs", chat_history: list = None):
     """
@@ -127,14 +127,30 @@ Output ONLY a valid JSON object, e.g., {{"year": 2025}} or {{}}"""
     search_results = search_response.points
     
     if not search_results:
-        return "I couldn't find any relevant documents to answer your question."
+        return None
         
-    print(f"[Search] Found {len(search_results)} relevant child chunks.")
+    print(f"[Search] Found {len(search_results)} relevant child chunks before reranking.")
+    
+    # 2.5 Cross-Encoder Re-Ranking
+    print("[Rerank] Re-ranking chunks with Cross-Encoder...")
+    from sentence_transformers import CrossEncoder
+    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    
+    # Pair the query with each chunk's text for scoring
+    pairs = [[standalone_query, result.payload.get("child_text", "")] for result in search_results]
+    scores = cross_encoder.predict(pairs)
+    
+    # Sort results by score descending
+    scored_results = sorted(zip(scores, search_results), key=lambda x: x[0], reverse=True)
+    # Take the top 3 most relevant chunks
+    top_results = [result for score, result in scored_results[:3]]
+    
+    print(f"[Rerank] Kept top {len(top_results)} most relevant chunks.")
     
     # 3. Deduplication Logic (Small-to-Big)
     print("[Retrieval] Deduplicating retrieved child chunks to extract unique parent context...")
     unique_parents = {}
-    for result in search_results:
+    for result in top_results:
         parent_id = result.payload.get("parent_id")
         if parent_id and parent_id not in unique_parents:
             unique_parents[parent_id] = result.payload.get("parent_context", "")
@@ -165,11 +181,11 @@ Provide a concise, well-structured answer in natural language.
 ### Explanation
 Briefly explain how the retrieved information answers the user's question.
 
-### Source(s)
+### Source(s) & Citations
 Mention:
 - Document title
 - Relevant chapter/section (if available)
-- Citation markers such as %[1]%, %[2]%
+- CRITICAL: Provide the exact, verbatim quote from the retrieved text that justifies your answer.
 
 Formatting:
 - CRITICAL: You MUST write your entire response (Answer and Explanation) in the exact same language as the User Question. If the document is in Marathi and the user asks in English, you MUST translate your answer into English.
@@ -189,10 +205,10 @@ User Question:
 {query}
 """
     
-    answer_response = generate_content_safe(
+    answer_stream = generate_content_stream_safe(
         gemini_client,
         model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
         contents=prompt
     )
     
-    return answer_response.text
+    return answer_stream

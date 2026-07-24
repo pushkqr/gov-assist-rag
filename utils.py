@@ -41,3 +41,8 @@ def generate_content_safe(client, *args, **kwargs):
 def embed_content_safe(client, *args, **kwargs):
     """Wrapper for client.models.embed_content with rate limiting."""
     return client.models.embed_content(*args, **kwargs)
+
+@with_retry_and_throttle(constant_delay=2.0)
+def generate_content_stream_safe(client, *args, **kwargs):
+    """Wrapper for client.models.generate_content_stream with rate limiting."""
+    return client.models.generate_content_stream(*args, **kwargs)
