@@ -2,6 +2,7 @@ import os
 from google import genai
 from google.genai import types
 from qdrant_client import QdrantClient
+from utils import generate_content_safe, embed_content_safe
 
 def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, query: str, collection_name: str = "gov_docs", chat_history: list = None):
     """
@@ -27,7 +28,8 @@ def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, quer
             f"Latest Question: {query}\n\nStandalone Question:"
         )
         try:
-            ctx_response = gemini_client.models.generate_content(
+            ctx_response = generate_content_safe(
+                gemini_client,
                 model='gemini-3.5-flash-lite',
                 contents=ctx_prompt,
                 config=types.GenerateContentConfig(temperature=0.0)
@@ -46,7 +48,8 @@ def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, quer
     model_name = os.getenv("MODEL_NAME", "text-embedding-004")
     
     print("Generating query embedding...")
-    response = gemini_client.models.embed_content(
+    response = embed_content_safe(
+        gemini_client,
         model=model_name,
         contents=standalone_query,
         config=config
@@ -64,7 +67,8 @@ Output ONLY a valid JSON object, e.g., {{"year": 2025}} or {{}}"""
     query_filter = None
     from qdrant_client import models
     try:
-        filter_response = gemini_client.models.generate_content(
+        filter_response = generate_content_safe(
+            gemini_client,
             model='gemini-3.5-flash-lite',
             contents=filter_prompt,
             config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json")
@@ -183,7 +187,8 @@ User Question:
 {query}
 """
     
-    answer_response = gemini_client.models.generate_content(
+    answer_response = generate_content_safe(
+        gemini_client,
         model='gemini-3.5-flash-lite',
         contents=prompt
     )

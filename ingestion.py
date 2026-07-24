@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 from docling.document_converter import DocumentConverter
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from utils import generate_content_safe, embed_content_safe
 
 def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_metadata: dict):
     """
@@ -60,7 +61,8 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             
         enriched_child_texts = [f"Context: {full_context_prefix}\n\nContent: {child_text}" for child_text in child_texts]
         
-        dense_response = client.models.embed_content(
+        dense_response = embed_content_safe(
+            client,
             model=model_name,
             contents=enriched_child_texts,
             config=config
@@ -144,7 +146,8 @@ def run_ingestion(client: genai.Client, docs_dir: str = "docs", target_files: li
             )
             
             # Using the latest cheap model requested with zero temperature for perfectly consistent structure
-            response = client.models.generate_content(
+            response = generate_content_safe(
+                client,
                 model='gemini-3.5-flash-lite',
                 contents=[uploaded_file, prompt],
                 config=types.GenerateContentConfig(temperature=0.0)
