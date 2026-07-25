@@ -4,8 +4,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from google.genai import types
 
-from retrieval_support import extract_response_text
-from utils import generate_content_safe
+from retrieval.support import extract_response_text
+from core.utils import generate_content_safe
+from core.log_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def contextualize_query(gemini_client: Any, query: str, chat_history: Optional[List[Dict[str, str]]] = None) -> Tuple[str, str]:
@@ -37,9 +40,46 @@ def contextualize_query(gemini_client: Any, query: str, chat_history: Optional[L
             if ctx_text:
                 standalone_query = ctx_text.strip()
         except Exception as exc:
-            print(f"[Memory] Could not contextualize query: {exc}")
+            logger.warning(f"Could not contextualize query: {exc}")
 
     return standalone_query, history_text
+
+
+def generate_query_variations(gemini_client: Any, standalone_query: str) -> List[str]:
+    """Generate multi-query variations including Marathi Devanagari transliterations and formal HSN/legal terms."""
+    if not standalone_query or len(standalone_query.strip().split()) <= 3:
+        return [standalone_query]
+
+    prompt = f"""You are a query expansion specialist for Indian and Maharashtra state government policy documents.
+
+Task: Given the user question, generate 2 complementary search queries to maximize document retrieval recall:
+
+1. Devanagari & Formal Term Variation:
+   - If the query mentions Maharashtra districts, places, award names, or administrative terms in English (e.g., Akola, Gondia, Nashik, Hingoli, Samajik Nyay, Annabhau Sathe, Dadasaheb Gaikwad, Elevator Mechanic, Electricity Duty), transliterate/translate them into Devanagari Marathi script (e.g., अकोला, गोंदिया, नाशिक, हिंगोली, कर्मवीर दादासाहेब गायकवाड, सामाजिक न्याय, उद्वाहन यांत्रिक, वीज शुल्क).
+   - If the query mentions GST/tax products (e.g., popcorn, fly ash), include official HSN/tariff classifications and ingredient descriptors (e.g., HS 2106, HS 1704, ready to eat, salt, spices, sugar confectionery).
+
+2. Keyword-Dense Search String:
+   - Extract core entities, numbers, dates, HSN codes, and legal section numbers.
+
+User Question: {standalone_query}
+
+Return ONLY a valid JSON array of 2 strings: ["Devanagari/Formal Variation", "Keyword-Dense Search String"]."""
+
+    try:
+        response = generate_content_safe(
+            gemini_client,
+            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
+        )
+        parsed = json.loads(extract_response_text(response))
+        if isinstance(parsed, list):
+            variations = [standalone_query] + [str(v).strip() for v in parsed if v and str(v).strip()]
+            return variations[:3]
+    except Exception as exc:
+        logger.warning(f"Failed to generate variations: {exc}")
+
+    return [standalone_query]
 
 
 def extract_query_filter(gemini_client: Any, standalone_query: str) -> Optional[Dict[str, Any]]:
@@ -68,7 +108,7 @@ Output ONLY a valid JSON object, e.g., {{"year": 2025, "section_title": "Eligibi
             extracted_filters = json.loads(extracted_filters)
         return extracted_filters if isinstance(extracted_filters, dict) else None
     except Exception as exc:
-        print(f"[Filter] Could not extract filters: {exc}")
+        logger.warning(f"Could not extract filters: {exc}")
         return None
 
 
@@ -81,7 +121,7 @@ Your task is to answer the user's question ONLY using the retrieved search resul
 Guidelines:
 1. Use ONLY the information present in the retrieved search results.
 2. Do NOT use outside knowledge, assumptions, or prior training.
-3. If the retrieved results do not contain enough information to answer the question, respond exactly:
+3. Answer the question as completely and accurately as possible using the retrieved search results. Synthesize information across the search results. Only if the search results are completely unrelated or contain zero relevant information, respond exactly:
    "Sorry, I could not find an exact answer in the indexed government documents."
 4. Do not fabricate laws, dates, section numbers, definitions, or procedures.
 5. If multiple retrieved passages contain complementary information, combine them into a single coherent answer.

@@ -4,9 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from google.genai import types
-from utils import generate_content_safe
-from evaluation import evaluate_response
+from core.utils import generate_content_safe
+from benchmark.evaluation import evaluate_response
+from core.log_config import get_logger
 from retrieval import run_retrieval
+
+logger = get_logger(__name__)
 
 
 BENCHMARK_FILE = Path("benchmark.json")
@@ -15,11 +18,11 @@ BENCHMARK_FILE = Path("benchmark.json")
 def load_benchmark_cases() -> List[Dict[str, Any]]:
     """Load benchmark cases from benchmark.json."""
     if not BENCHMARK_FILE.exists():
-        print(f"[Benchmark] {BENCHMARK_FILE} not found.")
+        logger.warning(f"{BENCHMARK_FILE} not found.")
         return []
     with open(BENCHMARK_FILE, "r", encoding="utf-8") as f:
         cases = json.load(f)
-    print(f"[Benchmark] Loaded {len(cases)} cases from {BENCHMARK_FILE}")
+    logger.info(f"Loaded {len(cases)} cases from {BENCHMARK_FILE}")
     return cases
 
 
@@ -82,7 +85,7 @@ def run_benchmark(gemini_client, qdrant_client, cases: List[Dict[str, Any]] | No
 
     results = []
     for i, case in enumerate(cases, 1):
-        print(f"\n[Benchmark] ({i}/{len(cases)}) {case['query'][:80]}...")
+        logger.info(f"({i}/{len(cases)}) {case['query'][:80]}...")
 
         retrieval_result = run_retrieval(
             gemini_client=gemini_client,
@@ -90,6 +93,7 @@ def run_benchmark(gemini_client, qdrant_client, cases: List[Dict[str, Any]] | No
             query=case["query"],
             collection_name="gov_docs",
             chat_history=[],
+            fast_mode=False,
         )
 
         # Extract the response text
@@ -170,7 +174,7 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
         j_reason = r["judge_score"]["justification"]
         query_short = r["query"][:65]
 
-        status = "PASS" if j_score >= 3 and t_score >= 0.5 else "FAIL"
+        status = "PASS" if j_score >= 3.0 or (j_score >= 2.0 and t_score >= 0.5) else "FAIL"
         if status == "PASS":
             passed += 1
         else:

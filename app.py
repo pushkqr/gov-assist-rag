@@ -73,7 +73,8 @@ load_dotenv()
 @st.cache_resource(show_spinner=False)
 def get_clients() -> tuple[genai.Client, QdrantClient]:
     """Create singleton clients to avoid local Qdrant lock collisions on reruns."""
-    gemini = genai.Client()
+    api_key = os.getenv("GEMINI_API_KEY")
+    gemini = genai.Client(api_key=api_key) if api_key else genai.Client()
     qdrant = QdrantClient(path="local_qdrant_db")
     return gemini, qdrant
 

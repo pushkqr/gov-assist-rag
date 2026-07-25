@@ -1,0 +1,128 @@
+import os
+import re
+import uuid
+from typing import Any, Dict, List
+
+from google import genai
+from google.genai import types
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from qdrant_client import models
+
+from core.embedding import get_sparse_model
+from core.log_config import get_logger
+from core.utils import embed_content_safe, generate_content_safe
+
+logger = get_logger(__name__)
+
+
+def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Split document hierarchically and generate dense and sparse embeddings."""
+    sparse_model = get_sparse_model()
+
+    headers_to_split_on = [
+        ("PART-", "Document_Part"),
+        ("#", "Header_1"),
+        ("##", "Header_2"),
+        ("###", "Header_3"),
+    ]
+
+    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on, strip_headers=False)
+    parent_docs = markdown_splitter.split_text(markdown_text)
+
+    database_payload = []
+    child_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
+
+    config = types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT", output_dimensionality=1536)
+    model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
+
+    for parent_doc in parent_docs:
+        parent_context = parent_doc.page_content
+        parent_metadata = parent_doc.metadata
+        parent_id = str(uuid.uuid4())
+
+        hierarchy_parts = [parent_metadata[k] for k in ["Document_Part", "Header_1", "Header_2", "Header_3"] if k in parent_metadata]
+        hierarchy_context = " > ".join(hierarchy_parts)
+        doc_info = f"Document: {global_metadata.get('doc_number', 'Unknown')} ({global_metadata.get('year', 'Unknown')})"
+        full_context_prefix = f"{doc_info}\nSection: {hierarchy_context}" if hierarchy_context else doc_info
+
+        section_title = hierarchy_context if hierarchy_context else os.path.basename(global_metadata.get("doc_number", "document"))
+        parent_context_with_section = f"Section: {section_title}\n\n{parent_context}"
+
+        # Extract table header lines if parent context contains a table
+        table_headers = [line.strip() for line in parent_context.splitlines() if line.strip().startswith("|")][:2]
+        table_header_str = "\n".join(table_headers) if len(table_headers) >= 1 else ""
+
+        child_texts = child_splitter.split_text(parent_context_with_section)
+        if not child_texts:
+            continue
+
+        # Prepend table header to table chunks missing the header row
+        if table_header_str:
+            processed_child_texts = []
+            for ct in child_texts:
+                if ct.strip().startswith("|") and not ct.startswith(table_headers[0]):
+                    processed_child_texts.append(f"{table_header_str}\n{ct}")
+                else:
+                    processed_child_texts.append(ct)
+            child_texts = processed_child_texts
+
+        logger.info(f"  -> Chunked into {len(child_texts)} passages. Translating & generating vector embeddings...")
+        enriched_child_texts = []
+        for c_idx, ct in enumerate(child_texts, 1):
+            prefix = f"Context: {full_context_prefix}\n\nContent: {ct}"
+            if re.search(r"[\u0900-\u097F]", ct):
+                logger.debug(f"     [Translation {c_idx}/{len(child_texts)}] Translating Devanagari text...")
+                try:
+                    tr_prompt = f"Translate the following Marathi government document text into concise English. Transliterate all proper names, award names, and district names cleanly. Output ONLY the English text and names.\n\nMarathi Text:\n{ct[:600]}"
+                    tr_resp = generate_content_safe(
+                        client,
+                        model=os.getenv("SPEC_MODEL_NAME", "gemini-3.5-flash-lite"),
+                        contents=tr_prompt,
+                        config=types.GenerateContentConfig(temperature=0.0),
+                    )
+                    tr_text = getattr(tr_resp, "text", "") or ""
+                    if tr_text.strip():
+                        prefix += f"\n\nEnglish Translation: {tr_text.strip()}"
+                except Exception as exc:
+                    logger.error(f"Failed translation: {exc}")
+            enriched_child_texts.append(prefix)
+
+        # Embed enriched text (including English translation) in BM25 for dual-language sparse keyword search
+        sparse_embeddings = list(sparse_model.embed(enriched_child_texts))
+
+        for i, child_text in enumerate(child_texts):
+            logger.debug(f"     [Embedding {i+1}/{len(child_texts)}] Generating dense vector ({model_name})...")
+            dense_response = embed_content_safe(client, model=model_name, contents=enriched_child_texts[i], config=config)
+
+            if not hasattr(dense_response, "embeddings") or not dense_response.embeddings:
+                continue
+
+            dense_vector = dense_response.embeddings[0].values
+            sparse_vec = sparse_embeddings[i]
+            vector_dict = {
+                "dense": dense_vector,
+                "bm25": models.SparseVector(
+                    indices=sparse_vec.indices.tolist(),
+                    values=sparse_vec.values.tolist(),
+                ),
+            }
+
+            payload_metadata = {
+                **parent_metadata,
+                **global_metadata,
+                "parent_id": parent_id,
+                "parent_context": parent_context_with_section,
+                "child_text": child_text,
+                "section_title": section_title,
+            }
+
+            database_payload.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "vector": vector_dict,
+                    "metadata": payload_metadata,
+                    "enriched_text_used_for_embedding": enriched_child_texts[i],
+                }
+            )
+
+    return database_payload

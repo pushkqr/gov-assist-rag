@@ -2,6 +2,10 @@ import os
 import time
 from functools import wraps
 
+from core.log_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def with_retry_and_throttle(constant_delay_env=None, default_delay=0, max_retries=5, initial_backoff=5, backoff_factor=2):
     """
@@ -28,9 +32,9 @@ def with_retry_and_throttle(constant_delay_env=None, default_delay=0, max_retrie
                     error_msg = str(e).lower()
                     if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
                         if attempt == max_retries - 1:
-                            print(f"[RateLimit] Max retries ({max_retries}) reached. Failing.")
+                            logger.warning(f"[RateLimit] Max retries ({max_retries}) reached. Failing.")
                             raise e
-                        print(f"[RateLimit] Hit API quota/rate-limit (Attempt {attempt+1}/{max_retries}). Retrying in {backoff_delay} seconds...")
+                        logger.warning(f"[RateLimit] Hit API quota/rate-limit (Attempt {attempt+1}/{max_retries}). Retrying in {backoff_delay} seconds...")
                         time.sleep(backoff_delay)
                         backoff_delay *= backoff_factor
                     else:
@@ -52,4 +56,3 @@ def embed_content_safe(client, *args, **kwargs):
 def generate_content_stream_safe(client, *args, **kwargs):
     """Wrapper for client.models.generate_content_stream with rate limiting."""
     return client.models.generate_content_stream(*args, **kwargs)
-
