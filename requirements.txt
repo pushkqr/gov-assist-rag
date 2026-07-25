@@ -1,0 +1,12 @@
+# Core
+streamlit
+google-genai
+qdrant-client[fastembed]
+sentence-transformers
+python-dotenv
+
+# Document Parsing
+pymupdf4llm
+
+# Search
+fastembed

@@ -9,6 +9,7 @@ venv.bak/
 temp/
 *.csv
 docs/
+tests/
 
 # Qdrant Database
 local_qdrant_db/

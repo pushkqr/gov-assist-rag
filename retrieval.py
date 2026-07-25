@@ -1,214 +1,258 @@
+import json
 import os
+import re
+from typing import Any, Dict, List, Optional, Tuple
+
+from fastembed import SparseTextEmbedding
 from google import genai
 from google.genai import types
-from qdrant_client import QdrantClient
-from utils import generate_content_safe, embed_content_safe, generate_content_stream_safe
+from qdrant_client import QdrantClient, models
 
-def run_retrieval(gemini_client: genai.Client, qdrant_client: QdrantClient, query: str, collection_name: str = "gov_docs", chat_history: list = None):
-    """
-    Main entry point for the retrieval module.
-    """
+from retrieval_pipeline import build_generation_prompt, contextualize_query, extract_query_filter
+from retrieval_support import build_context_text, extract_response_text
+from utils import embed_content_safe, generate_content_safe, generate_content_stream_safe
+
+_QUERY_CACHE: Dict[str, Dict[str, Any]] = {}
+_SPARSE_MODEL: Optional[SparseTextEmbedding] = None
+
+
+def get_sparse_model() -> SparseTextEmbedding:
+    """Lazy singleton for BM25 sparse embedding model."""
+    global _SPARSE_MODEL
+    if _SPARSE_MODEL is None:
+        _SPARSE_MODEL = SparseTextEmbedding(model_name="Qdrant/bm25")
+    return _SPARSE_MODEL
+
+
+def should_use_fast_path(query: str) -> bool:
+    """Check if query is suitable for fast lightweight retrieval."""
+    if not query or not query.strip():
+        return True
+
+    text = query.strip().lower()
+    if len(text.split()) <= 5:
+        return True
+
+    if re.search(r"\b(hello|hi|thanks|thank you|help|what can you do|who are you)\b", text):
+        return True
+
+    if re.search(r"\b(what|who|when|where|why|how)\b", text) and text.count(" ") <= 12:
+        return True
+
+    return False
+
+
+def should_escalate_to_deep(search_results: List[Any], evidence: List[Dict[str, Any]], use_fast_path: bool) -> bool:
+    """Escalate to deeper retrieval when fast path results are sparse."""
+    if not use_fast_path or not search_results:
+        return not search_results if use_fast_path else False
+
+    if len(search_results) < 2 or len(evidence) < 2:
+        return True
+
+    return sum(1 for item in evidence if (item.get("quote") or "").strip()) < 2
+
+
+class StreamingResponse:
+    """Wraps answer stream to support multiple UI iteration replays."""
+
+    def __init__(self, answer_stream):
+        self._answer_stream = answer_stream
+        self.captured_parts: List[str] = []
+        self._exhausted = False
+
+    def __iter__(self):
+        if self._exhausted:
+            for part in self.captured_parts:
+                yield part
+            return
+
+        for chunk in self._answer_stream:
+            text = getattr(chunk, "text", None)
+            if text:
+                self.captured_parts.append(text)
+                yield text
+        self._exhausted = True
+
+    @property
+    def full_text(self) -> str:
+        return "".join(self.captured_parts)
+
+
+def _build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
+    evidence: List[Dict[str, Any]] = []
+    for result in search_results:
+        payload = result.payload or {}
+        child_text = (payload.get("child_text") or "").strip()
+        parent_context = (payload.get("parent_context") or "").strip()
+        quote = child_text[:400] if child_text else parent_context[:400]
+        section_parts = [payload.get(k) for k in ["Document_Part", "Header_1", "Header_2", "Header_3"] if payload.get(k)]
+        evidence.append(
+            {
+                "document": payload.get("doc_number", "Unknown document"),
+                "year": payload.get("year"),
+                "section": " > ".join(str(p) for p in section_parts) if section_parts else "Section not available",
+                "quote": quote,
+            }
+        )
+    return evidence
+
+
+def run_retrieval(
+    gemini_client: genai.Client,
+    qdrant_client: QdrantClient,
+    query: str,
+    collection_name: str = "gov_docs",
+    chat_history: Optional[List[Dict[str, str]]] = None,
+    fast_mode: bool = False,
+) -> Dict[str, Any]:
+    """Execute hybrid search retrieval and stream grounded generation."""
     if chat_history is None:
         chat_history = []
-        
-    print(f"Processing Query: '{query}'")
-    
-    # 0. Contextualize query with Memory
+
+    cache_key = f"{collection_name}:{query.strip().lower()}"
+    if cache_key in _QUERY_CACHE:
+        cached_result = _QUERY_CACHE[cache_key]
+        if cached_result.get("status") == "success":
+            return cached_result
+        del _QUERY_CACHE[cache_key]
+
     standalone_query = query
     history_text = ""
     if chat_history:
-        print("\n[Memory] Contextualizing query using conversation history...")
-        history_text = "\n".join([f"{msg['role'].capitalize()}: {msg['text']}" for msg in chat_history[-4:]]) # Keep last 2 turns
-        
-        ctx_prompt = (
-            "Given the following conversation history and the user's latest question, rephrase the latest question "
-            "to be a standalone question that can be understood without the context of the conversation. "
-            "CRITICAL INSTRUCTION: If the latest question introduces a completely new topic or is clearly unrelated to the "
-            "conversation history, do NOT merge or carry over constraints (like years, document names, or specific rules) "
-            "from the history. Treat it as a completely new query. If it is already standalone, return it exactly as is.\n\n"
-            f"Conversation History:\n{history_text}\n\n"
-            f"Latest Question: {query}\n\nStandalone Question:"
-        )
-        try:
-            ctx_response = generate_content_safe(
-                gemini_client,
-                model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
-                contents=ctx_prompt,
-                config=types.GenerateContentConfig(temperature=0.0)
-            )
-            if ctx_response.text:
-                standalone_query = ctx_response.text.strip()
-                print(f"[Memory] Rewrote query to: '{standalone_query}'")
-        except Exception as e:
-            print(f"[Memory] Failed to contextualize query: {e}")
+        standalone_query, history_text = contextualize_query(gemini_client, query, chat_history)
 
-    # 1. Embed the standalone query
-    config = types.EmbedContentConfig(
-        task_type="RETRIEVAL_QUERY", # Note the different task type for queries!
-        output_dimensionality=1536
-    )
+    config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
     model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
-    
-    print("Generating query embedding...")
-    response = embed_content_safe(
-        gemini_client,
-        model=model_name,
-        contents=standalone_query,
-        config=config
-    )
-    
-    query_vector = response.embeddings[0].values
-    
-    # 1.5 Extract Metadata Filters (Dynamic)
-    print("\n[Filter] Checking query for metadata filters...")
-    filter_prompt = f"""Extract any filtering criteria from the following question. 
-If the user explicitly mentions a specific year, extract it. Otherwise return empty.
-Question: {standalone_query}
-Output ONLY a valid JSON object, e.g., {{"year": 2025}} or {{}}"""
-    
-    query_filter = None
-    from qdrant_client import models
+
     try:
-        filter_response = generate_content_safe(
-            gemini_client,
-            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
-            contents=filter_prompt,
-            config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json")
-        )
-        import json
-        extracted_filters = json.loads(filter_response.text)
-        
+        response = embed_content_safe(gemini_client, model=model_name, contents=standalone_query, config=config)
+        query_vector = response.embeddings[0].values
+    except Exception as exc:
+        return {
+            "status": "error",
+            "response_text": f"Embedding failed: {exc}",
+            "answer_stream": None,
+            "evidence": [],
+        }
+
+    query_filter = None
+    try:
+        extracted_filters = extract_query_filter(gemini_client, standalone_query)
         must_conditions = []
-        if "year" in extracted_filters and extracted_filters["year"]:
-            year_val = int(extracted_filters["year"])
-            must_conditions.append(models.FieldCondition(key="year", match=models.MatchValue(value=year_val)))
-            print(f"[Filter] Applied Year Filter: {year_val}")
-            
+        if extracted_filters and extracted_filters.get("year"):
+            must_conditions.append(models.FieldCondition(key="year", match=models.MatchValue(value=int(extracted_filters["year"]))))
+
+        if extracted_filters and extracted_filters.get("section_title"):
+            must_conditions.append(models.FieldCondition(key="section_title", match=models.MatchValue(value=str(extracted_filters["section_title"]).strip())))
+
         if must_conditions:
             query_filter = models.Filter(must=must_conditions)
-        else:
-            print("[Filter] No specific metadata filters detected.")
     except Exception as e:
-        print(f"[Filter] Failed to extract filters: {e}")
-    
-    # 2. Qdrant Vector Search (Hybrid)
-    print(f"\n[Search] Running hybrid (dense + sparse) search in Qdrant collection '{collection_name}'...")
-    
-    # Generate Sparse Vector for the query
-    from fastembed import SparseTextEmbedding
-    sparse_model = SparseTextEmbedding(model_name="Qdrant/bm25")
-    sparse_embedding = list(sparse_model.embed([standalone_query]))[0]
-    sparse_query = models.SparseVector(
-        indices=sparse_embedding.indices.tolist(),
-        values=sparse_embedding.values.tolist()
-    )
-    
-    prefetch = [
-        models.Prefetch(
-            query=query_vector,
-            using="dense",
-            limit=5,
-            filter=query_filter
-        ),
-        models.Prefetch(
-            query=sparse_query,
-            using="bm25",
-            limit=5,
-            filter=query_filter
+        print(f"[Filter] Could not extract filters: {e}")
+
+    use_fast_path = fast_mode or should_use_fast_path(query)
+
+    def run_search(current_fast_path: bool) -> Tuple[Optional[List[Any]], List[Any], List[Dict[str, Any]]]:
+        limit = 3 if current_fast_path else 8
+        rerank_limit = 2 if current_fast_path else 5
+
+        sparse_model = get_sparse_model()
+        sparse_embedding = list(sparse_model.embed([standalone_query]))[0]
+        sparse_query = models.SparseVector(
+            indices=sparse_embedding.indices.tolist(),
+            values=sparse_embedding.values.tolist(),
         )
-    ]
-    
-    search_response = qdrant_client.query_points(
-        collection_name=collection_name,
-        prefetch=prefetch,
-        query=models.FusionQuery(fusion=models.Fusion.RRF),
-        limit=5 # Fetch top 5 closest chunks after fusion
-    )
-    search_results = search_response.points
-    
-    if not search_results:
-        return None
-        
-    print(f"[Search] Found {len(search_results)} relevant child chunks before reranking.")
-    
-    # 2.5 Cross-Encoder Re-Ranking
-    print("[Rerank] Re-ranking chunks with Cross-Encoder...")
-    from sentence_transformers import CrossEncoder
-    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-    
-    # Pair the query with each chunk's text for scoring
-    pairs = [[standalone_query, result.payload.get("child_text", "")] for result in search_results]
-    scores = cross_encoder.predict(pairs)
-    
-    # Sort results by score descending
-    scored_results = sorted(zip(scores, search_results), key=lambda x: x[0], reverse=True)
-    # Take the top 3 most relevant chunks
-    top_results = [result for score, result in scored_results[:3]]
-    
-    print(f"[Rerank] Kept top {len(top_results)} most relevant chunks.")
-    
-    # 3. Deduplication Logic (Small-to-Big)
-    print("[Retrieval] Deduplicating retrieved child chunks to extract unique parent context...")
-    unique_parents = {}
-    for result in top_results:
-        parent_id = result.payload.get("parent_id")
-        if parent_id and parent_id not in unique_parents:
-            unique_parents[parent_id] = result.payload.get("parent_context", "")
-            
-    context_text = "\n\n---\n\n".join(unique_parents.values())
-    print(f"[Retrieval] Extracted {len(unique_parents)} unique parent sections for LLM context.")
-    
-    # 4. Generate Answer using LLM
-    print("\n[Generation] Generating grounded answer with Gemini...")
-    
-    prompt = f"""You are GovAssist, an AI Question Answering Assistant for Government Documents.
 
-Your task is to answer the user's question ONLY using the retrieved search results.
+        prefetch = [
+            models.Prefetch(query=query_vector, using="dense", limit=limit, filter=query_filter),
+            models.Prefetch(query=sparse_query, using="bm25", limit=limit, filter=query_filter),
+        ]
 
-Guidelines:
-1. Use ONLY the information present in the retrieved search results.
-2. Do NOT use outside knowledge, assumptions, or prior training.
-3. If the retrieved results do not contain enough information to answer the question, respond exactly:
-   "Sorry, I could not find an exact answer in the indexed government documents."
-4. Do not fabricate laws, dates, section numbers, definitions, or procedures.
-5. If multiple retrieved passages contain complementary information, combine them into a single coherent answer.
-6. Prefer the most recent notification if multiple documents appear to conflict.
+        search_response = qdrant_client.query_points(
+            collection_name=collection_name,
+            prefetch=prefetch,
+            query=models.FusionQuery(fusion=models.Fusion.RRF),
+            limit=limit,
+        )
+        current_results = search_response.points
+        if not current_results:
+            return None, [], []
 
-Response Format:
-### Answer
-Provide a concise, well-structured answer in natural language.
+        if current_fast_path:
+            top_results = current_results[:rerank_limit]
+        else:
+            ranking_prompt = f"""Rank the passages below from most relevant to least relevant for answering the question.
+Return ONLY a JSON array of indices in descending order of relevance, e.g. [2, 0, 1].
 
-### Explanation
-Briefly explain how the retrieved information answers the user's question.
+Question: {standalone_query}
 
-### Source(s) & Citations
-Mention:
-- Document title
-- Relevant chapter/section (if available)
-- CRITICAL: Provide the exact, verbatim quote from the retrieved text that justifies your answer.
-
-Formatting:
-- CRITICAL: You MUST write your entire response (Answer and Explanation) in the exact same language as the User Question. If the document is in Marathi and the user asks in English, you MUST translate your answer into English.
-- Use bullet points where appropriate.
-- Keep answers factual and professional.
-- Avoid repeating the same information.
-- Do not mention internal retrieval or search processes.
-- Do not say "According to the search results."
-
-Recent Conversation History:
-{history_text if history_text else "No previous history."}
-
-Search Results:
-{context_text}
-
-User Question:
-{query}
+Passages:
 """
-    
-    answer_stream = generate_content_stream_safe(
-        gemini_client,
-        model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
-        contents=prompt
-    )
-    
-    return answer_stream
+            for idx, res in enumerate(current_results):
+                payload = res.payload or {}
+                passage_text = payload.get("child_text") or payload.get("parent_context") or ""
+                ranking_prompt += f"{idx}: {passage_text[:800]}\n\n"
+
+            try:
+                ranking_response = generate_content_safe(
+                    gemini_client,
+                    model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+                    contents=ranking_prompt,
+                    config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
+                )
+                ranked_indices = json.loads(extract_response_text(ranking_response))
+                if isinstance(ranked_indices, list):
+                    top_results = [current_results[idx] for idx in ranked_indices if 0 <= idx < len(current_results)][:rerank_limit]
+                else:
+                    top_results = current_results[:rerank_limit]
+            except Exception:
+                top_results = current_results[:rerank_limit]
+
+        return current_results, top_results, _build_evidence(top_results)
+
+    search_results, top_results, evidence = run_search(use_fast_path)
+
+    if not search_results:
+        return {
+            "status": "empty",
+            "response_text": "Sorry, I could not find an exact answer in the indexed government documents.",
+            "answer_stream": None,
+            "evidence": [],
+        }
+
+    if should_escalate_to_deep(search_results, evidence, use_fast_path):
+        search_results, top_results, evidence = run_search(False)
+        if not search_results:
+            return {
+                "status": "empty",
+                "response_text": "Sorry, I could not find an exact answer in the indexed government documents.",
+                "answer_stream": None,
+                "evidence": [],
+            }
+
+    context_text = build_context_text(top_results)
+    prompt = build_generation_prompt(query=query, history_text=history_text, context_text=context_text)
+
+    try:
+        answer_stream = generate_content_stream_safe(
+            gemini_client,
+            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+            contents=prompt,
+        )
+    except Exception as exc:
+        return {
+            "status": "error",
+            "response_text": f"Generation failed: {exc}",
+            "answer_stream": None,
+            "evidence": evidence,
+        }
+
+    result = {
+        "status": "success",
+        "response_text": None,
+        "answer_stream": StreamingResponse(answer_stream),
+        "evidence": evidence,
+    }
+    _QUERY_CACHE[cache_key] = result
+    return result

@@ -50,14 +50,14 @@ def render_top_strip(gen_model: str, embed_model: str):
     <div class="brand">
         <div class="brand-mark">{brand_logo_html}</div>
         <div>
-            <div class="brand-name">GovAssist Frontier</div>
-            <div class="brand-note">PRODUCTION RAG CHAT SURFACE</div>
+            <div class="brand-name">GovAssist</div>
+            <div class="brand-note">RAG Knowledge Surface</div>
         </div>
     </div>
     <div class="badge-row">
-        <div class="badge">GEN · {gen_model}</div>
-        <div class="badge">EMBED · {embed_model}</div>
-        <div class="badge">VECTOR STORE · QDRANT LOCAL</div>
+        <div class="badge">gen &middot; {gen_model}</div>
+        <div class="badge">embed &middot; {embed_model}</div>
+        <div class="badge">store &middot; qdrant local</div>
     </div>
 </div>
 """,
@@ -69,24 +69,23 @@ def render_welcome_screen():
     st.markdown(
         """
 <div class="welcome">
-    <h2 class="welcome-title">Ask policy, rules, and notifications with <span class="welcome-title-accent">citation-ready grounding</span>.</h2>
-    <p class="welcome-copy">Responses are generated strictly from your indexed government documents, then structured for clarity and decision workflows.</p>
+    <h2 class="welcome-title">Query policy, rules, and notifications with <span class="welcome-title-accent">citation-ready grounding</span>.</h2>
+    <p class="welcome-copy">Responses are synthesized strictly from your indexed government documents. Every answer is structured for clarity, traceability, and decision support.</p>
     <div class="welcome-grid">
         <div class="welcome-card">
             <div class="welcome-card-title">Grounded Answers</div>
-            <div class="welcome-card-copy">No hallucinated policy text. Retrieval-first reasoning from your local corpus.</div>
+            <div class="welcome-card-copy">Retrieval-first reasoning from your local corpus. No hallucinated policy text.</div>
         </div>
         <div class="welcome-card">
             <div class="welcome-card-title">Comparative Analysis</div>
-            <div class="welcome-card-copy">Contrast clauses, eligibility rules, and revision notices in one response.</div>
+            <div class="welcome-card-copy">Contrast clauses, eligibility criteria, and revision notices side-by-side.</div>
         </div>
         <div class="welcome-card">
-            <div class="welcome-card-title">Source Confidence</div>
-            <div class="welcome-card-copy">Every answer is designed to include explainability and source-backed context.</div>
+            <div class="welcome-card-title">Source Traceability</div>
+            <div class="welcome-card-copy">Verbatim citations with document identifiers attached to every response.</div>
         </div>
     </div>
 </div>
 """,
         unsafe_allow_html=True,
     )
-    st.info("Use the quick actions in the sidebar to launch common government-doc queries.")
