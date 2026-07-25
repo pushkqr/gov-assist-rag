@@ -1,79 +1,123 @@
 # GovAssist
 
-GovAssist is an advanced Retrieval-Augmented Generation (RAG) engine and chat interface designed specifically for querying, comparing, and analyzing government policy documents, rules, and notifications. 
+GovAssist is an AI-powered Retrieval-Augmented Generation (RAG) system and chat surface designed specifically for querying, comparing, and analyzing government policy documents, circulars, and notifications.
 
-Built with a focus on citation-backed grounding and high-precision retrieval, the system ensures responses are generated strictly from indexed local documents, preventing hallucinated policy text.
+Built for citation-backed grounding and high-precision retrieval, responses are synthesized strictly from indexed local government documents, eliminating hallucinated policy text.
 
-## Architecture Overview
+---
 
-GovAssist operates on a dual-model architecture to optimize speed, cost, and accuracy:
-- **Embedding Model**: Fast, lightweight model for generating dense vectors from document chunks.
-- **Generative Model**: High-parameter instruction-tuned model for synthesizing answers and formatting structured data.
-- **Cross-Encoder**: A local re-ranking model that mathematically scores retrieved chunks against the user query for maximum contextual relevance before generation.
+## Key Features & Capabilities
+
+- **Hybrid Search Engine**: Combines **Dense Vector Search** (Gemini embeddings) with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
+- **Adaptive Fast/Deep Retrieval**: Automatically routes short/simple queries through a fast lightweight path, and seamlessly escalates to deep retrieval with LLM re-ranking when evidence is sparse.
+- **Automated Metadata Filtering**: Extracts implicit constraints (such as publication year or section titles) directly from queries using LLM filter parsing.
+- **Contextual Conversation Memory**: Rewrites follow-up questions into standalone queries while preventing topic-drift contamination from prior conversation history.
+- **Corpus Benchmarking & Evaluation**: Built-in benchmark suite (`benchmark.py` & `benchmark.json`) combining term-match scoring and a balanced LLM judge evaluator to output detailed performance reports and letter grades (A–D).
+- **Modern UI Control Room**: Streamlit-based dark theme UI styled with **Inter** and **JetBrains Mono**, featuring:
+  - **One-Click Copy**: Copy button on all assistant responses.
+  - **Session Persistence**: Automatic saving and restoration of chat history across page refreshes (`temp/chat_session.json`).
+  - **Fast / Deep Mode Switch**: Instant toggle between fast answer mode and deep analytical retrieval.
+  - **Resilient Error Handling**: User-friendly error messaging for network connectivity or rate limit events.
+
+---
 
 ## Core Components
 
-### 1. Ingestion Engine (`ingestion.py`)
-Parses complex government PDFs (supporting both English and regional languages) using a lightweight local parser (`pymupdf4llm`). The engine dynamically extracts metadata (such as document year and department) using regex rules, chunks the text semantically, generates embeddings, and indexes them into a local Qdrant vector database.
+```
+├── app.py                 # Main Streamlit web application & session state runner
+├── main.py                # Command-line entry point for Ingestion, Retrieval, & Benchmarks
+├── ingestion.py           # Hierarchical PDF document parser, metadata extractor & vector indexer
+├── ingestion_state.py     # File hashing & incremental ingestion state tracker
+├── retrieval.py           # Runtime hybrid retrieval orchestrator & response streamer
+├── retrieval_pipeline.py  # Query contextualizer, filter extractor & generation prompt builder
+├── retrieval_support.py   # Context deduplication & response text extractor helpers
+├── evaluation.py          # Term coverage evaluation metric functions
+├── benchmark.py           # Automated evaluation runner, LLM judge, and report printer
+├── utils.py               # Throttling & rate-limit retry wrappers for GenAI APIs
+├── benchmark.json         # Standardized 30-case evaluation dataset
+└── ui/                    # Design system & frontend components
+    ├── style.css          # Theme tokens, Inter typography, animations & scrollbar styles
+    ├── style.py           # CSS injector utility
+    ├── components.py      # Top branding strip, logo loader & welcome screen
+    ├── sidebar.py         # Control room metrics & quick-action triggers
+    └── copy_button.py     # Clipboard copy button component
+```
 
-### 2. Retrieval & Contextualization (`retrieval.py`)
-Handles the runtime query processing. 
-- **Query Contextualization**: Analyzes conversation history to rewrite follow-up questions into standalone queries, while actively detecting abrupt topic switches to prevent irrelevant filters from carrying over.
-- **Hybrid Search**: Combines semantic vector search with keyword-based metadata filtering.
-- **Cross-Encoder Re-ranking**: Re-scores the top retrieved chunks for maximum precision.
+---
 
-### 3. Frontend Control Room (`app.py` & `ui/`)
-A modularized, custom-styled Streamlit application providing a professional chat surface.
-- **Real-time Streaming**: Consumes the backend generator to provide typewriter-style responses.
-- **Modular UI**: The massive aesthetic styling and component logic are cleanly separated into `ui/style.css`, `ui/components.py`, and `ui/sidebar.py`.
-- **Quick Actions**: Sidebar shortcuts for common policy workflows like summarizing notifications or generating eligibility checklists.
+## Installation & Setup
 
-## Installation and Setup
+### 1. Prerequisites
 
-### Prerequisites
 - Python 3.10+
-- An API key for the generative and embedding models.
+- Google Gemini API Key
 
-### Environment Setup
+### 2. Installation
 
-1. Clone the repository and navigate to the project directory:
-```bash
-git clone https://github.com/your-username/gov-assist-rag.git
-cd gov-assist-rag
-```
+1. **Clone the repository**:
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
-```
+   ```bash
+   git clone https://github.com/your-username/gov-assist-rag.git
+   cd gov-assist-rag
+   ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+2. **Create and activate a virtual environment**:
 
-4. Configure environment variables:
-Create a `.env` file in the root directory and add your keys and model preferences:
-```env
-API_KEY=your_api_key_here
-GEN_MODEL_NAME=gemma-4-31b-it
-EMBED_MODEL_NAME=gemini-embedding-001
-```
+   ```bash
+   python -m venv .venv
+   # Windows:
+   .venv\Scripts\activate
+   # Linux/macOS:
+   source .venv/bin/activate
+   ```
 
-### Running the Application
+3. **Install dependencies**:
 
-1. **Ingest Documents**:
-Place your target government PDFs in the `data/` directory, then run the ingestion script to build the local vector database:
-```bash
-python ingestion.py
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2. **Launch the Interface**:
-Start the Streamlit application to open the GovAssist Control Room:
+4. **Configure environment variables**:
+   Copy `.env.example` to `.env` and enter your API credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   ```env
+   GOOGLE_API_KEY=your_gemini_api_key_here
+   GEN_MODEL_NAME=gemma-4-31b-it
+   EMBED_MODEL_NAME=gemini-embedding-001
+   ```
+
+---
+
+## Usage
+
+### Launching the Web Interface
+
+Start the Streamlit GovAssist Control Room:
+
 ```bash
 python -m streamlit run app.py
 ```
 
+### Ingestion & CLI Pipeline (`main.py`)
+
+To ingest documents, test interactive CLI retrieval, or run corpus benchmarks, configure the toggles in `main.py`:
+
+```python
+RUN_INGESTION = True    # Re-index PDFs in docs/
+RUN_RETRIEVAL = True    # Run interactive CLI chat
+RUN_BENCHMARK = True    # Run corpus benchmark evaluation
+```
+
+Then execute:
+
+```bash
+python main.py
+```
+
+---
+
 ## Disclaimer
-GovAssist is a conceptual implementation. It may generate mistakes or misinterpret complex legal language. Always verify outputs with official published government circulars.
+
+GovAssist is designed for administrative decision support. While it prioritizes strict retrieval-based grounding, always verify outputs against official published government circulars and gazette notifications.
