@@ -6,19 +6,8 @@ def render_copy_button(text: str, key: str):
     escaped = text.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$").replace("</", "<\\/")
     components.html(
         f"""
-        <button id="copy-{key}" onclick="
-            navigator.clipboard.writeText(`{escaped}`).then(() => {{
-                const btn = document.getElementById('copy-{key}');
-                btn.innerText = 'Copied';
-                btn.style.borderColor = '#38b7a6';
-                btn.style.color = '#6fd1c7';
-                setTimeout(() => {{
-                    btn.innerText = 'Copy';
-                    btn.style.borderColor = 'rgba(150,190,210,0.2)';
-                    btn.style.color = '#8ea8b8';
-                }}, 1800);
-            }});
-        " style="
+        <style>body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; }}</style>
+        <button id="copy-{key}" style="
             all: unset;
             cursor: pointer;
             font-family: 'JetBrains Mono', monospace;
@@ -35,6 +24,21 @@ def render_copy_button(text: str, key: str):
            onmouseout="this.style.borderColor='rgba(150,190,210,0.2)'; this.style.color='#8ea8b8';">
             Copy
         </button>
+        <script>
+            document.getElementById('copy-{key}').addEventListener('click', function() {{
+                navigator.clipboard.writeText(`{escaped}`).then(() => {{
+                    const btn = this;
+                    btn.innerText = 'Copied';
+                    btn.style.borderColor = '#38b7a6';
+                    btn.style.color = '#6fd1c7';
+                    setTimeout(() => {{
+                        btn.innerText = 'Copy';
+                        btn.style.borderColor = 'rgba(150,190,210,0.2)';
+                        btn.style.color = '#8ea8b8';
+                    }}, 1800);
+                }});
+            }});
+        </script>
         """,
         height=32,
     )

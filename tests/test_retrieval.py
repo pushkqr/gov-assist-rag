@@ -1,24 +1,37 @@
 import unittest
 from types import SimpleNamespace
 
-from retrieval.pipeline import should_use_fast_path
+from retrieval.pipeline import StreamingResponse
 from retrieval.query import build_generation_prompt, contextualize_query, extract_query_filter
 from retrieval.support import build_context_text, extract_response_text
 
 
-class RetrievalPerformanceTests(unittest.TestCase):
-    def test_simple_queries_use_fast_path(self):
-        self.assertTrue(should_use_fast_path("What is this policy about?"))
+class RetrievalStreamingTests(unittest.TestCase):
+    def test_streaming_response_with_string(self):
+        resp = StreamingResponse("Hello world")
+        parts = list(resp)
+        self.assertEqual(parts, ["Hello world"])
+        self.assertEqual(resp.full_text, "Hello world")
+        
+        # Test iterator replay
+        parts2 = list(resp)
+        self.assertEqual(parts2, ["Hello world"])
 
-    def test_generic_greetings_use_fast_path(self):
-        self.assertTrue(should_use_fast_path("Hello there"))
-
-    def test_complex_queries_do_not_use_fast_path(self):
-        self.assertFalse(
-            should_use_fast_path(
-                "What eligibility conditions apply for the 2024 circular on rural infrastructure funding and the appendix section?"
-            )
-        )
+    def test_streaming_response_with_chunks(self):
+        class Chunk:
+            def __init__(self, text):
+                self.text = text
+                
+        chunks = [Chunk("Hello "), Chunk("world!")]
+        resp = StreamingResponse(chunks)
+        
+        parts = list(resp)
+        self.assertEqual(parts, ["Hello ", "world!"])
+        self.assertEqual(resp.full_text, "Hello world!")
+        
+        # Test iterator replay
+        parts2 = list(resp)
+        self.assertEqual(parts2, ["Hello ", "world!"])
 
 
 class RetrievalRefactorTests(unittest.TestCase):
@@ -61,3 +74,7 @@ class RetrievalRefactorTests(unittest.TestCase):
             pass
 
         self.assertIsNone(extract_query_filter(StubClient(), "Tell me about the policy"))
+
+
+if __name__ == "__main__":
+    unittest.main()

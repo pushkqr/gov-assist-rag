@@ -61,11 +61,33 @@ def with_retry_and_throttle(constant_delay_env=None, default_delay=0, max_retrie
                     return func(*args, **kwargs)
                 except Exception as e:
                     error_msg = str(e).lower()
-                    if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
+                    is_transient = any(
+                        err in error_msg
+                        for err in [
+                            "429",
+                            "500",
+                            "502",
+                            "503",
+                            "504",
+                            "quota",
+                            "exhausted",
+                            "remoteprotocolerror",
+                            "connecterror",
+                            "connection",
+                            "disconnect",
+                            "unreachable",
+                            "socket",
+                            "winerror",
+                            "host",
+                            "reset",
+                            "timeout",
+                        ]
+                    )
+                    if is_transient:
                         if attempt == max_retries - 1:
-                            logger.warning(f"[RateLimit] Max retries ({max_retries}) reached. Failing.")
+                            logger.warning(f"[Retry] Max retries ({max_retries}) reached. Failing.")
                             raise e
-                        logger.warning(f"[RateLimit] Hit API quota/rate-limit (Attempt {attempt+1}/{max_retries}). Retrying in {backoff_delay} seconds...")
+                        logger.warning(f"[Retry] Transient network/rate-limit error ({e}). Retrying in {backoff_delay} seconds...")
                         time.sleep(backoff_delay)
                         backoff_delay *= backoff_factor
                     else:

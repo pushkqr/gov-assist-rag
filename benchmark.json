@@ -1,244 +1,215 @@
 [
   {
-    "query": "How does the GST classification for ready-to-eat popcorn change based on its ingredients, specifically the difference between salt versus sugar additions?",
-    "expected_terms": [
-      "HS 2106 90 99",
-      "salt and spices",
-      "5%",
-      "12%",
-      "sugar",
-      "sugar confectionery",
-      "HS 1704 90 90",
-      "18%"
+    "query": "What is the purpose of the Architects Act, 1972?",
+    "expected_tags": ["Architects Act 1972", "Purpose", "Registration"],
+    "expected_answer": "The Act provides for the registration of architects and matters connected therewith."
+  },
+  {
+    "query": "Who constitutes the Council of Architecture under the Architects Act?",
+    "expected_tags": [
+      "Architects Act 1972",
+      "Council of Architecture",
+      "Constitution"
     ],
-    "expected_answer": "Ready-to-eat popcorn mixed with salt and spices is classified under HS 2106 90 99 and attracts 5% GST if not pre-packaged/labeled, or 12% GST if pre-packaged and labeled. However, if the popcorn is mixed with sugar (such as caramel popcorn), it is classified as 'sugar confectionery' under HS 1704 90 90 and attracts a higher GST rate of 18%."
+    "expected_answer": "The Central Government constitutes the Council of Architecture by notification in the Official Gazette."
   },
   {
-    "query": "For goods arriving at a sea port, which specific countries of consignment allow for the Bill of Entry to be filed by the end of the day of arrival rather than the day preceding arrival?",
-    "expected_terms": [
-      "Bangladesh",
-      "Maldives",
-      "Myanmar",
-      "Pakistan",
-      "Sri Lanka"
+    "query": "Where is the head office of the Council of Architecture located?",
+    "expected_tags": [
+      "Architects Act 1972",
+      "Council of Architecture",
+      "Head Office"
     ],
-    "expected_answer": "For imports arriving at a sea port, the Bill of Entry must be filed by the end of the day of arrival only for goods consigned from Bangladesh, Maldives, Myanmar, Pakistan, and Sri Lanka."
+    "expected_answer": "The head office of the Council is at Delhi or at another place specified by the Central Government through notification."
   },
   {
-    "query": "According to the Railway Servants Rules 2005, what is the definition of a 'full-night' and how does it relate to the rest requirements for essentially intermittent workers?",
-    "expected_terms": [
-      "10.00 p.m. and 6.00 a.m.",
-      "24 consecutive hours",
-      "full night"
+    "query": "What does CAP stand for in the Maharashtra Unaided Private Professional Educational Institutions Act?",
+    "expected_tags": ["Admission Act 2015", "CAP", "Definitions"],
+    "expected_answer": "CAP stands for Centralized Admission Process, the centralized admission process carried out by the competent authority through a single-window system for admissions to professional courses."
+  },
+  {
+    "query": "Who is the Competent Authority under the Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015?",
+    "expected_tags": [
+      "Admission Act 2015",
+      "Competent Authority",
+      "Definitions"
     ],
-    "expected_answer": "A 'full-night' is defined as the period between 10:00 p.m. and 6:00 a.m.. Railway servants in essentially intermittent employment are required to be granted a periodical rest of at least 24 consecutive hours each week, which must include a full night."
+    "expected_answer": "The Competent Authority is the Commissioner of State CET appointed by the Government to conduct CET through the Centralized Admission Process for admissions into private professional educational institutions."
   },
   {
-    "query": "Who was the individual from Akola district selected for the Karmaveer Padmashree Dadasaheb Gaikwad Award for the year 2022-23?",
-    "expected_terms": [
-      "Bhimrao Ramaji Ghanbahadur",
-      "Akola",
-      "2022-23",
-      "Varul Jaulka"
+    "query": "Which chapter of the Maharashtra State Board of Technical Education Act deals with affiliation and autonomous status?",
+    "expected_tags": ["MSBTE Act 1997", "Affiliation", "Autonomous Status"],
+    "expected_answer": "Chapter IV deals with permission, affiliation, conferment of autonomous status, equivalence, and closure of institutions."
+  },
+  {
+    "query": "Who has the power to issue directions to the Maharashtra State Board of Technical Education?",
+    "expected_tags": ["MSBTE Act 1997", "Government Directions", "Board"],
+    "expected_answer": "The Government has the power to issue directions to the Board."
+  },
+  {
+    "query": "How many scholarship beneficiaries are available for postgraduate degree/diploma students under the 2023-24 overseas scholarship GR?",
+    "expected_tags": [
+      "Overseas Scholarship 2023-24",
+      "Beneficiaries",
+      "Postgraduate"
     ],
-    "expected_answer": "For the year 2022-23, Shri. Bhimrao Ramaji Ghanbahadur, residing at Varul Jaulka, Akot, District Akola, was selected for the Karmaveer Padmashree Dadasaheb Gaikwad Award."
+    "expected_answer": "From the academic year 2023-24 onward, the number of beneficiaries for postgraduate degree/postgraduate diploma programmes was increased from 10 to 30."
   },
   {
-    "query": "Is a Document Identification Number (DIN) required for an Order-in-Original in Form GST DRC-07 that is generated through the common portal and already has a Reference Number (RFN)?",
-    "expected_terms": ["DIN", "RFN", "not required", "valid communication"],
-    "expected_answer": "No. For communications issued via the common portal that already bear a verifiable Reference Number (RFN), the quoting of a Document Identification Number (DIN) is no longer required, and such documents are treated as valid communications."
-  },
-  {
-    "query": "Explain the revised monetary limit for exemptions introduced by Customs Notification No. 29/2024 and identify which principal notification it amends.",
-    "expected_terms": ["Rs. 3,00,000", "Three lakhs", "154/94-Customs"],
-    "expected_answer": "Notification No. 29/2024-Customs substituted the previous limit of 'Rs. 1,00,000 (One lakh)' with 'Rs. 3,00,000 (Three lakhs)'. This amendment applies to the principal notification No. 154/94-Customs dated 13th July, 1994."
-  },
-  {
-    "query": "A taxpayer made a payment for a tax demand using FORM GSTR-3B on September 20, 2024. Are they eligible for the waiver under Section 128A, and how does the requirement change if the payment is made on November 15, 2024?",
-    "expected_terms": [
-      "eligible",
-      "prior to 1st November 2024",
-      "Rule 164",
-      "mandatory modes"
+    "query": "Why did the number of scholarship beneficiaries become 40 under the overseas scholarship scheme?",
+    "expected_tags": [
+      "Overseas Scholarship 2023-24",
+      "Beneficiaries",
+      "Reasoning"
     ],
-    "expected_answer": "The payment made on September 20, 2024, via GSTR-3B is eligible for the waiver because it was made before the enforcement date of Section 128A (November 1, 2024), provided it is verified by the proper officer. However, for any intent to avail the benefit on or after November 1, 2024 (such as a payment on November 15), the taxpayer must strictly use the modes prescribed under Rule 164."
+    "expected_answer": "The total became 40 because postgraduate degree/postgraduate diploma beneficiaries were increased from 10 to 30 while the Ph.D. quota remained 10."
   },
   {
-    "query": "Identify the educational institution from Gondia district that received the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award for 2021-22.",
-    "expected_terms": [
-      "Scheduled Castes and Nav-Buddhist Girls Government Residential School",
-      "Dawwa",
-      "Gondia"
+    "query": "I want information about GST registration for a private company.",
+    "expected_tags": ["Negative", "Out of Scope"],
+    "expected_answer": "Sorry, I couldn't find any information about GST registration for private companies in the uploaded Acts, Government Resolutions, notifications, or circulars."
+  },
+  {
+    "query": "Why was the School Connect 2.0 campaign introduced by the Higher and Technical Education Department?",
+    "expected_tags": ["School Connect 2.0", "NEP 2020", "Awareness"],
+    "expected_answer": "The campaign was introduced to create awareness among students about student-centric educational changes under the National Education Policy (NEP) 2020 and to provide continuous guidance before they enter higher education."
+  },
+  {
+    "query": "Which student groups are expected to benefit from the School Connect 2.0 campaign?",
+    "expected_tags": ["School Connect 2.0", "Target Students", "NEP 2020"],
+    "expected_answer": "The circular focuses on students studying in Classes 9, 10 and 12, particularly those preparing to transition into higher education."
+  },
+  {
+    "query": "Name three national initiatives that universities are instructed to inform students about under School Connect 2.0.",
+    "expected_tags": [
+      "School Connect 2.0",
+      "AEDP",
+      "SWAYAM",
+      "SATHEE",
+      "Vidyalaxmi"
     ],
-    "expected_answer": "The award for 2021-22 was granted to the Scheduled Castes and Nav-Buddhist Girls Government Residential School, located at Dawwa, Taluka Sadak Arjuni, District Gondia."
+    "expected_answer": "The circular includes initiatives such as Apprenticeship Embedded Degree Programme (AEDP), SWAYAM, Vidyalaxmi Loan Scheme, SATHEE, Internship, IKS, Mahaswayam and PM-USP."
   },
   {
-    "query": "Under the Railway Servants Rules 2005, what is the 'long-on' period for 'intensive' workers compared to 'essentially intermittent' workers?",
-    "expected_terms": ["over eight hours", "over twelve hours"],
-    "expected_answer": "A 'long-on' is defined as a period of duty exceeding eight hours for 'intensive' workers and exceeding twelve hours for 'essentially intermittent' workers."
+    "query": "What is the objective of the SATHEE portal mentioned in the School Connect 2.0 circular?",
+    "expected_tags": ["School Connect 2.0", "SATHEE", "Competitive Exams"],
+    "expected_answer": "The SATHEE portal is intended to provide quality learning support for students preparing for JEE, NEET and other entrance examinations, especially those who cannot afford expensive coaching."
   },
   {
-    "query": "What are the rules regarding 'split duty' for a 'continuous' railway servant who lives 2 kilometers away from their place of work?",
-    "expected_terms": ["1.6 kilometers", "seven hours", "eight hours"],
-    "expected_answer": "For railway servants in 'continuous' employment who live more than 1.6 kilometers from their place of duty, seven hours of split duty is treated as equivalent to eight hours of normal duty."
+    "query": "According to the 28 February 2025 Government Resolution, why was a new recruitment procedure introduced for teachers in non-agricultural universities?",
+    "expected_tags": ["Teacher Recruitment", "Transparency", "UGC"],
+    "expected_answer": "The procedure was introduced to make the recruitment process more transparent, impartial and balanced while considering directions received from the Chancellor's office and the applicable UGC Regulations."
   },
   {
-    "query": "Which authority is responsible for reviewing and revising Orders-in-Original passed by a Common Adjudicating Authority (CAA) who is at the rank of Joint Commissioner?",
-    "expected_terms": [
-      "Principal Commissioner",
-      "Commissioner",
-      "under whom the CAA is posted",
-      "Section 107",
-      "Section 108"
+    "query": "Under the new teacher recruitment procedure, what two major aspects are considered together while selecting candidates?",
+    "expected_tags": [
+      "Teacher Recruitment",
+      "Selection Process",
+      "Academic Credentials",
+      "Interview"
     ],
-    "expected_answer": "The jurisdictional Principal Commissioner or Commissioner of Central Tax under whose administrative control the Common Adjudicating Authority is posted acts as both the Reviewing Authority (under Section 107) and the Revisional Authority (under Section 108)."
+    "expected_answer": "The revised procedure considers both the candidate's academic credentials and interview performance together during the selection process."
   },
   {
-    "query": "Regarding the 410 temporary posts in the Electrical Inspection branch, what happened to the 2 Elevator Mechanic posts and can they be refilled?",
-    "expected_terms": [
-      "Elevator Mechanics",
-      "उद्वाहन यांत्रिक",
-      "retirement",
-      "cannot be refilled"
+    "query": "Why was a Steering Committee established under the NEP-2020 Government Resolution dated 26 December 2022?",
+    "expected_tags": ["NEP 2020", "Steering Committee", "Implementation"],
+    "expected_answer": "The Steering Committee was established to review implementation of the NEP-2020 subcommittee recommendations, resolve implementation challenges, suggest corrective measures and provide guidance."
+  },
+  {
+    "query": "The NEP documents mention a Steering Committee several times. What is its primary role across these Government Resolutions?",
+    "expected_tags": [
+      "NEP 2020",
+      "Steering Committee",
+      "Implementation",
+      "Multi-document"
     ],
-    "expected_answer": "Two temporary posts of Elevator Mechanics (उद्वाहन यांत्रिक) became vacant due to retirements. According to the 2006 review, these specific posts cannot be refilled without a total review of all posts."
+    "expected_answer": "Across the NEP Government Resolutions, the Steering Committee is responsible for reviewing implementation of recommendations, addressing practical difficulties, issuing guidance and helping ensure uniform implementation of reforms across the State."
   },
   {
-    "query": "Is dried pepper supplied by an agriculturist taxable under GST? Provide the legal reference for registration liability in this case.",
-    "expected_terms": ["exempt from GST", "agriculturist", "Section 23(1)"],
-    "expected_answer": "Dried pepper supplied by an agriculturist from their own land is exempt from GST. Furthermore, the agriculturist is not liable for registration under Section 23(1) of the CGST Act."
-  },
-  {
-    "query": "What is the purpose of the Personal Ledger Account (PLA) approved for the Assistant Labour Commissioner in Kalyan, and what is specifically forbidden from being deposited there?",
-    "expected_terms": [
-      "court orders",
-      "workers' payments",
-      "not government funds",
-      "not government grants"
+    "query": "What is the purpose of the revised credit framework Government Resolution issued on 16 May 2023?",
+    "expected_tags": [
+      "NEP 2020",
+      "Credit Framework",
+      "Postgraduate Programmes"
     ],
-    "expected_answer": "The PLA is intended for depositing funds recovered under various court orders (Industrial, Labour, High Court, etc.) to be paid to workers. Government funds and official government grants are strictly prohibited from being deposited into this account."
+    "expected_answer": "The Government Resolution issues revised guidelines for the curriculum and credit framework relating to exit options, one-year postgraduate programmes and two-year postgraduate programmes for implementation from the academic year 2023-24."
   },
   {
-    "query": "Identify the individuals from Nashik district who were selected for the Sahityaratna Lokshahir Annabhau Sathe Award for the year 2019-20.",
-    "expected_terms": [
-      "Chandrakala Suresh Alhat",
-      "Popatrao Punjaram Wagh",
-      "Vitthal Raghoji Kamble"
+    "query": "Does any of the uploaded documents specify the salary of Assistant Professors in Maharashtra universities?",
+    "expected_tags": ["Negative", "Out of Scope"],
+    "expected_answer": "Sorry, I couldn't find any document in the uploaded collection that specifies the salary or pay scale of Assistant Professors."
+  },
+  {
+    "query": "According to the Government Resolution dated 30 June 2023, why were government approvals issued to unaided professional institutions for the academic year 2023-24?",
+    "expected_tags": [
+      "AICTE Approval",
+      "Government Approval",
+      "Unaided Institutions",
+      "2023-24"
     ],
-    "expected_answer": "The winners from Nashik for 2019-20 are: 1) Smt. Chandrakala Suresh Alhat, 2) Shri Popatrao Punjaram Wagh, and 3) Shri Vitthal Raghoji Kamble."
+    "expected_answer": "Government approval was granted because the All India Council for Technical Education (AICTE) had granted approvals and the Director of Technical Education had recommended the proposals for the academic year 2023-24."
   },
   {
-    "query": "How is the hourly rate of overtime pay calculated for railway servants who are NOT governed by the Principle of Averaging?",
-    "expected_terms": [
-      "1 ÷ daily rostered hours",
-      "1/30 of monthly ordinary rate of pay"
+    "query": "What types of proposals are covered by the Government Resolution on AICTE approvals for unaided institutions?",
+    "expected_tags": [
+      "AICTE Approval",
+      "New Institutions",
+      "Increase Intake",
+      "New Courses",
+      "Annexures"
     ],
-    "expected_answer": "The hourly rate is calculated as: (1 ÷ Number of daily rostered hours of work) × (1/30 of the monthly ordinary rate of pay)."
+    "expected_answer": "The Government Resolution covers proposals such as establishing new unaided institutions, starting new courses, increasing or decreasing intake capacity, closing courses or divisions, introducing programmes in Marathi, changes in institution names, changes in programme names, and other approvals listed in Annexures A to J."
   },
   {
-    "query": "If an importer files an advance Bill of Entry using only a House Bill of Lading (HBL), what is the procedure for updating the Master Bill of Lading (MBL) later?",
-    "expected_terms": [
-      "ICEGATE",
-      "auto approved",
-      "no officer approval",
-      "no fees"
+    "query": "The NEP implementation documents repeatedly refer to implementation from the academic year 2023-24. Which major reforms are scheduled for implementation during that academic year?",
+    "expected_tags": [
+      "NEP 2020",
+      "2023-24",
+      "Curriculum Framework",
+      "Credit Framework",
+      "School Connect 2.0",
+      "Multi-document"
     ],
-    "expected_answer": "Importers can subsequently update the MBL in the Bill of Entry via ICEGATE. This amendment is auto-approved by the Customs Automated System without requiring officer approval and is not subject to document fees."
+    "expected_answer": "Across the uploaded NEP documents, the academic year 2023-24 marks implementation of revised curriculum and credit frameworks, revised postgraduate credit guidelines including exit options, and student awareness initiatives such as the School Connect campaign."
   },
   {
-    "query": "Why was a Peon post revived in the office of the Deputy Labour Commissioner in Pune on October 8, 2025, and for whom?",
-    "expected_terms": [
-      "Gajanan Dhakne",
-      "Supreme Court",
-      "Appeal No. 6863/2023"
+    "query": "What is the objective of the revised curriculum and credit framework issued under NEP 2020?",
+    "expected_tags": ["NEP 2020", "Curriculum Framework", "Credit Framework"],
+    "expected_answer": "The objective is to implement a uniform curriculum and credit framework aligned with the National Education Policy 2020 across eligible higher educational institutions in Maharashtra."
+  },
+  {
+    "query": "I'm planning to start a new engineering college. Which uploaded document should I look at first?",
+    "expected_tags": ["AICTE Approval", "New Institutions", "Recommendation"],
+    "expected_answer": "The most relevant document is the Government Resolution dated 30 June 2023 regarding approvals for unaided professional institutions. It covers government approval for new institutions and related proposals based on AICTE approvals."
+  },
+  {
+    "query": "Which document discusses the regulation of admissions through the Centralized Admission Process (CAP), and which document discusses government approval of institutions after AICTE approval?",
+    "expected_tags": [
+      "Admission Act 2015",
+      "AICTE Approval",
+      "Comparison",
+      "CAP"
     ],
-    "expected_answer": "The post was revived for Shri. Gajanan Dhakne to comply with a Supreme Court order (Appeal No. 6863/2023) which directed the department to accommodate him in a vacant post."
+    "expected_answer": "The Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015 defines and regulates the Centralized Admission Process (CAP), while the Government Resolution dated 30 June 2023 deals with granting government approval to institutions following AICTE approval."
   },
   {
-    "query": "For the extension of probationary officers in the CPTP-9 program in October 2025, what is the duration of the extension and which budget head covers their salaries?",
-    "expected_terms": ["6 months", "30.09.2025", "2230-Labour", "01-Salary"],
-    "expected_answer": "The extension is for a period of 6 months starting from September 30, 2025. Salaries are drawn from budget head 'Demand No. K-4, Major Head 2230-Labour, Employment and Skill Development, 01-Salary'."
+    "query": "Which uploaded document should I refer to if I want to know how the Maharashtra State Board of Technical Education is constituted?",
+    "expected_tags": ["MSBTE Act 1997", "Board Constitution", "Navigation"],
+    "expected_answer": "Refer to the Maharashtra State Board of Technical Education Act, 1997, particularly the chapter dealing with the establishment and constitution of the Board."
   },
   {
-    "query": "What are the two specific factors the prescribed authority must satisfy before declaring a railway employment as 'Intensive'?",
-    "expected_terms": [
-      "Strenuous nature",
-      "mental or physical strain",
-      "Continuous application",
-      "little or no periods of relaxation"
-    ],
-    "expected_answer": "The authority must satisfy two factors: 1) the strenuous nature of the work tending to cause mental or physical strain, and 2) continuous application to such work with little or no periods of relaxation."
+    "query": "I heard NEP introduced four-year undergraduate programmes. What do these uploaded documents say about that?",
+    "expected_tags": ["NEP 2020", "Clarification", "Negative"],
+    "expected_answer": "The uploaded NEP documents primarily discuss curriculum frameworks, credit frameworks, postgraduate programmes, implementation committees, and student awareness initiatives. They do not explicitly explain the structure of four-year undergraduate programmes."
   },
   {
-    "query": "What is the GST rate for Fly ash blocks containing 55% fly ash content?",
-    "expected_terms": ["12%", "HS 6815", "at least 50%"],
-    "expected_answer": "Fly ash blocks containing more than 50% fly ash content are classifiable under HS 6815 and attract a GST rate of 12%."
+    "query": "fees?",
+    "expected_tags": ["Lazy Query", "Clarification"],
+    "expected_answer": "Could you clarify what you mean by 'fees'? The uploaded documents discuss admission and fee regulation for unaided professional educational institutions, fee concessions under the Girls Free Education Government Resolution, scholarship approvals, and fee-related provisions in other contexts."
   },
   {
-    "query": "Identify the institution from Chhatrapati Sambhajinagar district that received the Sahityaratna Annabhau Sathe Award for 2021-22 and provides theater/cultural services.",
-    "expected_terms": [
-      "Jai Sai Natraj Natya Chitrapat Kala v Sanskrutik Sanstha",
-      "MHADA",
-      "N-2"
-    ],
-    "expected_answer": "The institution is Jai Sai Natraj Natya Chitrapat Kala v Sanskrutik Sanstha, located at House No. 424, MHADA, in front of N-2, Chhatrapati Sambhajinagar."
-  },
-  {
-    "query": "Under the Bill of Entry Regulations, compare the filing deadlines for goods arriving at an Inland Container Depot (ICD) versus a Land Customs Station (LCS).",
-    "expected_terms": [
-      "ICD",
-      "preceding the day of arrival",
-      "LCS",
-      "end of the day of arrival"
-    ],
-    "expected_answer": "For an ICD, the Bill of Entry must be filed latest by the end of the day preceding the day of arrival. For an LCS, it must be filed latest by the end of the day of arrival."
-  },
-  {
-    "query": "What is the maximum number of breaks allowed in a single day for railway servants performing 'split duty'?",
-    "expected_terms": ["two breaks", "three spells"],
-    "expected_answer": "Split duty is limited to a maximum of two breaks, which results in a maximum of three spells of duty."
-  },
-  {
-    "query": "Who is the winner of the Sahityaratna Lokshahir Annabhau Sathe Award for 2019-20 from Wardha district?",
-    "expected_terms": [
-      "Indira Bahuuddeshiya Mahila Vikas Sanstha",
-      "Wardha",
-      "BARBADI ROAD"
-    ],
-    "expected_answer": "The winner is the Indira Bahuuddeshiya Mahila Vikas Sanstha, located at Plot No. B-22/1, M.I.D.C. Barbadi Road, Wardha."
-  },
-  {
-    "query": "In the context of the Section 128A waiver, if an adjudication order covers F.Y. 2017-18 to F.Y. 2021-22, can the taxpayer still avail the benefit for the allowed period?",
-    "expected_terms": [
-      "SPL-01",
-      "SPL-02",
-      "FY 2017-18 to 2019-20",
-      "intent to waive appeal"
-    ],
-    "expected_answer": "Yes. The taxpayer can file an application under FORM SPL-01 or SPL-02 for the portion of the demand covering F.Y. 2017-18 to 2019-20. They must intimate the appellate authority of their intent to avail the benefit and state they do not intend to pursue the appeal for that specific period."
-  },
-  {
-    "query": "According to Circular 247/04/2025, how is 'ground clearance' measured for the purpose of the 22% Compensation Cess on motor vehicles?",
-    "expected_terms": ["unladen condition", "170mm and above"],
-    "expected_answer": "Ground clearance is measured in an 'unladen condition'. Vehicles with a ground clearance of 170mm and above (along with other engine and length criteria) attract the 22% Compensation Cess."
-  },
-  {
-    "query": "Who has the power to temporarily exempt a railway servant from the hours of work limits, and can this power be delegated?",
-    "expected_terms": [
-      "Head of a Railway Administration",
-      "delegate",
-      "order in writing"
-    ],
-    "expected_answer": "The Head of a Railway Administration has the power to grant temporary exemptions via an order in writing. This power may be delegated to any subordinate officer the Head deems fit."
-  },
-  {
-    "query": "Identify the institution in Hingoli district that received the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award for the year 2022-23.",
-    "expected_terms": ["Sorry, im afraid i cant answer.."],
-    "expected_answer": "Sorry, im afraid i cant answer as the sources provided for the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award list 'Nil' for the years 2019-20 and 2020-21, and only provide a single entry for Gondia in 2021-22."
-  },
-  {
-    "query": "How many temporary posts were extended for the 'Electricity Duty Branch' (वीज शुल्क शाखा) for the period ending February 2026?",
-    "expected_terms": ["35", "temporary posts", "28.02.2026"],
-    "expected_answer": "A total of 35 temporary posts were extended for the Electricity Duty Branch (वीज शुल्क शाखा) until February 28, 2026."
+    "query": "What is the procedure for obtaining a passport in Maharashtra?",
+    "expected_tags": ["Negative", "Out of Scope"],
+    "expected_answer": "Sorry, I couldn't find any information about passport application procedures in the uploaded Acts, Government Resolutions, notifications, or circulars."
   }
 ]

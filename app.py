@@ -6,11 +6,14 @@ from dotenv import load_dotenv
 from google import genai
 from qdrant_client import QdrantClient
 
+from core.utils import get_genai_client
 from retrieval import run_retrieval
 from ui.style import load_css
 from ui.components import render_top_strip, render_welcome_screen
 from ui.sidebar import render_sidebar
 from ui.copy_button import render_copy_button
+
+load_dotenv()
 
 st.set_page_config(
     page_title="GovAssist | Government RAG Assistant",
@@ -19,10 +22,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Load CSS
 load_css()
 
-# ── Session Persistence ──
 SESSION_FILE = Path("temp/chat_session.json")
 
 def _load_session():
@@ -46,7 +47,6 @@ def _save_session():
         encoding="utf-8",
     )
 
-# ── Session State Initialization ──
 if "messages" not in st.session_state:
     saved_msgs, saved_history = _load_session()
     st.session_state.messages = saved_msgs
@@ -55,8 +55,6 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "queued_prompt" not in st.session_state:
     st.session_state.queued_prompt = None
-if "answer_mode" not in st.session_state:
-    st.session_state.answer_mode = "fast"
 
 def queue_prompt(prompt_text: str) -> None:
     st.session_state.queued_prompt = prompt_text
@@ -67,10 +65,6 @@ def clear_chat() -> None:
     st.session_state.queued_prompt = None
     if SESSION_FILE.exists():
         SESSION_FILE.unlink()
-
-from core.utils import get_genai_client
-
-load_dotenv()
 
 @st.cache_resource(show_spinner=False)
 def get_clients() -> tuple[genai.Client, QdrantClient]:
@@ -114,16 +108,6 @@ embed_model = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
 
 render_top_strip(gen_model, embed_model)
 
-mode_col, _ = st.columns([1, 3])
-with mode_col:
-    selected_mode = st.radio(
-        "Answer mode",
-        ["fast", "deep"],
-        index=0 if st.session_state.answer_mode == "fast" else 1,
-        horizontal=True,
-        key="answer_mode_selector",
-    )
-    st.session_state.answer_mode = selected_mode
 
 # Welcome Screen
 if not st.session_state.messages:
@@ -131,7 +115,7 @@ if not st.session_state.messages:
 
 # Render Chat History
 for idx, msg in enumerate(st.session_state.messages):
-    avatar = "🧑" if msg["role"] == "user" else "assets/logo.png"
+    avatar = "assets/user.jpg" if msg["role"] == "user" else "assets/logo.png"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
         if msg["role"] == "assistant":
@@ -144,25 +128,19 @@ st.session_state.queued_prompt = None
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="🧑"):
+    with st.chat_message("user", avatar="assets/user.jpg"):
         st.markdown(prompt)
-
-    status_container = st.empty()
 
     try:
         # Step 1: Embedding & Search
-        status_container.info("Embedding query and searching knowledge base...")
-        retrieval_result = run_retrieval(
-            gemini_client=gemini_client,
-            qdrant_client=qdrant_client,
-            query=prompt,
-            collection_name="gov_docs",
-            chat_history=st.session_state.chat_history,
-            fast_mode=(st.session_state.answer_mode == "fast"),
-        )
-
-        # Step 2: Clear status before rendering response
-        status_container.empty()
+        with st.spinner("Assistant is processing the query..."):
+            retrieval_result = run_retrieval(
+                gemini_client=gemini_client,
+                qdrant_client=qdrant_client,
+                query=prompt,
+                collection_name="gov_docs",
+                chat_history=st.session_state.chat_history,
+            )
 
         with st.chat_message("assistant", avatar="assets/logo.png"):
             if isinstance(retrieval_result, dict):
@@ -192,7 +170,7 @@ if prompt:
             _save_session()
 
     except Exception as e:
-        status_container.error(_friendly_error(e))
+        st.error(_friendly_error(e))
 
 st.markdown(
     '<div class="footer-note">GovAssist may generate mistakes. Verify with official published circulars.</div>',

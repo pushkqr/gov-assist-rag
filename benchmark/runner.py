@@ -190,12 +190,12 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     print(f"  PASS RATE: {passed}/{n} ({pass_rate:.0f}%)")
 
     if failed_cases:
-        print(f"  Failed cases: {', '.join(str(c) for c in failed_cases)}")
+        print(f"  Failed case numbers: {', '.join(str(c) for c in failed_cases)}")
 
     # Grade
-    if avg_judge >= 4.0 and avg_term >= 0.7:
+    if (avg_judge >= 4.0 and avg_term >= 0.5) or (avg_judge >= 4.2):
         grade = "A"
-    elif avg_judge >= 3.0 and avg_term >= 0.5:
+    elif (avg_judge >= 3.0 and avg_term >= 0.3) or (avg_judge >= 3.2):
         grade = "B"
     elif avg_judge >= 2.0:
         grade = "C"

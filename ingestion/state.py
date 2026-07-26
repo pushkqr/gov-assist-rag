@@ -12,7 +12,7 @@ def get_state_path(state_path: Optional[str] = None) -> str:
     """Return default state file path if none specified."""
     if state_path:
         return state_path
-    return os.path.join(os.getcwd(), "ingestion_state.json")
+    return os.path.join(os.getcwd(), "scratch", "ingestion_state.json")
 
 
 def compute_file_hash(file_path: str) -> str:
@@ -79,6 +79,7 @@ def save_ingestion_state(
     }
 
     try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as handle:
             json.dump(state, handle, indent=2, ensure_ascii=False)
     except Exception as exc:

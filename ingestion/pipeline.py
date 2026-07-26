@@ -4,6 +4,8 @@ import re
 from typing import Any, Dict, List, Optional
 
 from google import genai
+from qdrant_client import QdrantClient, models
+from qdrant_client.models import PointStruct
 
 from ingestion.chunking import chunk_and_embed_circular
 from ingestion.state import compute_file_hash, save_ingestion_state, should_skip_file
@@ -16,11 +18,13 @@ logger = get_logger(__name__)
 
 def run_ingestion(
     client: genai.Client,
+    qdrant: Optional[QdrantClient] = None,
+    collection_name: str = "gov_docs",
     docs_dir: str = "docs",
     target_files: Optional[List[str]] = None,
     force_reingest: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Process PDF documents in target directory and return vector records."""
+    """Process PDF documents in target directory, upsert immediately to Qdrant per file, and save state."""
     if target_files:
         pdf_files = [os.path.join(docs_dir, f) for f in target_files]
     else:
@@ -32,7 +36,7 @@ def run_ingestion(
 
     logger.info(f"Found {len(pdf_files)} PDF files in '{docs_dir}/'.")
     all_processed_records = []
-    state_path = os.getenv("INGESTION_STATE_PATH", os.path.join(os.getcwd(), "ingestion_state.json"))
+    state_path = os.getenv("INGESTION_STATE_PATH", os.path.join(os.getcwd(), "scratch", "ingestion_state.json"))
 
     for idx, target_file in enumerate(pdf_files, 1):
         filename = os.path.basename(target_file)
@@ -44,6 +48,7 @@ def run_ingestion(
             logger.info(f"[{idx}/{len(pdf_files)}] Skipping {filename} (Unchanged)")
             continue
 
+        logger.info(f"[{idx}/{len(pdf_files)}] Processing {filename}...")
         target_md = parse_pdf(client, target_file)
 
         if not target_md:
@@ -66,6 +71,16 @@ def run_ingestion(
 
         processed_records = chunk_and_embed_circular(client, target_md, global_metadata)
         all_processed_records.extend(processed_records)
+
+        # Immediate upsert to Qdrant per file
+        if qdrant and processed_records:
+            points = [
+                PointStruct(id=record["id"], vector=record["vector"], payload=record["metadata"])
+                for record in processed_records
+            ]
+            qdrant.upsert(collection_name=collection_name, points=points)
+            logger.info(f"  -> Immediately upserted {len(points)} chunks for {filename} into Qdrant.")
+
         save_ingestion_state(target_file, file_hash, state_path, global_metadata)
 
     return all_processed_records

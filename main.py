@@ -40,29 +40,8 @@ def main():
         else:
             print(f"Using existing Qdrant collection: '{collection_name}' (incremental hash check active)")
 
-        records = run_ingestion(client, docs_dir="docs")
-        if records:
-            logger.info(f"Upserting {len(records)} chunks into Qdrant...")
-            points = [
-                PointStruct(id=record["id"], vector=record["vector"], payload=record["metadata"])
-                for record in records
-            ]
-            qdrant.upsert(collection_name=collection_name, points=points)
-
-            # Create payload indices (active when deployed on Qdrant Server)
-            logger.info("Setting Qdrant payload index schema...")
-            import warnings
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
-                try:
-                    qdrant.create_payload_index(collection_name, field_name="year", field_schema=models.PayloadSchemaType.INTEGER)
-                    qdrant.create_payload_index(collection_name, field_name="doc_number", field_schema=models.PayloadSchemaType.KEYWORD)
-                    qdrant.create_payload_index(collection_name, field_name="document_category", field_schema=models.PayloadSchemaType.KEYWORD)
-                    qdrant.create_payload_index(collection_name, field_name="section_title", field_schema=models.PayloadSchemaType.KEYWORD)
-                except Exception as exc:
-                    pass
-
-            print("Upsert and indexing complete! Vectors are now stored locally.")
+        records = run_ingestion(client, qdrant=qdrant, collection_name=collection_name, docs_dir="docs")
+        print("Upsert and indexing complete! All vector records are stored in Qdrant.")
 
     if RUN_BENCHMARK:
         print("\n" + "=" * 50)

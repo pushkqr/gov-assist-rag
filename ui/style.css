@@ -357,6 +357,8 @@
 
     /* ── Chat Messages ── */
     [data-testid="stChatMessage"] {
+        display: flex !important;
+        align-items: flex-start !important;
         border: 1px solid var(--line);
         border-radius: var(--radius-lg);
         padding: 1rem 1.2rem 1.4rem;
@@ -373,7 +375,7 @@
 
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatarContainer"] {
         align-self: flex-start !important;
-        margin-top: 0.15rem !important;
+        margin-top: 0 !important;
     }
 
     [data-testid="stChatMessage"] p,
@@ -424,13 +426,14 @@
         color: var(--accent) !important;
     }
 
-    /* First element in a message should have no top margin */
+    /* First element in a message compensates for font line-height leading to align with avatar top */
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] > :first-child,
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] > div:first-child > :first-child {
-        margin-top: 0 !important;
+        margin-top: -4px !important;
         padding-top: 0 !important;
         border-top: none !important;
     }
+
 
     /* Last element should have no bottom margin */
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] > :last-child {

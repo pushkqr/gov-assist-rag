@@ -8,8 +8,38 @@ from google.genai import types
 from qdrant_client import QdrantClient, models
 
 from core.embedding import get_sparse_model
-from retrieval.support import extract_response_text
+from retrieval.query import generate_query_variations
+from retrieval.support import extract_response_text, build_context_text
 from core.utils import embed_content_safe, generate_content_safe
+
+
+# Tool Declaration for Agent Supervisor
+search_policy_docs_tool = types.Tool(
+    function_declarations=[
+        types.FunctionDeclaration(
+            name="search_policy_docs",
+            description="Search indexed government policy documents, circulars, acts, and rules for factual answers.",
+            parameters=types.Schema(
+                type=types.Type.OBJECT,
+                properties={
+                    "query": types.Schema(
+                        type=types.Type.STRING,
+                        description="The search query or keywords to look up in government documents.",
+                    ),
+                    "year": types.Schema(
+                        type=types.Type.INTEGER,
+                        description="Optional publication year filter (e.g. 2025, 2020, 2019, 1961).",
+                    ),
+                    "fast_mode": types.Schema(
+                        type=types.Type.BOOLEAN,
+                        description="Set true for fast search, false for deep analytical multi-query search.",
+                    ),
+                },
+                required=["query"],
+            ),
+        )
+    ]
+)
 
 
 def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
@@ -54,7 +84,7 @@ Passages:
     try:
         ranking_response = generate_content_safe(
             gemini_client,
-            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+            model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
             contents=ranking_prompt,
             config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
         )
@@ -140,3 +170,57 @@ def run_hybrid_search(
         top_results = rerank_results(gemini_client, current_results, standalone_query, rerank_limit)
 
     return current_results, top_results, build_evidence(top_results)
+
+
+def execute_search_tool(
+    gemini_client: genai.Client,
+    qdrant_client: QdrantClient,
+    collection_name: str,
+    query: str,
+    year: Optional[int] = None,
+    fast_mode: bool = False,
+) -> Tuple[str, List[Dict[str, Any]]]:
+    """Execute the search tool and format results for the LLM."""
+    # Build variations
+    query_variations = [query]
+    if not fast_mode:
+        query_variations = generate_query_variations(gemini_client, query)
+
+    # Embed query variations
+    config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
+    model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
+    
+    query_vectors = []
+    for q_var in query_variations:
+        try:
+            resp = embed_content_safe(gemini_client, model=model_name, contents=q_var, config=config)
+            query_vectors.append(resp.embeddings[0].values)
+        except Exception:
+            pass
+            
+    if not query_vectors:
+        return json.dumps({"error": "Failed to generate embeddings."}), []
+
+    query_filter = None
+    if year:
+        query_filter = models.Filter(must=[models.FieldCondition(key="year", match=models.MatchValue(value=year))])
+
+    # Run hybrid search
+    search_results, top_results, evidence = run_hybrid_search(
+        gemini_client, qdrant_client, query_vectors, query_variations,
+        query, collection_name, query_filter, fast_mode
+    )
+
+    if not evidence:
+        return json.dumps({"results": "No relevant documents found. Try modifying the keywords or changing fast_mode to false."}), []
+
+    # Format for LLM
+    context_text = build_context_text(top_results)
+    
+    result_dict = {
+        "status": "success",
+        "fast_mode_used": fast_mode,
+        "results_count": len(evidence),
+        "context": context_text
+    }
+    return json.dumps(result_dict), evidence
