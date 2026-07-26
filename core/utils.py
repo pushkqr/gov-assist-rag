@@ -13,7 +13,7 @@ _aistudio_client = None
 def get_genai_client() -> genai.Client:
     """Initialize genai.Client configured for GCP Vertex AI using ADC or AI Studio."""
     use_vertex = os.getenv("USE_VERTEX_AI", "True").strip().lower() in ("true", "1", "yes")
-    project = os.getenv("GOOGLE_CLOUD_PROJECT", "project-a69d4df0-3f7f-4e30-a8a")
+    project = os.getenv("GOOGLE_CLOUD_PROJECT")
     location = os.getenv("GOOGLE_CLOUD_LOCATION", "asia-south1")
 
     if use_vertex:

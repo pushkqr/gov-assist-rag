@@ -25,7 +25,7 @@ def translate_marathi_batch_gcp(chunks: List[str]) -> List[str]:
     if not chunks or translate is None:
         return [""] * len(chunks)
 
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-a69d4df0-3f7f-4e30-a8a")
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
     location = os.environ.get("TRANSLATE_LOCATION", "global")
     parent = f"projects/{project_id}/locations/{location}"
 

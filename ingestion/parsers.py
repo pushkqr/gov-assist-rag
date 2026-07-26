@@ -123,7 +123,7 @@ def parse_pdf_with_document_ai(client: genai.Client, target_file: str) -> Option
 
     project_id = os.getenv("DOCAI_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
     location = os.getenv("DOCAI_LOCATION", "asia-south1")
-    processor_id = os.getenv("DOCAI_PROCESSOR_ID", "145e9f9f81537cb0")
+    processor_id = os.getenv("DOCAI_PROCESSOR_ID")
 
     if not project_id or not processor_id:
         return None
