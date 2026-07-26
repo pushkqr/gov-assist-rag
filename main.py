@@ -6,41 +6,41 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from benchmark import load_benchmark_cases, print_benchmark_report, run_benchmark
 from ingestion import run_ingestion
-from log_config import get_logger
+from core.log_config import get_logger
 from retrieval import run_retrieval
+
+from core.utils import get_genai_client
 
 logger = get_logger(__name__)
 
 
 def main():
     load_dotenv()
-    api_key = os.getenv("GEMINI_API_KEY")
-    client = genai.Client(api_key=api_key) if api_key else genai.Client()
+    client = get_genai_client()
     qdrant = QdrantClient(path="local_qdrant_db")
     collection_name = "gov_docs"
 
     RUN_INGESTION = True
     RUN_RETRIEVAL = False
     RUN_BENCHMARK = True
-    USE_LOCAL_PARSER = False
 
     if RUN_INGESTION:
         print("\n" + "=" * 50)
         print("MODULE: INGESTION PIPELINE")
         print("=" * 50)
 
-        logger.info(f"Creating/Updating Qdrant collection: '{collection_name}' with Hybrid Search support")
-        if qdrant.collection_exists(collection_name):
-            qdrant.delete_collection(collection_name)
+        if not qdrant.collection_exists(collection_name):
+            print(f"Creating Qdrant collection: '{collection_name}' with Hybrid Search support")
+            qdrant.create_collection(
+                collection_name=collection_name,
+                vectors_config={"dense": VectorParams(size=1536, distance=Distance.COSINE)},
+                sparse_vectors_config={"bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)},
+                hnsw_config=models.HnswConfigDiff(m=16, ef_construct=100),
+            )
+        else:
+            print(f"Using existing Qdrant collection: '{collection_name}' (incremental hash check active)")
 
-        qdrant.create_collection(
-            collection_name=collection_name,
-            vectors_config={"dense": VectorParams(size=1536, distance=Distance.COSINE)},
-            sparse_vectors_config={"bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)},
-            hnsw_config=models.HnswConfigDiff(m=16, ef_construct=100),
-        )
-
-        records = run_ingestion(client, docs_dir="docs", use_local_parser=USE_LOCAL_PARSER)
+        records = run_ingestion(client, docs_dir="docs")
         if records:
             logger.info(f"Upserting {len(records)} chunks into Qdrant...")
             points = [

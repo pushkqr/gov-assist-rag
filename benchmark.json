@@ -1,6 +1,6 @@
 [
   {
-    "query": "How does the GST classification for ready-to-eat popcorn change based on its ingredients, specifically salt versus sugar?",
+    "query": "How does the GST classification for ready-to-eat popcorn change based on its ingredients, specifically the difference between salt versus sugar additions?",
     "expected_terms": [
       "HS 2106 90 99",
       "salt and spices",
@@ -11,7 +11,7 @@
       "HS 1704 90 90",
       "18%"
     ],
-    "expected_answer": "Popcorn mixed with salt and spices is classified under HS 2106 90 99 and attracts 5% GST (if not pre-packaged/labeled) or 12% GST (if pre-packaged/labeled). If mixed with sugar, it is classified as 'sugar confectionery' under HS 1704 90 90 and attracts 18% GST."
+    "expected_answer": "Ready-to-eat popcorn mixed with salt and spices is classified under HS 2106 90 99 and attracts 5% GST if not pre-packaged/labeled, or 12% GST if pre-packaged and labeled. However, if the popcorn is mixed with sugar (such as caramel popcorn), it is classified as 'sugar confectionery' under HS 1704 90 90 and attracts a higher GST rate of 18%."
   },
   {
     "query": "For goods arriving at a sea port, which specific countries of consignment allow for the Bill of Entry to be filed by the end of the day of arrival rather than the day preceding arrival?",
@@ -22,16 +22,16 @@
       "Pakistan",
       "Sri Lanka"
     ],
-    "expected_answer": "Bills of Entry for imports consigned from Bangladesh, Maldives, Myanmar, Pakistan, and Sri Lanka must be filed latest by the end of the day of the vessel's arrival."
+    "expected_answer": "For imports arriving at a sea port, the Bill of Entry must be filed by the end of the day of arrival only for goods consigned from Bangladesh, Maldives, Myanmar, Pakistan, and Sri Lanka."
   },
   {
     "query": "According to the Railway Servants Rules 2005, what is the definition of a 'full-night' and how does it relate to the rest requirements for essentially intermittent workers?",
     "expected_terms": [
-      "10.00 p.m. to 6.00 a.m.",
+      "10.00 p.m. and 6.00 a.m.",
       "24 consecutive hours",
       "full night"
     ],
-    "expected_answer": "A 'full-night' is the period between 10:00 p.m. and 6:00 a.m. Railway servants in essentially intermittent employment must be granted at least 24 consecutive hours of periodical rest each week, which must include a full night."
+    "expected_answer": "A 'full-night' is defined as the period between 10:00 p.m. and 6:00 a.m.. Railway servants in essentially intermittent employment are required to be granted a periodical rest of at least 24 consecutive hours each week, which must include a full night."
   },
   {
     "query": "Who was the individual from Akola district selected for the Karmaveer Padmashree Dadasaheb Gaikwad Award for the year 2022-23?",
@@ -41,17 +41,17 @@
       "2022-23",
       "Varul Jaulka"
     ],
-    "expected_answer": "Shri. Bhimrao Ramaji Ghanbahadur, residing at Varul Jaulka, Akot, District Akola, was selected for the award for the year 2022-23."
+    "expected_answer": "For the year 2022-23, Shri. Bhimrao Ramaji Ghanbahadur, residing at Varul Jaulka, Akot, District Akola, was selected for the Karmaveer Padmashree Dadasaheb Gaikwad Award."
   },
   {
     "query": "Is a Document Identification Number (DIN) required for an Order-in-Original in Form GST DRC-07 that is generated through the common portal and already has a Reference Number (RFN)?",
     "expected_terms": ["DIN", "RFN", "not required", "valid communication"],
-    "expected_answer": "No. For communications issued via the common portal that already bear a verifiable Reference Number (RFN), quoting a Document Identification Number (DIN) is not required, and such documents are treated as valid."
+    "expected_answer": "No. For communications issued via the common portal that already bear a verifiable Reference Number (RFN), the quoting of a Document Identification Number (DIN) is no longer required, and such documents are treated as valid communications."
   },
   {
     "query": "Explain the revised monetary limit for exemptions introduced by Customs Notification No. 29/2024 and identify which principal notification it amends.",
     "expected_terms": ["Rs. 3,00,000", "Three lakhs", "154/94-Customs"],
-    "expected_answer": "Notification No. 29/2024-Customs substituted the previous limit of 'Rs. 1,00,000 (One lakh)' with 'Rs. 3,00,000 (Three lakhs)' in principal notification No. 154/94-Customs."
+    "expected_answer": "Notification No. 29/2024-Customs substituted the previous limit of 'Rs. 1,00,000 (One lakh)' with 'Rs. 3,00,000 (Three lakhs)'. This amendment applies to the principal notification No. 154/94-Customs dated 13th July, 1994."
   },
   {
     "query": "A taxpayer made a payment for a tax demand using FORM GSTR-3B on September 20, 2024. Are they eligible for the waiver under Section 128A, and how does the requirement change if the payment is made on November 15, 2024?",
@@ -61,7 +61,7 @@
       "Rule 164",
       "mandatory modes"
     ],
-    "expected_answer": "The payment on September 20, 2024, via GSTR-3B is eligible for the waiver as it was made before November 1, 2024, subject to verification. For payments made on or after November 1, 2024 (like November 15), the taxpayer must strictly use the modes prescribed under Rule 164 (such as DRC-03)."
+    "expected_answer": "The payment made on September 20, 2024, via GSTR-3B is eligible for the waiver because it was made before the enforcement date of Section 128A (November 1, 2024), provided it is verified by the proper officer. However, for any intent to avail the benefit on or after November 1, 2024 (such as a payment on November 15), the taxpayer must strictly use the modes prescribed under Rule 164."
   },
   {
     "query": "Identify the educational institution from Gondia district that received the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award for 2021-22.",
@@ -70,17 +70,17 @@
       "Dawwa",
       "Gondia"
     ],
-    "expected_answer": "The award for 2021-22 was given to the Scheduled Castes and Nav-Buddhist Girls Government Residential School, Dawwa, Taluka Sadak Arjuni, District Gondia."
+    "expected_answer": "The award for 2021-22 was granted to the Scheduled Castes and Nav-Buddhist Girls Government Residential School, located at Dawwa, Taluka Sadak Arjuni, District Gondia."
   },
   {
     "query": "Under the Railway Servants Rules 2005, what is the 'long-on' period for 'intensive' workers compared to 'essentially intermittent' workers?",
     "expected_terms": ["over eight hours", "over twelve hours"],
-    "expected_answer": "A 'long-on' is a period of duty exceeding eight hours for 'intensive' workers and exceeding twelve hours for 'essentially intermittent' workers."
+    "expected_answer": "A 'long-on' is defined as a period of duty exceeding eight hours for 'intensive' workers and exceeding twelve hours for 'essentially intermittent' workers."
   },
   {
     "query": "What are the rules regarding 'split duty' for a 'continuous' railway servant who lives 2 kilometers away from their place of work?",
     "expected_terms": ["1.6 kilometers", "seven hours", "eight hours"],
-    "expected_answer": "For 'continuous' workers living more than 1.6 km from their place of duty, seven hours of split duty is treated as equivalent to eight hours of normal duty."
+    "expected_answer": "For railway servants in 'continuous' employment who live more than 1.6 kilometers from their place of duty, seven hours of split duty is treated as equivalent to eight hours of normal duty."
   },
   {
     "query": "Which authority is responsible for reviewing and revising Orders-in-Original passed by a Common Adjudicating Authority (CAA) who is at the rank of Joint Commissioner?",
@@ -91,7 +91,7 @@
       "Section 107",
       "Section 108"
     ],
-    "expected_answer": "The jurisdictional Principal Commissioner or Commissioner of Central Tax under whom the CAA is posted acts as both the Reviewing Authority (Section 107) and the Revisional Authority (Section 108)."
+    "expected_answer": "The jurisdictional Principal Commissioner or Commissioner of Central Tax under whose administrative control the Common Adjudicating Authority is posted acts as both the Reviewing Authority (under Section 107) and the Revisional Authority (under Section 108)."
   },
   {
     "query": "Regarding the 410 temporary posts in the Electrical Inspection branch, what happened to the 2 Elevator Mechanic posts and can they be refilled?",
@@ -101,12 +101,12 @@
       "retirement",
       "cannot be refilled"
     ],
-    "expected_answer": "Two temporary posts of Elevator Mechanics became vacant due to retirements. According to the 2006 review, these posts cannot be refilled without a total review of all posts."
+    "expected_answer": "Two temporary posts of Elevator Mechanics (उद्वाहन यांत्रिक) became vacant due to retirements. According to the 2006 review, these specific posts cannot be refilled without a total review of all posts."
   },
   {
     "query": "Is dried pepper supplied by an agriculturist taxable under GST? Provide the legal reference for registration liability in this case.",
     "expected_terms": ["exempt from GST", "agriculturist", "Section 23(1)"],
-    "expected_answer": "Dried pepper supplied by an agriculturist from their own land is exempt from GST, and the agriculturist is not liable for registration under Section 23(1) of the CGST Act."
+    "expected_answer": "Dried pepper supplied by an agriculturist from their own land is exempt from GST. Furthermore, the agriculturist is not liable for registration under Section 23(1) of the CGST Act."
   },
   {
     "query": "What is the purpose of the Personal Ledger Account (PLA) approved for the Assistant Labour Commissioner in Kalyan, and what is specifically forbidden from being deposited there?",
@@ -116,16 +116,16 @@
       "not government funds",
       "not government grants"
     ],
-    "expected_answer": "The PLA is for depositing funds recovered via court orders to be paid to workers. Government funds and government grants are strictly prohibited from being deposited into this account."
+    "expected_answer": "The PLA is intended for depositing funds recovered under various court orders (Industrial, Labour, High Court, etc.) to be paid to workers. Government funds and official government grants are strictly prohibited from being deposited into this account."
   },
   {
-    "query": "Identify the individuals from Nashik district who were selected for the Sahityaratna Lokshahir Annabhau Sathe Award for 2019-20.",
+    "query": "Identify the individuals from Nashik district who were selected for the Sahityaratna Lokshahir Annabhau Sathe Award for the year 2019-20.",
     "expected_terms": [
       "Chandrakala Suresh Alhat",
       "Popatrao Punjaram Wagh",
       "Vitthal Raghoji Kamble"
     ],
-    "expected_answer": "The winners from Nashik are Smt. Chandrakala Suresh Alhat, Shri Popatrao Punjaram Wagh, and Shri Vitthal Raghoji Kamble."
+    "expected_answer": "The winners from Nashik for 2019-20 are: 1) Smt. Chandrakala Suresh Alhat, 2) Shri Popatrao Punjaram Wagh, and 3) Shri Vitthal Raghoji Kamble."
   },
   {
     "query": "How is the hourly rate of overtime pay calculated for railway servants who are NOT governed by the Principle of Averaging?",
@@ -133,7 +133,7 @@
       "1 ÷ daily rostered hours",
       "1/30 of monthly ordinary rate of pay"
     ],
-    "expected_answer": "The rate is: (1 ÷ Number of daily rostered hours of work) × (1/30 of the monthly ordinary rate of pay)."
+    "expected_answer": "The hourly rate is calculated as: (1 ÷ Number of daily rostered hours of work) × (1/30 of the monthly ordinary rate of pay)."
   },
   {
     "query": "If an importer files an advance Bill of Entry using only a House Bill of Lading (HBL), what is the procedure for updating the Master Bill of Lading (MBL) later?",
@@ -143,7 +143,7 @@
       "no officer approval",
       "no fees"
     ],
-    "expected_answer": "Importers can subsequently update the MBL in the BE via ICEGATE. This amendment is auto-approved by the Customs Automated System without needing officer approval or incurring fees."
+    "expected_answer": "Importers can subsequently update the MBL in the Bill of Entry via ICEGATE. This amendment is auto-approved by the Customs Automated System without requiring officer approval and is not subject to document fees."
   },
   {
     "query": "Why was a Peon post revived in the office of the Deputy Labour Commissioner in Pune on October 8, 2025, and for whom?",
@@ -152,12 +152,12 @@
       "Supreme Court",
       "Appeal No. 6863/2023"
     ],
-    "expected_answer": "The post was revived for Shri. Gajanan Dhakne following a Supreme Court order in Appeal No. 6863/2023, which directed the department to accommodate him in a vacant post."
+    "expected_answer": "The post was revived for Shri. Gajanan Dhakne to comply with a Supreme Court order (Appeal No. 6863/2023) which directed the department to accommodate him in a vacant post."
   },
   {
     "query": "For the extension of probationary officers in the CPTP-9 program in October 2025, what is the duration of the extension and which budget head covers their salaries?",
     "expected_terms": ["6 months", "30.09.2025", "2230-Labour", "01-Salary"],
-    "expected_answer": "The extension is for 6 months starting September 30, 2025. Salaries are drawn from budget head 'Demand No. K-4, Major Head 2230-Labour, Employment and Skill Development, 01-Salary'."
+    "expected_answer": "The extension is for a period of 6 months starting from September 30, 2025. Salaries are drawn from budget head 'Demand No. K-4, Major Head 2230-Labour, Employment and Skill Development, 01-Salary'."
   },
   {
     "query": "What are the two specific factors the prescribed authority must satisfy before declaring a railway employment as 'Intensive'?",
@@ -167,18 +167,19 @@
       "Continuous application",
       "little or no periods of relaxation"
     ],
-    "expected_answer": "The factors are: 1) The strenuous nature of the work causing mental or physical strain, and 2) Continuous application to the work with little or no periods of relaxation."
+    "expected_answer": "The authority must satisfy two factors: 1) the strenuous nature of the work tending to cause mental or physical strain, and 2) continuous application to such work with little or no periods of relaxation."
   },
   {
     "query": "What is the GST rate for Fly ash blocks containing 55% fly ash content?",
-    "expected_terms": ["12%", "HS 6815", "more than 50%"],
-    "expected_answer": "Fly ash blocks containing more than 50% fly ash content fall under HS 6815 and attract a GST rate of 12%."
+    "expected_terms": ["12%", "HS 6815", "at least 50%"],
+    "expected_answer": "Fly ash blocks containing more than 50% fly ash content are classifiable under HS 6815 and attract a GST rate of 12%."
   },
   {
     "query": "Identify the institution from Chhatrapati Sambhajinagar district that received the Sahityaratna Annabhau Sathe Award for 2021-22 and provides theater/cultural services.",
     "expected_terms": [
       "Jai Sai Natraj Natya Chitrapat Kala v Sanskrutik Sanstha",
-      "N-2 CIDCO"
+      "MHADA",
+      "N-2"
     ],
     "expected_answer": "The institution is Jai Sai Natraj Natya Chitrapat Kala v Sanskrutik Sanstha, located at House No. 424, MHADA, in front of N-2, Chhatrapati Sambhajinagar."
   },
@@ -190,12 +191,12 @@
       "LCS",
       "end of the day of arrival"
     ],
-    "expected_answer": "For an ICD, the Bill of Entry must be filed by the end of the day preceding arrival. For an LCS, it must be filed by the end of the day of arrival."
+    "expected_answer": "For an ICD, the Bill of Entry must be filed latest by the end of the day preceding the day of arrival. For an LCS, it must be filed latest by the end of the day of arrival."
   },
   {
     "query": "What is the maximum number of breaks allowed in a single day for railway servants performing 'split duty'?",
     "expected_terms": ["two breaks", "three spells"],
-    "expected_answer": "Split duty is limited to a maximum of two breaks (creating three spells of duty)."
+    "expected_answer": "Split duty is limited to a maximum of two breaks, which results in a maximum of three spells of duty."
   },
   {
     "query": "Who is the winner of the Sahityaratna Lokshahir Annabhau Sathe Award for 2019-20 from Wardha district?",
@@ -204,22 +205,22 @@
       "Wardha",
       "BARBADI ROAD"
     ],
-    "expected_answer": "The winner is the Indira Bahuuddeshiya Mahila Vikas Sanstha, located on Barbadi Road, Wardha."
+    "expected_answer": "The winner is the Indira Bahuuddeshiya Mahila Vikas Sanstha, located at Plot No. B-22/1, M.I.D.C. Barbadi Road, Wardha."
   },
   {
     "query": "In the context of the Section 128A waiver, if an adjudication order covers F.Y. 2017-18 to F.Y. 2021-22, can the taxpayer still avail the benefit for the allowed period?",
     "expected_terms": [
       "SPL-01",
       "SPL-02",
-      " FY 2017-18 to 2019-20",
-      "partial coverage"
+      "FY 2017-18 to 2019-20",
+      "intent to waive appeal"
     ],
-    "expected_answer": "Yes. The taxpayer can file an application under FORM SPL-01 or SPL-02 for the portion of the demand covering F.Y. 2017-18 to 2019-20 after making the required payments, provided they intimate the appellate authority of their intent to waive the appeal for that specific period."
+    "expected_answer": "Yes. The taxpayer can file an application under FORM SPL-01 or SPL-02 for the portion of the demand covering F.Y. 2017-18 to 2019-20. They must intimate the appellate authority of their intent to avail the benefit and state they do not intend to pursue the appeal for that specific period."
   },
   {
     "query": "According to Circular 247/04/2025, how is 'ground clearance' measured for the purpose of the 22% Compensation Cess on motor vehicles?",
     "expected_terms": ["unladen condition", "170mm and above"],
-    "expected_answer": "'Ground clearance' is measured in an unladen condition. Vehicles with a ground clearance of 170mm and above (along with other engine/length criteria) attract the 22% cess."
+    "expected_answer": "Ground clearance is measured in an 'unladen condition'. Vehicles with a ground clearance of 170mm and above (along with other engine and length criteria) attract the 22% Compensation Cess."
   },
   {
     "query": "Who has the power to temporarily exempt a railway servant from the hours of work limits, and can this power be delegated?",
@@ -228,16 +229,12 @@
       "delegate",
       "order in writing"
     ],
-    "expected_answer": "The Head of a Railway Administration has the power to grant temporary exemptions via written order. He may delegate this power to any subordinate officer he deems fit."
+    "expected_answer": "The Head of a Railway Administration has the power to grant temporary exemptions via an order in writing. This power may be delegated to any subordinate officer the Head deems fit."
   },
   {
     "query": "Identify the institution in Hingoli district that received the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award for the year 2022-23.",
-    "expected_terms": [
-      "Ambreshwar Shikshan Prasarak Mandal",
-      "Berula",
-      "Hingoli"
-    ],
-    "expected_answer": "The award for 2022-23 was granted to Ambreshwar Shikshan Prasarak Mandal, located at Berula, Taluka Aundha (Nagnath), District Hingoli."
+    "expected_terms": ["Sorry, im afraid i cant answer.."],
+    "expected_answer": "Sorry, im afraid i cant answer as the sources provided for the Dr. Babasaheb Ambedkar Samajik Nyay Pravinya Award list 'Nil' for the years 2019-20 and 2020-21, and only provide a single entry for Gondia in 2021-22."
   },
   {
     "query": "How many temporary posts were extended for the 'Electricity Duty Branch' (वीज शुल्क शाखा) for the period ending February 2026?",

@@ -62,7 +62,7 @@ Return ONLY valid JSON with fields: "score" (integer 0-5) and "justification" (o
     try:
         result = generate_content_safe(
             gemini_client,
-            model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+            model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
             contents=prompt,
             config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
         )

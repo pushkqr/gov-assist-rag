@@ -14,6 +14,57 @@ from core.utils import embed_content_safe, generate_content_safe
 
 logger = get_logger(__name__)
 
+try:
+    from google.cloud import translate_v3 as translate
+except ImportError:
+    translate = None
+
+
+def translate_marathi_batch_gcp(chunks: List[str]) -> List[str]:
+    """Translate a list of Marathi text chunks using GCP Cloud Translation v3 (sub-batching under 30,720 codepoints)."""
+    if not chunks or translate is None:
+        return [""] * len(chunks)
+
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-a69d4df0-3f7f-4e30-a8a")
+    location = os.environ.get("TRANSLATE_LOCATION", "global")
+    parent = f"projects/{project_id}/locations/{location}"
+
+    try:
+        client = translate.TranslationServiceClient()
+        clean_contents = [c[:2000] for c in chunks]
+
+        # Group clean_contents into sub-batches of max 25,000 chars total
+        sub_batches = []
+        current_batch = []
+        current_len = 0
+        for text in clean_contents:
+            if current_len + len(text) > 25000 and current_batch:
+                sub_batches.append(current_batch)
+                current_batch = [text]
+                current_len = len(text)
+            else:
+                current_batch.append(text)
+                current_len += len(text)
+        if current_batch:
+            sub_batches.append(current_batch)
+
+        all_translations = []
+        for sb in sub_batches:
+            request = translate.TranslateTextRequest(
+                contents=sb,
+                target_language_code="en",
+                source_language_code="mr",
+                parent=parent,
+            )
+            response = client.translate_text(request=request)
+            all_translations.extend([t.translated_text for t in response.translations])
+
+        logger.info(f"  -> Batch translated {len(chunks)} Marathi chunks via GCP Cloud Translation API in {len(sub_batches)} call(s).")
+        return all_translations
+    except Exception as exc:
+        logger.warning(f"GCP Cloud Translation batch call failed: {exc}, falling back to Gemini.")
+        return [""] * len(chunks)
+
 
 def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Split document hierarchically and generate dense and sparse embeddings."""
@@ -67,24 +118,43 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             child_texts = processed_child_texts
 
         logger.info(f"  -> Chunked into {len(child_texts)} passages. Translating & generating vector embeddings...")
+
+        # Identify Devanagari chunks for batch translation
+        marathi_indices = [idx for idx, ct in enumerate(child_texts) if re.search(r"[\u0900-\u097F]", ct)]
+        marathi_chunks = [child_texts[idx] for idx in marathi_indices]
+
+        # Batch translate via GCP Cloud Translation v3
+        gcp_translations = translate_marathi_batch_gcp(marathi_chunks) if marathi_chunks else []
+        gcp_trans_map = dict(zip(marathi_indices, gcp_translations))
+
         enriched_child_texts = []
-        for c_idx, ct in enumerate(child_texts, 1):
+        for c_idx, ct in enumerate(child_texts):
             prefix = f"Context: {full_context_prefix}\n\nContent: {ct}"
-            if re.search(r"[\u0900-\u097F]", ct):
-                logger.debug(f"     [Translation {c_idx}/{len(child_texts)}] Translating Devanagari text...")
-                try:
-                    tr_prompt = f"Translate the following Marathi government document text into concise English. Transliterate all proper names, award names, and district names cleanly. Output ONLY the English text and names.\n\nMarathi Text:\n{ct[:600]}"
-                    tr_resp = generate_content_safe(
-                        client,
-                        model=os.getenv("SPEC_MODEL_NAME", "gemini-3.5-flash-lite"),
-                        contents=tr_prompt,
-                        config=types.GenerateContentConfig(temperature=0.0),
-                    )
-                    tr_text = getattr(tr_resp, "text", "") or ""
-                    if tr_text.strip():
-                        prefix += f"\n\nEnglish Translation: {tr_text.strip()}"
-                except Exception as exc:
-                    logger.error(f"Failed translation: {exc}")
+
+            if c_idx in marathi_indices:
+                tr_text = gcp_trans_map.get(c_idx, "")
+                if not tr_text:
+                    # Fallback to Gemini if GCP batch translation returned empty
+                    logger.debug(f"     [Gemini Translation Fallback {c_idx+1}/{len(child_texts)}]")
+                    try:
+                        tr_prompt = (
+                            "Translate the following Marathi government document text into concise English. "
+                            "Transliterate all proper names, award names, and district names cleanly. "
+                            f"Output ONLY the English text and names.\n\nMarathi Text:\n{ct[:600]}"
+                        )
+                        tr_resp = generate_content_safe(
+                            client,
+                            model=os.getenv("SPEC_MODEL_NAME", "gemini-2.5-flash"),
+                            contents=tr_prompt,
+                            config=types.GenerateContentConfig(temperature=0.0),
+                        )
+                        tr_text = getattr(tr_resp, "text", "") or ""
+                    except Exception as exc:
+                        logger.error(f"Failed Gemini fallback translation: {exc}")
+
+                if tr_text.strip():
+                    prefix += f"\n\nEnglish Translation: {tr_text.strip()}"
+
             enriched_child_texts.append(prefix)
 
         # Embed enriched text (including English translation) in BM25 for dual-language sparse keyword search

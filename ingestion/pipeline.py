@@ -18,7 +18,6 @@ def run_ingestion(
     client: genai.Client,
     docs_dir: str = "docs",
     target_files: Optional[List[str]] = None,
-    use_local_parser: bool = False,
     force_reingest: bool = False,
 ) -> List[Dict[str, Any]]:
     """Process PDF documents in target directory and return vector records."""
@@ -45,7 +44,7 @@ def run_ingestion(
             logger.info(f"[{idx}/{len(pdf_files)}] Skipping {filename} (Unchanged)")
             continue
 
-        target_md = parse_pdf(client, target_file, use_local_parser=use_local_parser)
+        target_md = parse_pdf(client, target_file)
 
         if not target_md:
             continue

@@ -10,7 +10,7 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 
 - **Resilient Multi-Tier PDF Processing**:
   - **Tier 1: Google Document AI Layout Processor**: Extracts structured layout blocks (`document_layout.blocks`) with explicit page numbers and section headers (`### Section`).
-  - **Tier 2: Gemini Vision API**: High-precision multimodal extraction with a **45-second hard timeout**.
+  - **Tier 2: Gemini Vision API**: High-precision multimodal extraction with a **30-second hard timeout**.
   - **Tier 3: Local PyMuPDF Parser**: Offline fallback ensuring ingestion never stalls.
 - **Hybrid Search Engine**: Combines **Dense Vector Search** (`gemini-embedding-001`) with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
 - **Adaptive Fast/Deep Retrieval**: Automatically routes simple queries through a fast lightweight path, and seamlessly escalates to deep retrieval with LLM re-ranking when evidence is sparse.

@@ -1,4 +1,5 @@
 import os
+import re
 import time
 from typing import Optional
 
@@ -23,46 +24,106 @@ except ImportError:
     ClientOptions = None
 
 
-def parse_layout_blocks_to_markdown(document_layout) -> str:
-    """Convert Document AI Layout Parser blocks into structured, page-tagged Markdown."""
-    blocks = getattr(document_layout, "blocks", [])
-    if not blocks:
+def format_plain_text_with_llm(client: genai.Client, raw_text: str) -> str:
+    """Use Gemini Flash to structure raw OCR plain text into semantic Markdown headers."""
+    if not raw_text or len(raw_text.strip()) < 50:
+        return raw_text
+
+    # If text already has markdown headers, return as-is
+    if re.search(r"^#{1,3}\s+", raw_text, re.MULTILINE):
+        return raw_text
+
+    try:
+        prompt = f"""You are an expert document structure parser.
+Organize the following raw document OCR text into clean Markdown format.
+
+Requirements:
+1. Identify all document titles, circular/notification numbers, subjects, main sections, and sub-sections.
+2. Mark main titles and subjects with '#', major sections with '##', and sub-sections/points with '###'.
+3. Preserve all exact wording, numbers, table values, dates, and text content. Do NOT summarize or omit anything.
+4. Output ONLY the formatted Markdown.
+
+Raw Text:
+{raw_text[:30000]}
+"""
+        response = generate_content_safe(
+            client,
+            model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.0),
+        )
+        formatted = getattr(response, "text", "") or ""
+        if formatted and len(formatted.strip()) >= 50:
+            logger.info("  -> LLM semantic structuring successfully generated Markdown headers.")
+            return formatted.strip()
+    except Exception as exc:
+        logger.warning(f"LLM semantic structuring fallback to rule-based parser due to: {exc}")
+
+    return format_plain_text_to_markdown(raw_text)
+
+
+def format_plain_text_to_markdown(text: str) -> str:
+    """Rule-based fallback: format plain OCR text with markdown headers (#, ##, ###)."""
+    if not text:
         return ""
 
-    markdown_chunks = []
-    current_header = "General"
+    if re.search(r"^#{1,3}\s+", text, re.MULTILINE):
+        return text
 
-    for block in blocks:
-        page_span = getattr(block, "page_span", None)
-        page_num = getattr(page_span, "page_start", 1) if page_span else 1
+    lines = text.split("\n")
+    formatted_lines = []
 
-        text_block = getattr(block, "text_block", None)
-        if not text_block or not text_block.text:
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            formatted_lines.append("")
             continue
 
-        text = text_block.text.strip()
-        block_type = getattr(text_block, "type_", None) or getattr(text_block, "type", "paragraph")
-        block_type_str = str(block_type).lower()
-
-        if "header" in block_type_str or text.startswith("#"):
-            current_header = text.lstrip("#").strip()
-            markdown_chunks.append(f"\n### {current_header}\n")
-        elif "table" in block_type_str:
-            markdown_chunks.append(f"\n<!-- Page {page_num} | Table Block -->\n{text}\n")
+        if re.match(r"^(Circular|Notification|F\.?\s*No\.?|G\.S\.R|ORDER|MEMORANDUM)\s", stripped, re.IGNORECASE):
+            formatted_lines.append(f"# {stripped}")
+        elif re.match(r"^Subject\s*:", stripped, re.IGNORECASE):
+            formatted_lines.append(f"# {stripped}")
+        elif re.match(r"^\d+\.\s+[A-Z]", stripped) and len(stripped) < 150:
+            formatted_lines.append(f"## {stripped}")
+        elif re.match(r"^\b(CHAPTER|PART|ANNEXURE|SCHEDULE)\b", stripped, re.IGNORECASE) and len(stripped) < 100:
+            formatted_lines.append(f"## {stripped}")
+        elif re.match(r"^\d+\.\d+(\.\d+)?\s+", stripped) and len(stripped) < 150:
+            formatted_lines.append(f"### {stripped}")
         else:
-            markdown_chunks.append(f"\n<!-- Page {page_num} | Section: {current_header} -->\n{text}\n")
+            formatted_lines.append(line)
 
-    return "".join(markdown_chunks)
+    result = "\n".join(formatted_lines)
+
+    if not re.search(r"^#{1,3}\s+", result, re.MULTILINE) and len(result) > 1500:
+        paragraphs = result.split("\n\n")
+        section_chunks = []
+        current_chunk = []
+        current_len = 0
+        section_idx = 1
+
+        for p in paragraphs:
+            current_chunk.append(p)
+            current_len += len(p)
+            if current_len >= 1200:
+                section_chunks.append(f"## Section {section_idx}\n\n" + "\n\n".join(current_chunk))
+                section_idx += 1
+                current_chunk = []
+                current_len = 0
+        if current_chunk:
+            section_chunks.append(f"## Section {section_idx}\n\n" + "\n\n".join(current_chunk))
+        result = "\n\n".join(section_chunks)
+
+    return result
 
 
-def parse_pdf_with_document_ai(target_file: str) -> Optional[str]:
-    """Parse PDF document using Google Cloud Document AI Layout Processor."""
+def parse_pdf_with_document_ai(client: genai.Client, target_file: str) -> Optional[str]:
+    """Parse PDF document using Google Cloud Document AI Document Processor (OCR)."""
     if documentai is None or ClientOptions is None:
         return None
 
     project_id = os.getenv("DOCAI_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
-    location = os.getenv("DOCAI_LOCATION", "asia-southeast1")
-    processor_id = os.getenv("DOCAI_PROCESSOR_ID")
+    location = os.getenv("DOCAI_LOCATION", "asia-south1")
+    processor_id = os.getenv("DOCAI_PROCESSOR_ID", "145e9f9f81537cb0")
 
     if not project_id or not processor_id:
         return None
@@ -70,48 +131,34 @@ def parse_pdf_with_document_ai(target_file: str) -> Optional[str]:
     try:
         api_endpoint = f"{location}-documentai.googleapis.com"
         opts = ClientOptions(api_endpoint=api_endpoint)
-        client = documentai.DocumentProcessorServiceClient(client_options=opts)
-        processor_path = client.processor_path(project_id, location, processor_id)
+        docai_client = documentai.DocumentProcessorServiceClient(client_options=opts)
+        processor_path = docai_client.processor_path(project_id, location, processor_id)
 
         with open(target_file, "rb") as f:
             file_content = f.read()
 
         raw_document = documentai.RawDocument(content=file_content, mime_type="application/pdf")
-        process_options = documentai.ProcessOptions(
-            layout_config=documentai.ProcessOptions.LayoutConfig(
-                chunking_config=documentai.ProcessOptions.LayoutConfig.ChunkingConfig(
-                    chunk_size=500,
-                    include_ancestor_headings=True,
-                )
-            )
-        )
-
         request = documentai.ProcessRequest(
             name=processor_path,
             raw_document=raw_document,
-            process_options=process_options,
         )
 
         t0 = time.time()
-        response = client.process_document(request=request, timeout=60.0)
+        response = docai_client.process_document(request=request, timeout=60.0)
         elapsed = time.time() - t0
         doc = getattr(response, "document", None)
 
-        if doc:
-            document_layout = getattr(doc, "document_layout", None)
-            formatted_md = parse_layout_blocks_to_markdown(document_layout) if document_layout else ""
-            if not formatted_md and doc.text and len(doc.text.strip()) > 100:
-                formatted_md = doc.text.strip()
-
-            if formatted_md:
-                logger.info(f"  -> Document AI extracted {len(formatted_md)} chars ({len(getattr(document_layout, 'blocks', []))} layout blocks) in {elapsed:.1f}s.")
-                return formatted_md
+        if doc and doc.text and len(doc.text.strip()) > 50:
+            extracted_text = doc.text.strip()
+            formatted_md = format_plain_text_with_llm(client, extracted_text)
+            logger.info(f"  -> Document AI OCR extracted {len(formatted_md)} chars in {elapsed:.1f}s.")
+            return formatted_md
     except Exception as exc:
-        logger.error(f"[Document AI] Processing failed for {os.path.basename(target_file)}: {exc}")
+        logger.error(f"[Document AI OCR] Processing failed for {os.path.basename(target_file)}: {exc}")
     return None
 
 
-def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout: int = 45) -> Optional[str]:
+def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout: int = 30) -> Optional[str]:
     """Parse PDF using Gemini Vision API with configurable timeout."""
     filename = os.path.basename(target_file)
     logger.info(f"Parsing {filename} with Gemini Vision API for markdown extraction ({timeout}s timeout)...")
@@ -122,7 +169,7 @@ def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout
         try:
             while uploaded_file.state == "PROCESSING":
                 if time.time() - start_time > timeout:
-                    logger.warning(f"[Timeout] Gemini Vision API extraction timed out (>{timeout}s) for {filename}. Falling back to PyMuPDF.")
+                    logger.warning(f"[Timeout] Gemini Vision API extraction timed out (>{timeout}s) for {filename}.")
                     timed_out = True
                     break
                 time.sleep(2)
@@ -136,13 +183,13 @@ def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout
                 )
                 response = generate_content_safe(
                     client,
-                    model=os.getenv("SPEC_MODEL_NAME", "gemini-3.5-flash"),
+                    model=os.getenv("SPEC_MODEL_NAME", "gemini-2.5-flash"),
                     contents=[uploaded_file, prompt],
                     config=types.GenerateContentConfig(temperature=0.0),
                 )
                 result = getattr(response, "text", "") or ""
                 if result and len(result.strip()) >= 100:
-                    return result
+                    return format_plain_text_with_llm(client, result.strip())
         finally:
             try:
                 client.files.delete(name=uploaded_file.name)
@@ -158,37 +205,34 @@ def parse_pdf_with_pymupdf(target_file: str) -> Optional[str]:
     if pymupdf4llm is None:
         return None
     filename = os.path.basename(target_file)
-    logger.warning(f"Fallback: Parsing {filename} with PyMuPDF local parser...")
     try:
         result = pymupdf4llm.to_markdown(target_file)
         if result and len(result.strip()) >= 100:
             return result
     except Exception as e:
-        logger.error(f"PyMuPDF fallback failed for {filename}: {e}")
+        logger.error(f"PyMuPDF failed for {filename}: {e}")
     return None
 
 
-def parse_pdf(client: genai.Client, target_file: str, use_local_parser: bool = False) -> Optional[str]:
-    """Orchestrate PDF parsing: DocAI → PyMuPDF (if local) → Gemini Vision (45s timeout) → PyMuPDF fallback."""
+def parse_pdf(client: genai.Client, target_file: str) -> Optional[str]:
+    """Orchestrate PDF parsing: PyMuPDF -> DocAI OCR -> Gemini Vision -> PyMuPDF fallback."""
     filename = os.path.basename(target_file)
-    target_md = None
 
-    if not use_local_parser:
-        logger.info(f"Parsing {filename} with Google Document AI Layout Processor...")
-        target_md = parse_pdf_with_document_ai(target_file)
+    # Step 1: Primary parser is PyMuPDF
+    logger.info(f"Parsing {filename} with PyMuPDF...")
+    target_md = parse_pdf_with_pymupdf(target_file)
 
-    if not target_md and use_local_parser:
-        logger.info(f"Parsing {filename} with PyMuPDF local parser...")
-        try:
-            if pymupdf4llm is not None:
-                target_md = pymupdf4llm.to_markdown(target_file)
-        except Exception as e:
-            logger.warning(f"PyMuPDF failed for {filename}: {e}, falling back to Gemini Vision API.")
-            target_md = None
-
+    # Step 2: Fallback to Document AI OCR if PyMuPDF returned empty or < 100 chars
     if not target_md or len(target_md.strip()) < 100:
+        logger.warning(f"PyMuPDF yielded insufficient content for {filename}. Falling back to Google Document AI OCR...")
+        target_md = parse_pdf_with_document_ai(client, target_file)
+
+    # Step 3: Fallback to Gemini Vision if DocAI OCR also returned empty or < 100 chars
+    if not target_md or len(target_md.strip()) < 100:
+        logger.warning(f"Document AI OCR yielded insufficient content for {filename}. Falling back to Gemini Vision API...")
         target_md = parse_pdf_with_gemini_vision(client, target_file)
 
+    # Step 4: Final fallback to PyMuPDF if anything remains
     if not target_md or len(target_md.strip()) < 100:
         target_md = parse_pdf_with_pymupdf(target_file)
 
