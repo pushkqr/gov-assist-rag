@@ -175,7 +175,7 @@
   {
     "query": "What is the objective of the revised curriculum and credit framework issued under NEP 2020?",
     "expected_tags": ["NEP 2020", "Curriculum Framework", "Credit Framework"],
-    "expected_answer": "The objective is to implement a uniform curriculum and credit framework aligned with the National Education Policy 2020 across eligible higher educational institutions in Maharashtra."
+    "expected_answer": "The objective is to provide a flexible, holistic, and student-centric higher education system with multiple entry and exit options, enhanced employability through industry-academia linkages, and a learning outcomes-based approach."
   },
   {
     "query": "I'm planning to start a new engineering college. Which uploaded document should I look at first?",
@@ -199,8 +199,8 @@
   },
   {
     "query": "I heard NEP introduced four-year undergraduate programmes. What do these uploaded documents say about that?",
-    "expected_tags": ["NEP 2020", "Clarification", "Negative"],
-    "expected_answer": "The uploaded NEP documents primarily discuss curriculum frameworks, credit frameworks, postgraduate programmes, implementation committees, and student awareness initiatives. They do not explicitly explain the structure of four-year undergraduate programmes."
+    "expected_tags": ["NEP 2020", "UG Programmes", "Credit Framework"],
+    "expected_answer": "The documents outline a flexible four-year undergraduate programme with multiple entry and exit options (Certificate after 1 year, Diploma after 2 years, Bachelor's degree after 3 years, and Honours/Honours with Research after 4 years). It details credit distribution for major, minor, and vocational courses, and allows students to re-enter within three years of exiting using the Academic Bank of Credits."
   },
   {
     "query": "fees?",

@@ -93,7 +93,6 @@ def run_benchmark(gemini_client, qdrant_client, cases: List[Dict[str, Any]] | No
             query=case["query"],
             collection_name="gov_docs",
             chat_history=[],
-            fast_mode=False,
         )
 
         # Extract the response text
@@ -158,7 +157,6 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     print("  GOVASSIST BENCHMARK REPORT")
     print("=" * 72)
     print(f"  Total Cases : {n}")
-    print(f"  Avg Term    : {avg_term:.3f} / 1.000")
     print(f"  Avg Judge   : {avg_judge:.1f} / 5.0")
     print("=" * 72)
 
@@ -181,7 +179,7 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
             failed_cases.append(i)
 
         print(f"\n  [{i:02d}] {status}  {query_short}{'...' if len(r['query']) > 65 else ''}")
-        print(f"       Terms: {t_matched}/{t_total} ({t_score:.2f})  |  Judge: {j_score:.0f}/5")
+        print(f"       Judge Score: {j_score:.0f}/5")
         print(f"       Reason: {j_reason}")
 
     # Summary
