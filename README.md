@@ -10,7 +10,7 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 
 - **Resilient Multi-Stage PDF Parsing Pipeline**:
   - **Stage 1: PyMuPDF4LLM**: High-speed (0.4–0.9s) native Markdown parser generating structural `#`, `##`, `###` headers for text PDFs.
-  - **Stage 2: Google Cloud Document AI OCR**: High-accuracy OCR processor (`asia-south1`) for scanned/image-based PDFs.
+  - **Stage 2: Google Cloud Document AI OCR**: High-accuracy OCR processor for scanned/image-based PDFs.
   - **Stage 3: LLM Semantic Markdown Structuring**: Uses `Gemini 2.5 Flash` to automatically format raw OCR text into structured Markdown headers (`# Subject`, `## Section`, `### Subsection`), backed by a rule-based regex formatter fallback.
   - **Stage 4: Gemini Vision API**: Multimodal extraction safety net with a **30-second hard timeout**.
 - **High-Speed GCP Batch Translation**:
@@ -18,17 +18,17 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
   - Uses smart sub-batching (< 25,000 characters per call) to translate all Marathi passages in a section in **1 single API call (~1.2s)** with Gemini LLM fallback.
 - **Hybrid API Routing (Vertex AI + AI Studio)**:
   - **Dense & Sparse Embeddings**: Dedicated AI Studio client via `GEMINI_API_KEY` (`gemini-embedding-001`, 1536-dim).
-  - **Generation & LLM Judge**: Vertex AI (`your_gcp_project_id` in `asia-south1`).
-  - **Translation & OCR**: GCP Cloud Translation v3 (`global`) and GCP Document AI (`asia-south1`).
+  - **Generation & LLM Judge**: Vertex AI.
+  - **Translation & OCR**: GCP Cloud Translation v3 and GCP Document AI.
 - **Hybrid Search Engine**: Combines **Dense Vector Search** (`gemini-embedding-001`) with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
-- **Adaptive Fast/Deep Retrieval**: Automatically routes simple queries through a fast lightweight path, and seamlessly escalates to deep retrieval with LLM re-ranking when evidence is sparse.
+- **True Agentic RAG Pipeline**: An autonomous function-calling Supervisor agent (`SPEC_MODEL_NAME`) routes queries, extracts keywords, and seamlessly escalates from fast lookups to deep analytical retrieval natively. Includes robust execution loops (`MAX_ITERATIONS = 3`) and graceful fallbacks.
 - **Automated Metadata Filtering**: Extracts implicit constraints (such as publication year or section titles) directly from queries using LLM filter parsing.
 - **Contextual Conversation Memory**: Rewrites follow-up questions into standalone queries while preventing topic-drift contamination from prior conversation history.
 - **Grounded Benchmark & Evaluation Harness**: 30-case dataset (`benchmark.json`) audited directly against corpus contents, combining term-match scoring and a balanced LLM judge evaluator to output detailed performance reports and letter grades (A–D).
 - **Streamlit Control Room UI**: Streamlit-based dark theme UI styled with **Inter** and **JetBrains Mono**, featuring:
-  - **One-Click Copy**: Copy button on all assistant responses.
+  - **One-Click Copy**: Native, iframe-free copy buttons dynamically injected via `st.html()`.
   - **Session Persistence**: Automatic saving and restoration of chat history across page refreshes (`temp/chat_session.json`).
-  - **Fast / Deep Mode Switch**: Instant toggle between fast answer mode and deep analytical retrieval.
+  - **Live Agentic Status**: Real-time loading spinners indicating the Supervisor's execution loop state.
 - **Automated Unit Test Suite**: 23 unit tests in `tests/` covering parsing, sub-batch translation, API routing, ingestion state, retrieval logic, and evaluation metrics.
 
 ---
@@ -45,6 +45,12 @@ rag/
 ├── test_models.py                      # Vertex AI model verification script
 ├── requirements.txt                    # Python dependencies
 │
+├── temp/                               # Session State Persistence
+│   └── chat_session.json               # Server-side serialized chat history
+│
+├── scratch/                            # Temporary & Persisted State
+│   └── ingestion_state.json            # File hashing & incremental ingestion state tracker
+│
 ├── core/                               # Shared Core Infrastructure
 │   ├── __init__.py                     # Exports get_logger, get_sparse_model
 │   ├── log_config.py                   # Central logging configuration (DEBUG=true/false)
@@ -57,7 +63,7 @@ rag/
 │   ├── parsers.py                      # PyMuPDF -> DocAI OCR -> Gemini Vision parser sequence
 │   ├── metadata.py                     # Metadata extraction (year, category, doc_number)
 │   ├── chunking.py                     # Hierarchical child chunking & GCP batch translation
-│   └── state.py                        # File hashing & incremental ingestion state tracker
+│   └── state.py                        # File hashing & incremental ingestion state manager
 │
 ├── retrieval/                          # Retrieval & Generation Pipeline
 │   ├── __init__.py                     # Exports run_retrieval
