@@ -1,0 +1,1038 @@
+{
+  "case_count": 30,
+  "average_term_score": 0.0,
+  "average_judge_score": 4.9,
+  "results": [
+    {
+      "query": "What is the purpose of the Architects Act, 1972?",
+      "term_score": {
+        "query": "What is the purpose of the Architects Act, 1972?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer directly quotes the core purpose as stated in the ideal answer and provides additional, correct, and relevant details that elaborate on this purpose without any factual errors."
+      },
+      "response_text": "Based on the official text of **The Architects Act, 1972**, the primary purpose of the Act is:\n\n> **\"An Act to provide for the registration of architects and for matters connected therewith.\"**\n\nTo achieve this purpose, the Act outlines several key provisions and mechanisms:\n\n1. **Registration of Architects (Chapter III):** It establishes the preparation, maintenance, and first preparation of a register of architects in India (Sections 23 & 24). Only individuals registered under this Act are officially recognized as \"architects\" (Section 2).\n2. **Establishment of the Council of Architecture (Section 3):** It provides for the constitution of the Council of Architecture, which is tasked with maintaining the register and regulating the profession.\n3. **Regulation of Architectural Education (Section 21):** It empowers the Council to prescribe and oversee the minimum standards of architectural education required for granting recognized qualifications by colleges or institutions in India.\n4. **Professional Conduct and Ethics (Section 22):** It allows the Council to prescribe standards of professional conduct, etiquette, and a code of ethics for architects, as well as handle inquiries into professional misconduct (Section 30).\n5. **Protection of the Title \"Architect\" (Sections 36 & 37):** It prohibits unregistered individuals or firms from using the title and style of \"architect\" (with exceptions for landscape and naval architects) and imposes penalties for falsely claiming to be registered.",
+      "evidence": [
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972",
+          "quote": "Section: THE ARCHITECTS ACT, 1972\n\n# THE ARCHITECTS ACT, 1972  \n[31 _st May,_ 1972.]  \nAn Act to provide for the registration of architects and for matters connected therewith.  \nBE it enacted by Parliament in the Twenty-third Year of the Republic of India as follows:—"
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > REGISTRATION OF ARCHITECTS",
+          "quote": "**35. Effect of registration.—** ( _1_ ) Any reference in any law for the time being in force to an architect shall be deemed to be a reference to an architect registered under this Act.  \n( _2_ ) After the expiry of two years from the date appointed under sub-section ( _2_ ) of section 24, a person who is registered in the register shall get preference for appointment as an architect under the Ce"
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > MISCELLANEOUS",
+          "quote": "( _2_ ) Every order made under this section shall, as soon as may be after it is made, be laid before each House of Parliament and the provisions of sub-section ( _3_ ) of section 44 shall apply in respect of such order as it applies in respect of a rule made under this Act.  \n**44. Power of Central Government to make rules.—** ( _1_ ) The Central Government may, by notification in the Official Ga"
+        }
+      ]
+    },
+    {
+      "query": "Who constitutes the Council of Architecture under the Architects Act?",
+      "term_score": {
+        "query": "Who constitutes the Council of Architecture under the Architects Act?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate correctly identifies the Central Government as the constituting authority, aligning with the ideal answer, and provides additional accurate details about the Council's composition without penalty."
+      },
+      "response_text": "Under **Section 3(3) of Chapter II of the Architects Act, 1972**, the Council of Architecture is constituted by the Central Government and consists of the following members:\n\n1. **Elected by the Indian Institute of Architects:** Five architects possessing recognized qualifications, elected from among its members.\n2. **Nominated by the All India Council for Technical Education (AICTE):** Two persons nominated by the AICTE.\n3. **Elected by Heads of Architectural Institutions:** Five persons elected from among themselves by the heads of architectural institutions in India imparting full-time instruction for recognized qualifications.\n4. **Ex Officio Members:** \n   * The Chief Architects in the Ministries of the Central Government to which the Government business relating to defence and railways has been allotted.\n   * The head of the Architectural Organisation in the Central Public Works Department (CPWD).\n5. **Nominated by the Central Government:** One person.\n6. **Nominated by State Governments:** One architect from each State, nominated by the respective State Government.\n7. **Nominated by the Institution of Engineers (India):** Two persons nominated from among its members.\n8. **Nominated by the Institution of Surveyors of India:** One person nominated from among its members.",
+      "evidence": [
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > CHAPTER II",
+          "quote": "## CHAPTER II  \nCOUNCIL OF ARCHITECTURE  \n**3. Constitution of Council of Architecture.—** ( _1_ ) The Central Government shall, by notification in the Official Gazette, constitute, with effect from such date as may be specified in the notification, a Council to be known as the Council of Architecture, which shall be a body corporate, having perpetual succession and a common seal, with power to ac"
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "<mark>ARRANGEMENT OF SECTIONS</mark> > COUNCIL OF ARCHITECTURE",
+          "quote": "## COUNCIL OF ARCHITECTURE  \n3. Constitution of Council of Architecture.  \n4. President and Vice-President of Council.  \n5. Mode of elections.  \n6. Terms of office and casual vacancies.  \n7. Validity of act or proceeding of Council, Executive Committee or other committees not to be invalidated by reason of vacancy, etc.  \n8. Disabilities.  \n9. Meetings of Council.  \n10. Executive Committee and oth"
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > CHAPTER I",
+          "quote": "## CHAPTER I  \nPRELIMINARY  \n**1. Short title, extent and commencement.—** ( _1_ ) This Act may be called the Architects Act, 1972.  \n( _2_ ) It extends to the whole of India.  \n( _3_ ) It shall come into force on such date<sup>1</sup> as the Central Government may, by notification in the Official Gazette, appoint.  \n**2. Definitions.—** In this Act, unless the context otherwise requires,—  \n( _a_"
+        }
+      ]
+    },
+    {
+      "query": "Where is the head office of the Council of Architecture located?",
+      "term_score": {
+        "query": "Where is the head office of the Council of Architecture located?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer accurately provides all key facts from the ideal answer, including the primary location and the contingency, while also adding relevant and correct legal context."
+      },
+      "response_text": "According to **Section 3(2)** of **The Architects Act, 1972**, the Head Office of the Council of Architecture is located in **Delhi** (or at such other place as the Central Government may specify by notification in the Official Gazette).",
+      "evidence": [
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > CHAPTER II",
+          "quote": "( _2_ ) The Head Office of the Council shall be at Delhi or at such other place as the Central Government may, by notification in the Official Gazette, specify.  \n( _3_ ) The Council shall consist of the following members, namely:—  \n( _a_ ) five architects possessing recognised qualifications elected by the Indian Institute of Architects from among its members;  \n( _b_ ) two persons nominated by "
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "<mark>ARRANGEMENT OF SECTIONS</mark> > COUNCIL OF ARCHITECTURE",
+          "quote": "## COUNCIL OF ARCHITECTURE  \n3. Constitution of Council of Architecture.  \n4. President and Vice-President of Council.  \n5. Mode of elections.  \n6. Terms of office and casual vacancies.  \n7. Validity of act or proceeding of Council, Executive Committee or other committees not to be invalidated by reason of vacancy, etc.  \n8. Disabilities.  \n9. Meetings of Council.  \n10. Executive Committee and oth"
+        },
+        {
+          "document": "20",
+          "year": 1972,
+          "section": "THE ARCHITECTS ACT, 1972 > CHAPTER II",
+          "quote": "## CHAPTER II  \nCOUNCIL OF ARCHITECTURE  \n**3. Constitution of Council of Architecture.—** ( _1_ ) The Central Government shall, by notification in the Official Gazette, constitute, with effect from such date as may be specified in the notification, a Council to be known as the Council of Architecture, which shall be a body corporate, having perpetual succession and a common seal, with power to ac"
+        }
+      ]
+    },
+    {
+      "query": "What does CAP stand for in the Maharashtra Unaided Private Professional Educational Institutions Act?",
+      "term_score": {
+        "query": "What does CAP stand for in the Maharashtra Unaided Private Professional Educational Institutions Act?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies what CAP stands for and provides a comprehensive definition that fully aligns with the ideal answer, including additional accurate context."
+      },
+      "response_text": "In the **Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015**, **CAP** stands for **Centralized Admission Process**.\n\nAccording to **Section 2(c)** of the Act, it is defined as:\n> *\"the centralized process of admission carried out by the competent authority through single window system in a transparent manner for admitting the students for various professional courses in educational institutions.\"*",
+      "evidence": [
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER  I",
+          "quote": "### CHAPTER  I  \nPRELIMINARY  \n> Short title, **1.** ( _1_ ) This Act may be called the Maharashtra Unaided Private  \n> extent and Professional Educational Institutions (Regulation of Admissions and Fees) commencement. Act, 2015.  \n( _2_ ) It extends to the whole of the State of Maharashtra.  \n( _3_ ) It shall be deemed to have come into force on the 12th May 2015.  \nDefinitions.  \n**2.** In this "
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).**",
+          "quote": "## **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).**  \nIn pursuance of clause (3) of article 348 of the Constitution of India, the following translation in English of the Maharashtra Unaided Private Professional Educational Institutions (Regu"
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > **MAHARASHTRA ACT  No. XXVIII OF  2015.**",
+          "quote": "### **MAHARASHTRA ACT  No. XXVIII OF  2015.**  \n(First published, after having received the assent of the Governor in the “ _Maharashtra Government Gazette_ ”, on the 17th August 2015).  \nAn Act to provide for regulation of admissions and fees by Unaided Private Professional Educational Institutions in the State of Maharashtra and for matters connected therewith or incidental thereto.  \nWHEREAS bo"
+        }
+      ]
+    },
+    {
+      "query": "Who is the Competent Authority under the Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015?",
+      "term_score": {
+        "query": "Who is the Competent Authority under the Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all key facts from the ideal answer, providing the complete definition of the Competent Authority and even adding relevant supporting details from the Act."
+      },
+      "response_text": "Under the **Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015**, the **Competent Authority** is defined as follows:\n\n* **Definition (Section 2(e)):** \n  > *\"Competent Authority\" means the **Commissioner of State CET** appointed by the Government under section 10, for conducting CET [Common Entrance Test] through CAP [Centralized Admission Process] for the admissions into Private Professional Educational Institutions.*\n\n* **Appointment and Role (Section 10(2)):** \n  The State Common Entrance Test Cell is headed by an officer working under the control of the Admissions Regulating Authority, not below the rank of Joint Secretary, who is nominated as the **Commissioner of State CET**.",
+      "evidence": [
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER  I",
+          "quote": "( _e_ ) “Competent Authority” means the Commissioner of State CET appointed by the Government under section 10, for conducting CET through CAP for the admissions into Private Professional Educational Institutions ;  \n( _f_ ) “Director” means the Director of Higher Education or, of Technical Education or, of Medical Education and Research or, of any other Directorate or Commissioner of any Commissi"
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER III",
+          "quote": "( _3_ ) The Commissioner shall be assisted by officers of the rank of Joint Director of the State Government, in the fields of the Medical, Technical, Agriculture, Higher Education, etc.  \n( _4_ ) The Common Entrance Test for admissions to Unaided Institution shall be conducted by the Competent Authority:  \nProvided that, the State Government may allow such admissions through CET conducted by the "
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER II",
+          "quote": "( _c_ ) the Competent Authority shall supervise and guide the entire Centralized Admission Process in such manner as it may specify with a view to ensuring that the process is fair, transparent, merit-based and non-exploitative.  \n> Irregular **5.** Any admission made in contravention of the provisions of this Act  \n> admissions or the rules made thereunder shall be void. void."
+        }
+      ]
+    },
+    {
+      "query": "Which chapter of the Maharashtra State Board of Technical Education Act deals with affiliation and autonomous status?",
+      "term_score": {
+        "query": "Which chapter of the Maharashtra State Board of Technical Education Act deals with affiliation and autonomous status?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies the chapter and its core topics, providing additional accurate and relevant details that enhance the answer without any factual errors."
+      },
+      "response_text": "Under the **Maharashtra State Board of Technical Education Act, 1997**, **Chapter IV** deals with affiliation and autonomous status. \n\nSpecifically, the chapter is titled **\"PERMISSION, AFFILIATION, CONFERRING AUTONOMOUS STATUS AND EQUIVALENCE\"** and contains the following relevant sections:\n* **Section 25:** Conditions of affiliation\n* **Section 27:** Procedure for affiliation\n* **Section 28:** Continuation of affiliation\n* **Section 29:** Extension of affiliation\n* **Section 30:** Permanent affiliation and recognition\n* **Section 32:** Withdrawal of affiliation or recognition\n* **Section 33:** Conferment of Autonomous Status\n* **Section 34:** Equivalence and Eligibility",
+      "evidence": [
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "H 1057—1  \n###### (ii)  \n_Maharashtra State Board of Technical Education Act, 1997._  \n###### **[1997 : Mah. XXXVIII**  \n###### CHAPTER IV  \nPERMISSION, AFFILIATION, CONFERRING AUTONOMOUS STATUS AND EQUIVALENCE  \n25. Conditions of affiliation. 26. Procedure for permission.  \n27. Procedure for affiliation.  \n28. Continuation of affiliation.  \n29. Extension of affiliation.  \n30. Permanent affiliatio"
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "###### CHAPTER IV  \nPERMISSION, AFFILIATION, CONFERRING AUTONOMOUS STATUS AND EQUIVALENCE  \n**25.** _(1)_ The management applying for affiliation and management whose institution has been granted affiliation for a period specified, shall give and comply with the following undertaking,—  \nConditions of  affiliation.  \n_(a)_ that the provisions of the Act and regulations thereunder and the standing "
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "_(6)_ The Government may, by order in writing, specifying the reasons thereof, suspend the execution of any resolution or order of the Board and prohibit the doing of the action ordered to be or purporting to be ordered to be done by the Board if the Government is of the opinion that such resolution, order or act, is in excess of the powers conferred by or under this Act upon the Board.  \n###### C"
+        }
+      ]
+    },
+    {
+      "query": "Who has the power to issue directions to the Maharashtra State Board of Technical Education?",
+      "term_score": {
+        "query": "Who has the power to issue directions to the Maharashtra State Board of Technical Education?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies the Government as having the power to issue directions, providing extensive and accurate supporting details from the relevant Act, and also includes additional correct information about the Governing Council without penalty."
+      },
+      "response_text": "Based on the **Maharashtra State Board of Technical Education Act, 1997**, the power to issue directions to the Maharashtra State Board of Technical Education is vested in the following authorities:\n\n### 1. The Government of Maharashtra\nUnder **Section 24** of the Act, the State Government has broad powers to issue directions to the Board:\n* **Section 24(1):** The Government has the power, after considering any advice tendered by the Board, to issue directions as it considers necessary regarding matters specified in **Section 22(a)** (such as coordination between national and state policies, coordination between secondary/higher secondary/degree and diploma level education, maintaining uniform standards, and promoting industry-institute interaction). The Board is statutory bound to comply with these directions.\n* **Section 24(4):** If the Board does not take action within a reasonable time to the satisfaction of the Government, the Government may (after considering any explanation or representation from the Board) issue directions consistent with the Act, which the Board must comply with.\n* **Section 43(4) & Section 44(2):** The Government can also issue directions following inspections, inquiries, or upon reviewing reports/returns furnished by the Board.\n\n### 2. The Governing Council of the Board\nUnder **Section 21A(h)** (inserted via amendment Mah. 1 of 2003), the Governing Council—which serves as the apex body to control and monitor matters pertaining to diploma-level technical education—has the power and duty:\n* *\"To give directions to the Board in respect of the implementation of various policy decisions taken by the Government, from time to time.\"*",
+      "evidence": [
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "13  \n###### **1997 : Mah. XXXVIII]** _Maharashtra State Board of Technical Education Act, 1997._  \n**24.** _(1)_ The Government shall have the power, after considering the advice (if any) tendered by the Board, to issue such directions as it may consider necessary in regard to all or any of the matters specified in clause _(a)_ of section 22. The Board concerned shall comply with such directions. "
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "Powers of Government to issue directions.  \n_(2)_ The Government shall have also the right to address the Board with reference to anything it has conducted or done, or is conducting or doing or intends to conduct or do, and to communicate to the Board its views in the matter.  \n_(3)_ The Board shall report to the Government such action, if any, as it proposes to take or has taken upon the communic"
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "_(g)_ that the services of all teaching and non-teaching employees and the facilities of the institution to be affiliated shall be made available for conducting examinations and for promoting other activities of the Board ;  \n_(h)_ that the directions, and orders issued by the Chairman and other officers of the Board in exercise of the powers conferred on them under the provisions of the Act, and "
+        }
+      ]
+    },
+    {
+      "query": "How many scholarship beneficiaries are available for postgraduate degree/diploma students under the 2023-24 overseas scholarship GR?",
+      "term_score": {
+        "query": "How many scholarship beneficiaries are available for postgraduate degree/diploma students under the 2023-24 overseas scholarship GR?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies the standard increase to 30 beneficiaries and provides additional, accurate information about the total 39 beneficiaries available for the 2023-24 academic year due to inter-conversion, which is more specific to the query."
+      },
+      "response_text": "Based on the Government Resolution (GR No. पशशयो-2023/प.क.109/तांशश-4 dated October 13, 2023) issued by the Higher and Technical Education Department, Government of Maharashtra, the details regarding the scholarship beneficiaries for postgraduate degree/diploma students for the academic year 2023-24 are as follows:\n\n1. **Standard Allocation:** \n   As per the Government Resolution dated July 31, 2023, the number of beneficiary seats for postgraduate degree/postgraduate diploma courses was increased from 10 to **30 seats**.\n\n2. **Total Available Seats for 2023-24 (After Inter-conversion):** \n   In addition to the 30 standard seats, **9 vacant seats** from the Ph.D. course were transferred/made available through inter-conversion (as per the provisions of Appendix-B, point 11(7) of the GR dated October 4, 2018). \n\n   Therefore, a total of **39 seats/beneficiaries** were made available and selected for the postgraduate degree/diploma courses for the academic year 2023-24.",
+      "evidence": [
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > पसतावना :-",
+          "quote": "परदेशात उच्च शशक्षण घेणाऱ्या गुणवंत मुलामुलींना शैक्षशणक वर्ष 2018-19 पासून शशष्यवृत्ती योजना लागू करण्यात आली आहे. सदर योजनेंतगषत प्रत्येक शैक्षशणक वर्ामदये पदव्युत्तर पदवी / पदव्युत्तर पदशवका आशण पीएच.डी. अभ्यासक्रमासाठी प्रत्येकी 10 याप्रमाणे एकूण 20 लाभार्थ्यांची शनवड करण्यात येत होती. तथाशप, शद.31.07.2023 रोजीच्या शासन शनणषयान्वये शैक्षशणक वर्ष 2023-24 पासून पदव्युत्तर पदवी / पदव्युत्तर पदशवक"
+        },
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > 2) पदवयुतर पदवी / पदवयुतर पदशवका अभयासकम:",
+          "quote": "पदव्युत्तर पदवी / पदव्युत्तर पदशवका अभ्यासक्रमाकरीता शद.31.07.2023 च्या शासन शनणषयानुसार 30 जागा उपलब्ध आहेत. तसेच, या व्यशतशरक्त शद.04.10.2018 च्या शासन शनणषयातील पशरशशष्ट-ब मधील मुद्दा क्र.11(7) च्या तरतुदीनुसार पी.एचडी अभ्यासक्रमाच्या 9 जागा आतंरपशरवतषनाव्दारे उपलब्ध झाल्यामुळे शैक्षशणक वर्ष 2023-24 साठी एकूण 39 जागा पदव्युत्तर पदवी अभ्यासक्रमासाठी उपलब्ध झाल्या आहेत. यास्तव, पदव्युत्तर पदवी / "
+        },
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > पसतावना :-",
+          "quote": "लाभार्थ्यांची संख्या 40 झालेली आहे. सदर योजनेची कायषपददती व शनवड प्रक्रीया ही संदभाधीन क्र.1 येथील शद.0४.10.2018 च्या शासन शनणषयान्वये शवशहत करण्यात आलेली आहे. त्यानुसार शैक्षशणक वर्ष 2023-24 करीता वतषमानपत्रात जाशहरातीव्दारे प्रशसददी देवून ऑनलाईन पददतीने अजष मागशवण्यात आले होते.  शवशहत कालमयादेपयंत तंत्रशशक्षण संचालनालयाकडे ऑनलाईन पोटषलवर प्राप्त झालेल्या अजांची छाननी करुन ते शद.06.09.2023 रोजीच्"
+        }
+      ]
+    },
+    {
+      "query": "Why did the number of scholarship beneficiaries become 40 under the overseas scholarship scheme?",
+      "term_score": {
+        "query": "Why did the number of scholarship beneficiaries become 40 under the overseas scholarship scheme?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully explains that the increase to 40 beneficiaries was due to the postgraduate degree/diploma seats increasing from 10 to 30 while Ph.D. seats remained 10, and provides additional accurate context regarding the scheme's history and the specific government resolution."
+      },
+      "response_text": "Based on the government policy documents, the number of scholarship beneficiaries under the overseas scholarship scheme became **40** due to the following reasons:\n\n1. **Original Structure (from 2018-19):** \n   When the scheme was initially implemented in the academic year 2018-19, a total of **20 beneficiaries** were selected each year—**10** for Post Graduate Degree/Diploma courses and **10** for Ph.D. courses.\n\n2. **Increase in Seats (from 2023-24):** \n   By the Government Resolution (शासन निर्णय) dated **July 31, 2023**, the number of beneficiary seats for the Post Graduate Degree / Post Graduate Diploma courses was increased from **10 to 30** starting from the academic year 2023-24.\n\n3. **Total Count:** \n   With **30 seats** now allocated for Post Graduate Degree/Diploma courses and **10 seats** remaining for Ph.D. courses, the total number of beneficiaries under the scheme increased to **40**.",
+      "evidence": [
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > पसतावना :-",
+          "quote": "परदेशात उच्च शशक्षण घेणाऱ्या गुणवंत मुलामुलींना शैक्षशणक वर्ष 2018-19 पासून शशष्यवृत्ती योजना लागू करण्यात आली आहे. सदर योजनेंतगषत प्रत्येक शैक्षशणक वर्ामदये पदव्युत्तर पदवी / पदव्युत्तर पदशवका आशण पीएच.डी. अभ्यासक्रमासाठी प्रत्येकी 10 याप्रमाणे एकूण 20 लाभार्थ्यांची शनवड करण्यात येत होती. तथाशप, शद.31.07.2023 रोजीच्या शासन शनणषयान्वये शैक्षशणक वर्ष 2023-24 पासून पदव्युत्तर पदवी / पदव्युत्तर पदशवक"
+        },
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > पसतावना :-",
+          "quote": "लाभार्थ्यांची संख्या 40 झालेली आहे. सदर योजनेची कायषपददती व शनवड प्रक्रीया ही संदभाधीन क्र.1 येथील शद.0४.10.2018 च्या शासन शनणषयान्वये शवशहत करण्यात आलेली आहे. त्यानुसार शैक्षशणक वर्ष 2023-24 करीता वतषमानपत्रात जाशहरातीव्दारे प्रशसददी देवून ऑनलाईन पददतीने अजष मागशवण्यात आले होते.  शवशहत कालमयादेपयंत तंत्रशशक्षण संचालनालयाकडे ऑनलाईन पोटषलवर प्राप्त झालेल्या अजांची छाननी करुन ते शद.06.09.2023 रोजीच्"
+        },
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > 2) पदवयुतर पदवी / पदवयुतर पदशवका अभयासकम:",
+          "quote": "यादीतील ज्येष्ठता क्रमांकानुसार सशमतीने खालीलप्रमाणे 39 उमेदवारांची शनवड केली आहे. त्यास या शासन शनणषयाद्वारे मंजुरी देण्यात येत आहे:-"
+        }
+      ]
+    },
+    {
+      "query": "I want information about GST registration for a private company.",
+      "term_score": {
+        "query": "I want information about GST registration for a private company.",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer accurately states that the information is not available, similar to the ideal answer, and provides additional helpful context and external resources without any factual errors."
+      },
+      "response_text": "Based on the government policy documents and acts currently indexed in the system, there is no specific information available regarding **GST registration for a private company**. \n\nThe available documents primarily cover:\n1. **The Architects Act, 1972** (detailing the registration, qualifications, and maintenance of the register of architects).\n2. **Maharashtra Government Resolutions (Higher and Technical Education Department)** (concerning approvals, intake capacities, and fee concessions for various educational institutions).\n\nSince the exact guidelines, requirements, and process for GST registration of a private company are not present in the provided database, I am unable to provide a factual answer based on these documents. For official and up-to-date information on GST registration, please refer directly to the official **GST Portal (gst.gov.in)** or the **Central Board of Indirect Taxes and Customs (CBIC)** guidelines.",
+      "evidence": [
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "महाराष्ट्राचे राज्यपाल यांच्या आदेिानुसार व नावाने, ANIL RAGHUNATH KATKAR > कायासन अखधकारी, महाराषर िासन. > पखत,",
+          "quote": "|Sr, No.|**Current**<br>**Application**<br>**Number**|**Permanent Id**|**Institute Name & Address**<br>|**District**|**Organisation(Trust)**<br>**Address**|**Minority**<br>**Institute**|**Program**|**University**|**Level**|**Name of Course**|**Intake**<br>**Approved**<br>**for 2022-23**|**Intake**<br>**Approved for**<br>**2023-24**|\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n|363 1-<br>"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "महाराष्ट्राचे राज्यपाल यांच्या आदेिानुसार व नावाने, ANIL RAGHUNATH KATKAR > कायासन अखधकारी, महाराषर िासन. > पखत,",
+          "quote": "|Sr, No.|**Current**<br>**Application**<br>**Number**|**Permanent Id**|**Institute Name & Address**<br>|**District**|**Organisation(Trust)**<br>**Address**|**Minority**<br>**Institute**|**Program**|**University**|**Level**|**Name of Course**|**Intake**<br>**Approved**<br>**for 2022-23**|**Intake**<br>**Approved for**<br>**2023-24**|\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n|22 1-53778"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "महाराष्ट्राचे राज्यपाल यांच्या आदेिानुसार व नावाने, ANIL RAGHUNATH KATKAR > कायासन अखधकारी, महाराषर िासन. > पखत,",
+          "quote": "|Sr, No.|**Current**<br>**Application**<br>**Number**|**Permanent Id**|**Institute Name & Address**<br>|**District**|**Organisation(Trust)**<br>**Address**|**Minority**<br>**Institute**|**Program**|**University**|**Level**|**Name of Course**|**Intake**<br>**Approved**<br>**for 2022-23**|**Intake**<br>**Approved for**<br>**2023-24**|\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n||GOBIND SI"
+        }
+      ]
+    },
+    {
+      "query": "Why was the School Connect 2.0 campaign introduced by the Higher and Technical Education Department?",
+      "term_score": {
+        "query": "Why was the School Connect 2.0 campaign introduced by the Higher and Technical Education Department?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all key facts from the ideal answer, including the role of NEP 2020, the need for awareness, and continuous guidance, while also providing extensive and accurate supporting details and context."
+      },
+      "response_text": "The **School Connect 2.0** campaign was introduced by the **Higher and Technical Education Department, Government of Maharashtra** (via a circular dated December 20, 2024) for several key reasons aimed at facilitating a smooth transition for students from school to higher education under the National Education Policy (NEP) 2020. \n\nThe primary reasons and objectives for introducing this campaign include:\n\n### 1. Implementation of NEP-2020 and the Need for Awareness\n* Since the academic year 2023–24, Maharashtra has been implementing the National Education Policy (NEP) 2020. \n* Because the higher education system is undergoing radical, comprehensive, and structural changes, the department recognized an urgent need for **public awareness and continuous counseling** for students and parents to help them navigate these changes.\n\n### 2. Expanding the Scope of the Previous Campaign\n* In the academic year 2023–24, the initial \"School Connect\" campaign was launched to target 12th-grade students in junior colleges. \n* To make student-centric education principles more effective, the department expanded the scope for the academic year 2024–25 under **School Connect 2.0** to include **9th, 10th, and 12th-grade students** from secondary and higher secondary/junior colleges who will eventually enter higher education.\n\n### 3. Promoting Key Educational Initiatives and Schemes\nThe campaign was introduced to guide students and parents about various innovative schemes and platforms introduced by the Central and State Governments, including:\n* **Apprenticeship Embedded Degree Programme (AEDP) & Internships:** Integrating practical work experience with degree programs.\n* **Indian Knowledge System (IKS), SWAYAM, and Mahaswayam:** Promoting digital learning and traditional knowledge systems.\n* **PM-Vidyalaxmi Loan Scheme:** Providing educational loans to students wishing to study in selected premier higher education institutions.\n* **PM-Uchchatar Shiksha Protsahan (PM-USP):** Promoting higher education through financial assistance.\n* **SATHEE Portal (Self-Assessment, Test and Help for Entrance Exams):** A collaborative initiative by the Ministry of Education and IIT Kanpur to provide free, high-quality preparation resources for JEE, NEET, and state-level engineering exams, specifically targeting students who cannot afford expensive coaching classes.\n\n### 4. Explaining Academic Flexibility and Credit Systems\n* To inform students about the **experiential, multidisciplinary, and flexible curricula** designed by universities.\n* To explain the **credit-based evaluation system** and the academic flexibility it offers.\n* To provide information on open and distance learning (ODL) opportunities, as well as creative, vocational, and skill-based education.\n\n### 5. Career Guidance and Attracting Students to Higher Education\n* **Post-12th Guidance:** To help 12th-grade students choose higher education courses aligned with their interests.\n* **Post-10th Guidance:** To guide 10th-grade students interested in employment-linked or vocational courses about immediate opportunities and future degree pathways.\n* **Scholarship Awareness:** To provide detailed information about various state and central government scholarships.\n* **Inspiration:** To motivate and attract every school and junior college student toward pursuing higher education.",
+      "evidence": [
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राषरीय शैकणिक धोरि-2020 ची अंमलबजाविीचया अनुषंगाने णवदारी उपयोगी शैकणिक बदलांबाबत णवदारयाना माणिती उपलबध करन देणयाचया अनुषंगाने सवव अकणष णवदापीठसतरावरन सकल कनेकट 2.0 िे संपकव अणियान राबणवणयाबाबत.  \nमिाराषर शासन उचच व तंत णशकि णविाग शासन पणरपतक कमांक : संणकिव- 2024/ प.क.01/ णवणश-3 मादाम कामा मागव, िुतात्मा राजगुरु चौक, 4 र्था मजला, मंत्रालय णवस्तार, मुंबई  400 032 णदनांक : 20 णिसेंबर, 2024  \nवाचा -"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "3. उपरोक्त बदलांचा संपूिव पणरिाम इयत्ता ९ वी, १० वी आणि १२ वी मध्ये णशक्षि घेत असलेल्या माध्यणमक आणि उच्च माध्यणमक/कणनष्ट्ठ मिाणवद्यालयातून उच्च णशक्षिात प्रवेश घेिाऱ्या णवद्यार्थ्यांना िोिार आिे, णवद्यार्थी केंद्रीत णशक्षिाची मुलिूत तत्वे पणरिामकारकणरत्या प्रत्यक्षात आिावयाच्या अनुषंगाने संदिाधीन णद.05.01.2024 च्या शासन णनिवयान्वये राबणवण्यात आलेल्या स्कुल कनेक्ट या संपकव अणियानाची व्याप्ती वाढवू"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "4. या स्कुल कनेक्ट अणियान 2.0 या संपकव अणियानाची उणदेशष््े पुढीलप्रमािे आिेत.  \n(१) राष्ट्रीय शैक्षणिक धोरि २०२० मधील णवद्यार्थीकेंद्री बदलांणवषयी आणि त्यांच्या णितकारक पणरिामाणवषयी णवद्यार्थी आणि पालकांना मागवदशवन करिे.  \n(२) णवद्यापीठांनी तयार केलेल्या अनुिवाणध्ष्ट्ठत, बिुणवद्याशाखीय लवणचक अभ्यासक्रमाणवषयी सणवस्तर माणिती उपलब्ध करून देिे.  \n(३) मूल्यमापनातील श्रेयांक पद्धती आणि त्यामुळे आलेली लव"
+        }
+      ]
+    },
+    {
+      "query": "Which student groups are expected to benefit from the School Connect 2.0 campaign?",
+      "term_score": {
+        "query": "Which student groups are expected to benefit from the School Connect 2.0 campaign?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all student groups mentioned in the ideal answer and provides additional, correct, and relevant details about other beneficiaries and the campaign's objectives."
+      },
+      "response_text": "Based on the Government of Maharashtra's Higher and Technical Education Department Circular (No. Sankirna-2024/P.K.01/UE-3, dated December 20, 2024), the **School Connect 2.0 (सकूल कनेक्ट 2.0)** campaign is designed to benefit the following student groups:\n\n1. **Students transitioning to Higher Education:** \n   * Students currently studying in **Class 9th, 10th, and 12th** (*इयत्ता ९ वी, १० वी आणि १२ वी*) in secondary and higher secondary/junior colleges who will be entering higher education.\n\n2. **Workshop Participants from Schools and Junior Colleges:**\n   * Students of **Class 11th and 12th** (*अकरावी, बारावी*) as well as **Class 9th and 10th** (*इयत्ता नववी, दिावी*) from nearby junior colleges and schools who are invited to participate in the campaign's workshops.\n\n3. **Class 12th Repeaters/Re-examiners:**\n   * **Class 12th repeaters/re-examiners** (*इयत्ता 12 वी च्या पुनपरीक्षार्थी*) are to be specially included and targeted in these workshops to ensure they benefit from the guidance.\n\n### Key Objectives for these Student Groups:\n* To guide them and their parents on student-centric changes under the **National Education Policy (NEP) 2020**.\n* To inform them about experiential, multidisciplinary, and flexible curricula, credit systems, and scholarship opportunities.\n* To provide information on innovative initiatives like the Apprenticeship Embedded Degree Programme (AEDP), Internship, IKS, SWAYAM, Mahaswayam, PM-Vidyalaxmi Loan Scheme, and the SATHEE portal (for JEE/NEET preparation).\n* To guide Class 10th students on employment-oriented courses and Class 12th students on choosing higher education courses of their interest.",
+      "evidence": [
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "4. या स्कुल कनेक्ट अणियान 2.0 या संपकव अणियानाची उणदेशष््े पुढीलप्रमािे आिेत.  \n(१) राष्ट्रीय शैक्षणिक धोरि २०२० मधील णवद्यार्थीकेंद्री बदलांणवषयी आणि त्यांच्या णितकारक पणरिामाणवषयी णवद्यार्थी आणि पालकांना मागवदशवन करिे.  \n(२) णवद्यापीठांनी तयार केलेल्या अनुिवाणध्ष्ट्ठत, बिुणवद्याशाखीय लवणचक अभ्यासक्रमाणवषयी सणवस्तर माणिती उपलब्ध करून देिे.  \n(३) मूल्यमापनातील श्रेयांक पद्धती आणि त्यामुळे आलेली लव"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राषरीय शैकणिक धोरि-2020 ची अंमलबजाविीचया अनुषंगाने णवदारी उपयोगी शैकणिक बदलांबाबत णवदारयाना माणिती उपलबध करन देणयाचया अनुषंगाने सवव अकणष णवदापीठसतरावरन सकल कनेकट 2.0 िे संपकव अणियान राबणवणयाबाबत.  \nमिाराषर शासन उचच व तंत णशकि णविाग शासन पणरपतक कमांक : संणकिव- 2024/ प.क.01/ णवणश-3 मादाम कामा मागव, िुतात्मा राजगुरु चौक, 4 र्था मजला, मंत्रालय णवस्तार, मुंबई  400 032 णदनांक : 20 णिसेंबर, 2024  \nवाचा -"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "3. उपरोक्त बदलांचा संपूिव पणरिाम इयत्ता ९ वी, १० वी आणि १२ वी मध्ये णशक्षि घेत असलेल्या माध्यणमक आणि उच्च माध्यणमक/कणनष्ट्ठ मिाणवद्यालयातून उच्च णशक्षिात प्रवेश घेिाऱ्या णवद्यार्थ्यांना िोिार आिे, णवद्यार्थी केंद्रीत णशक्षिाची मुलिूत तत्वे पणरिामकारकणरत्या प्रत्यक्षात आिावयाच्या अनुषंगाने संदिाधीन णद.05.01.2024 च्या शासन णनिवयान्वये राबणवण्यात आलेल्या स्कुल कनेक्ट या संपकव अणियानाची व्याप्ती वाढवू"
+        }
+      ]
+    },
+    {
+      "query": "Name three national initiatives that universities are instructed to inform students about under School Connect 2.0.",
+      "term_score": {
+        "query": "Name three national initiatives that universities are instructed to inform students about under School Connect 2.0.",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate correctly identifies three national initiatives from the ideal answer and provides accurate descriptions for each, fully addressing the query."
+      },
+      "response_text": "Under the **School Connect 2.0** (*सकूल कनेक्ट 2.0*) initiative launched by the Government of Maharashtra (Higher and Technical Education Department) in line with the National Education Policy (NEP) 2020, universities are instructed to inform and guide students and parents about several national initiatives. \n\nThree of these national initiatives are:\n\n1. **PM-Vidyalaxmi Loan Scheme:** \n   A central government scheme designed to provide educational loans to students who wish to pursue higher education in selected premier higher education institutions (including eligible institutions in Maharashtra).\n\n2. **PM-Uchchatar Shiksha Protsahan (PM-USP):** \n   A central government initiative launched to support, encourage, and provide financial assistance/scholarships to students pursuing higher education.\n\n3. **SATHEE (Self-Assessment, Test and Help for Entrance Exams):** \n   A portal launched in collaboration with the Ministry of Education, Department of Higher Education, and IIT Kanpur. It aims to provide high-quality, equitable preparation resources and self-assessment tools for competitive exams like JEE, NEET, and various state-level engineering exams, specifically targeting students who cannot afford expensive private coaching classes.\n\n*(Note: Other national/student-centric initiatives mentioned under this campaign include **SWAYAM**, **Indian Knowledge System (IKS)**, and the **Apprenticeship Embedded Degree Programme (AEDP)**).*",
+      "evidence": [
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "3. उपरोक्त बदलांचा संपूिव पणरिाम इयत्ता ९ वी, १० वी आणि १२ वी मध्ये णशक्षि घेत असलेल्या माध्यणमक आणि उच्च माध्यणमक/कणनष्ट्ठ मिाणवद्यालयातून उच्च णशक्षिात प्रवेश घेिाऱ्या णवद्यार्थ्यांना िोिार आिे, णवद्यार्थी केंद्रीत णशक्षिाची मुलिूत तत्वे पणरिामकारकणरत्या प्रत्यक्षात आिावयाच्या अनुषंगाने संदिाधीन णद.05.01.2024 च्या शासन णनिवयान्वये राबणवण्यात आलेल्या स्कुल कनेक्ट या संपकव अणियानाची व्याप्ती वाढवू"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "4. या स्कुल कनेक्ट अणियान 2.0 या संपकव अणियानाची उणदेशष््े पुढीलप्रमािे आिेत.  \n(१) राष्ट्रीय शैक्षणिक धोरि २०२० मधील णवद्यार्थीकेंद्री बदलांणवषयी आणि त्यांच्या णितकारक पणरिामाणवषयी णवद्यार्थी आणि पालकांना मागवदशवन करिे.  \n(२) णवद्यापीठांनी तयार केलेल्या अनुिवाणध्ष्ट्ठत, बिुणवद्याशाखीय लवणचक अभ्यासक्रमाणवषयी सणवस्तर माणिती उपलब्ध करून देिे.  \n(३) मूल्यमापनातील श्रेयांक पद्धती आणि त्यामुळे आलेली लव"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राषरीय शैकणिक धोरि-2020 ची अंमलबजाविीचया अनुषंगाने णवदारी उपयोगी शैकणिक बदलांबाबत णवदारयाना माणिती उपलबध करन देणयाचया अनुषंगाने सवव अकणष णवदापीठसतरावरन सकल कनेकट 2.0 िे संपकव अणियान राबणवणयाबाबत.  \nमिाराषर शासन उचच व तंत णशकि णविाग शासन पणरपतक कमांक : संणकिव- 2024/ प.क.01/ णवणश-3 मादाम कामा मागव, िुतात्मा राजगुरु चौक, 4 र्था मजला, मंत्रालय णवस्तार, मुंबई  400 032 णदनांक : 20 णिसेंबर, 2024  \nवाचा -"
+        }
+      ]
+    },
+    {
+      "query": "What is the objective of the SATHEE portal mentioned in the School Connect 2.0 circular?",
+      "term_score": {
+        "query": "What is the objective of the SATHEE portal mentioned in the School Connect 2.0 circular?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer accurately covers all key facts from the ideal answer regarding the objective of the SATHEE portal and provides additional correct context without any errors."
+      },
+      "response_text": "Based on the **School Connect 2.0 circular** (dated December 20, 2024), the objective of the **SATHEE (Self-Assessment, Test and Help for Entrance Exams)** portal is as follows:\n\n* **Objective:** To provide **high-quality and equal-standard education/preparation resources** to every student aspiring to participate in competitive exams such as **JEE, NEET, and various state-level engineering and other entrance examinations**. \n* **Target Audience:** It is specifically designed to support students who lag behind because they **cannot afford expensive coaching classes**.\n* **Collaboration:** The portal has been launched in collaboration with the **Department of Higher Education, Ministry of Education (Government of India)** and **IIT Kanpur**.",
+      "evidence": [
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "शासन 2024/ 01/ णवणश- 3 पणरपत्रक क्रमांकः संणकिव- प्र.क्र.  \n(5) उच्च णशक्षि णविाग, णशक्षि मंत्रालय आणि आयआयटी कानपूर यांच्या सियोगाने JEE, NEET आणि णवणवध राज्यस्तरीय अणियांणत्रकी तसेच इतर स्पधा परीक्षांमध्ये सििागी िोऊ इ्च्णिाऱ्या प्रत्येक णवद्यार्थ्याला, णवशेषतः जे मिागड्या कोचचग क्लासेस परवित नसल्यामुळे मागे आिेत अशा णवद्यार्थ्यांसाठी गुिवत्तापूिव, समान दजाचे णशक्षि प्रदान करण्याच्या उद ाने SATH"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "3. उपरोक्त बदलांचा संपूिव पणरिाम इयत्ता ९ वी, १० वी आणि १२ वी मध्ये णशक्षि घेत असलेल्या माध्यणमक आणि उच्च माध्यणमक/कणनष्ट्ठ मिाणवद्यालयातून उच्च णशक्षिात प्रवेश घेिाऱ्या णवद्यार्थ्यांना िोिार आिे, णवद्यार्थी केंद्रीत णशक्षिाची मुलिूत तत्वे पणरिामकारकणरत्या प्रत्यक्षात आिावयाच्या अनुषंगाने संदिाधीन णद.05.01.2024 च्या शासन णनिवयान्वये राबणवण्यात आलेल्या स्कुल कनेक्ट या संपकव अणियानाची व्याप्ती वाढवू"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "4. या स्कुल कनेक्ट अणियान 2.0 या संपकव अणियानाची उणदेशष््े पुढीलप्रमािे आिेत.  \n(१) राष्ट्रीय शैक्षणिक धोरि २०२० मधील णवद्यार्थीकेंद्री बदलांणवषयी आणि त्यांच्या णितकारक पणरिामाणवषयी णवद्यार्थी आणि पालकांना मागवदशवन करिे.  \n(२) णवद्यापीठांनी तयार केलेल्या अनुिवाणध्ष्ट्ठत, बिुणवद्याशाखीय लवणचक अभ्यासक्रमाणवषयी सणवस्तर माणिती उपलब्ध करून देिे.  \n(३) मूल्यमापनातील श्रेयांक पद्धती आणि त्यामुळे आलेली लव"
+        }
+      ]
+    },
+    {
+      "query": "According to the 28 February 2025 Government Resolution, why was a new recruitment procedure introduced for teachers in non-agricultural universities?",
+      "term_score": {
+        "query": "According to the 28 February 2025 Government Resolution, why was a new recruitment procedure introduced for teachers in non-agricultural universities?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 4.0,
+        "justification": "The candidate answer covers the core reasons of transparency, impartiality, balance, and Chancellor's directives, but omits the mention of applicable UGC Regulations from the ideal answer."
+      },
+      "response_text": "According to the Government Resolution (GR) dated **28 February 2025** (GR No. Sankirna-2025/E-860421/Vishi-1) issued by the Higher and Technical Education Department, Government of Maharashtra, the new recruitment procedure for teachers in non-agricultural universities was introduced for the following key reasons:\n\n### 1. To Enhance Transparency, Impartiality, and Balance\nThe primary objective of prescribing this new methodology is to make the selection process of teachers **more transparent, impartial, and balanced** (*अधिक पारदर्शक, निष्पक्ष आणि संतुलित*). \n\n### 2. To Combine Academic Credentials and Interview Performance\nUnder the previous system (based on the GR dated 8 March 2019), the criteria in Appendix-II (Table 3A) were used primarily for shortlisting candidates for interviews. The new procedure reforms this by integrating both aspects into a unified evaluation:\n* **Academic Quality, Research, and Teaching:** Assigned a weightage of **80%**.\n* **Interview Performance:** Assigned a weightage of **20%**.\n* Candidates must secure a minimum of **50% marks out of the combined 100 marks** to be eligible for final selection.\n\n### 3. To Implement Directions from the Chancellor/Governor\nThe introduction of this standardized procedure was also prompted by **specific directives received from the office of the Hon. Chancellor and Governor of Maharashtra** (*मा. कुलपती तथा राज्यपाल महोदयांच्या कार्यालयाकडून प्राप्त झालेले निर्देश*) to reform and standardize the teacher selection process.\n\n### Additional Measures Introduced for Fairness:\nTo ensure these objectives of transparency and fairness are met, the GR also introduced:\n* **Mandatory Audio-Visual Recording:** The proceedings of the Selection Committee meetings must be video-recorded and sealed immediately after the process.\n* **Public Disclosure of Marks:** The marks obtained by candidates based on academic quality, research, and teaching must be published on the university's website.\n* **Prompt Results:** Results must be declared on the same day or the day immediately following the completion of the interviews.",
+      "evidence": [
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "Section not available",
+          "quote": "Section: 1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools\n\nअकषि षिदापीठामधील अधयापकााचया भरती पकीयेमधये अषधक पारदरशकता आणणयासाठी कायशपधदती षिषित करणयाबाबत.  \nमिाराषर रासन उचच ि तात षरकण षिभाग रासन षनणशय कमााक : साषकणश -2025/ ई-860421  /षिषर-1, मांत्रालय षिस्तार भिन,  मादाम कामा मागश,"
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "# रासन षनणशय:-  \nअकृषि षिद्यापीठाांमधील अध्यापकाांच्या षनिड प्रक्रीयेसाठी पुढीलप्रमाणे कायशपध्दती षिषित करण्यात येत आिे:-  \n(१) षिद्यापीठाांमधील सिायक प्राध्यापक या पदाच्या मुलाखतीसाठी उमेदिार षनिडीचे षनकि, सांदभीत षद.८ माचश, २०१९ च्या र्ासन षनणशयासोबत जोडलेल्या पषरषर्ष्ट्ि-दोन मधील (GR dt. 08.03.2019 Appendix-II तक्ता:३अ प्रमाणे षिषित करण्यात आले आिेत. Table:3A Criteria for Short-listing of Candi"
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "मिाराष्ट्राचे राज्यपाल याांच्या आदेर्ानुसार ि नािाने,  \nDigitally signed by PRATAP PANDURANG LUBAL DN: c=IN, o=GOVERNMENT OF MAHARASHTRA, ou=HIGHER AND TECHNICAL EDUCATION DEPARTMENT, 2.5.4.20=b0d6763338fc6cc4f7cf07ca60db7abc1cfac99c84ab1b5bfc0dae4609d 631d0, postalCode=400032, st=Maharashtra, serialNumber=AF6895C47A84066432F5BDD1F182B4163D880AC9BD8D24A19 8FD0E7310BBEB59, cn=PRATAP PANDURANG LUBAL"
+        }
+      ]
+    },
+    {
+      "query": "Under the new teacher recruitment procedure, what two major aspects are considered together while selecting candidates?",
+      "term_score": {
+        "query": "Under the new teacher recruitment procedure, what two major aspects are considered together while selecting candidates?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies both major aspects from the ideal answer and provides additional accurate and relevant details without any factual errors."
+      },
+      "response_text": "Based on the Government Resolution (शासन निर्णय क्रमांक: साकिण-2025/ ई-860421 /विशि-1) regarding the recruitment of teachers in non-agricultural universities, the two major aspects considered together to ensure a more transparent, impartial, and balanced selection process are:\n\n1. **Academic Credentials (शैक्षणिक क्रेडेंशियल्स):** This covers academic quality, research, and teaching (शैक्षणिक गुणवत्ता, संशोधन आणि अध्यापन), which is assigned a weightage of **80%**.\n2. **Performance in the Interview (मुलाखतीमधील कामगिरी):** This is assigned a weightage of **20%**.\n\nThese two aspects are combined to prepare a merit list out of 100 marks, and candidates must secure a minimum of 50% of the combined 100 marks to be eligible for final selection.",
+      "evidence": [
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "(२) त्यानुसार र्ैक् णक गुणित्ता, सांर्ोधन आषण अध्यापन या बाबींना ८०% इतके गुण (िेिेज) देण्यात यािे. मुलाखतीमधील कामषगरीसाठी २०% इतके गुण (िेिेज) देण्यात यािे. िरील दोन्िी बाबी एकत्र करून १०० गुणाांपैकी प्राप्त गुणाांनुसार उमेदिाराांची गुणित्ता यादी षनिडीकषरता तयार करण्यात यािी. तसेच एकषत्रत १०० गुणाांपैकी षकमान ५० िक्के गुण प्राप्त केलेल्या उमेदिाराांनाच अांषतम षनिडीसाठी पात्र समजण्यात यािे."
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "र्ासन षनणशय क्रमाांकः साषकणश -2025/ ई-860421  /षिषर-1  \nउमेदिाराांची षनिड करण्यासाठी िापरण्यात येतात. त्यात सुधारणा करून यापुढे उमेदिाराांचे र्ैक् णक क्रेडेन्न्र्यल आषण त्याांची मुलाखतीमधील कामषगरी अर्ा दोन्िी बाबी एकषत्रत करून अषधक पारदर्शक, षनष्ट्पक्ष आषण सांतुषलत षनिड प्रषक्रया षिषित करण्यात येत आिे."
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "(३) र्ैक् णक गुणित्ता, सांर्ोधन आषण अध्यापन इत्यादी षनकिाांच्या आधारे ( सांदभीत षद.८ माचश, २०१९ च्या र्ासन षनणशयासोबत जोडलेल्या पषरषर्ष्ट्ि-दोन मधील तक्ता: 3अ नुसार) उमेदिाराांनी प्राप्त केलेले गुण षिद्यापीठाच्या सांकेतस्थळािर प्रषसद्ध करािेत.  \n(४) अध्यापन क्षमता अथिा सांर्ोधन प्राषिण्य (aptitude)  याांचे मुल्यमापन पषरसांिाद (seminar) अथिा व्याख्यान प्रात्यषक्षक (lecture in a classroom situation)"
+        }
+      ]
+    },
+    {
+      "query": "Why was a Steering Committee established under the NEP-2020 Government Resolution dated 26 December 2022?",
+      "term_score": {
+        "query": "Why was a Steering Committee established under the NEP-2020 Government Resolution dated 26 December 2022?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all key reasons for the establishment of the Steering Committee as outlined in the ideal answer, including reviewing implementation, resolving obstacles, suggesting measures, and providing guidance, while also providing additional relevant context."
+      },
+      "response_text": "Based on the Government Resolution (GR) dated **26 December 2022** issued by the Higher and Technical Education Department, Government of Maharashtra, the **Steering Committee (सुकाणू समिती)** was established for the following primary reasons:\n\n### **Primary Purpose of Establishment**\n1. **Review and Implementation:** To review the implementation of the recommendations contained in the reports of the sub-committees constituted for implementing the National Education Policy (NEP) 2020 in the state of Maharashtra.\n2. **Resolution of Obstacles:** To suggest measures and solutions for resolving any difficulties or obstacles arising during the implementation of these recommendations in the academic year starting from June 2023.\n3. **Guidance:** To provide continuous guidance on the effective execution of the policy.\n\nThis decision was taken following discussions in the Joint Board of Vice-Chancellors (JBVC) meeting held on 24 November 2022 under the chairmanship of the Hon'ble Chancellor, and based on a proposal submitted by the Director of Higher Education, Maharashtra State, Pune, on 16 December 2022.\n\n---\n\n### **Scope of Work (Functions) of the Steering Committee**\nThe resolution outlines the specific scope of work for the Steering Committee to ensure smooth implementation of NEP-2020:\n\n1. **Degree Duration Restructuring:** Implementing 3-to-4-year undergraduate degree programs and 1-to-2-year postgraduate programs across various disciplines.\n2. **Multidisciplinary Education & Flexibility:** Implementing a multidisciplinary degree structure and curriculum, along with **Multiple Entry and Multiple Exit** options.\n3. **ODL and Online Learning:** Incorporating Open and Distance Learning (ODL) and Online Programme methods into UG/PG courses and establishing credit determination.\n4. **Skill Development & Internships:** Integrating various skills into the curriculum and designing frameworks/methodologies for **Internships and hands-on experience**.\n5. **Uniform Academic Calendar:** Suggesting measures to bring uniformity to the academic calendars of all non-agricultural universities in the state.\n6. **KRA Dashboard:** Providing recommendations to create a dashboard for tracking Key Result Areas (KRAs) of higher education institutions and colleges.\n7. **Credit Equivalence:** Suggesting measures to bring uniformity to the credit-awarding systems across all state universities.\n8. **Branding and Communication:** Formulating strategies to promote high-quality model universities/institutions through branding and communication, and ensuring that the key features of NEP-2020 are effectively communicated to all stakeholders.",
+      "evidence": [
+        {
+          "document": "202212261620157508",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राषरीय शैकणिक धोरि, 2020 ची राजयातील अंमलबजाविीचया अनुषंगाने गठीत उपसणमतयांचया अहवालातील णशफारशीचया अंमलबजाविीसंदरात आढावा घेऊन येिा-या अडचिी णनवारिासाठी उपाययोजना सुचणवणयासाठी व मागगदशगन करिेसाठी थापन करणयाबाबत. सुकािू सणमती स  \nमहाराषर शासन उचच व तंत णशकि णवराग शासन णनिगय कमांक : एनईपी-2022/प.क.09/णवणश-3, णशकाना मंत्रालय, मुंबई 400 032, णदनांक: 26 णडसेंबर, 2022  \n<u>सदरः-</u> 1. शासन णनिगय, उच्च"
+        },
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "महाराषर शासन ईचच व तंत णशकण णवभाग",
+          "quote": "राष्ट्रीय शैक्षणणक धोरण, 2020 ची राज्यातील ऄंमलबजावणीच्या ऄनुषंगाने गठीत ईपसणममयांच्या ऄहवालातील णशफारशींच्या ऄंमलबजावणीसंदभात अढावा घेउन येणा-या ऄडचणी णनवारणासाठी ईपाययोजना सुचणवण्यासाठी व मागगदशगन करणेसाठी णद. २६.१२.२०२२ च्या शासन णनणगयान्वये स्थापन करण्यात अलेल्या सुकाणू सणमतीने ऄभ्यासक्रम व श्रेयांक अराखड्यासंदभात ऄंतणरम ऄहवाल सादर केला होता. सदर ऄंतणरम ऄहवालावर णद. १९ व २० एणप्रल, २०२३ रोजी म"
+        },
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "<u>पसतावना</u> -",
+          "quote": "राष्ट्रीय शैक्षणिक धोरि, 2020 ची राज्यातील अंमलबजाविीच्या अनुषंगाने गठीत उपसणममयांच्या अहवालातील णशफारशींच्या अंमलबजाविीसंदर्भात आढावा घेऊन येिा-या अडचिी णनवारिासाठी उपाययोजना सुचणवण्यासाठी व मागगदशगन करिेसाठी णद. २६.०१२.२०२२ च्या शासन णनिगयान्वये सुकािू सणमती स्थापन करण्यात आली आहे. सुकािू सणमतीने अभ्यासक्रम व श्रेयांक आराखड्यासंदर्भात सादर केलेल्या अंतणरम अहवालावर णद. १९ व २० एणप्रल २०२३  \nशासन "
+        }
+      ]
+    },
+    {
+      "query": "The NEP documents mention a Steering Committee several times. What is its primary role across these Government Resolutions?",
+      "term_score": {
+        "query": "The NEP documents mention a Steering Committee several times. What is its primary role across these Government Resolutions?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all key facts mentioned in the ideal answer regarding the Steering Committee's role, and provides extensive additional correct details and context."
+      },
+      "response_text": "Based on the provided Government Resolutions (GRs) from the Higher and Technical Education Department of Maharashtra, the **Steering Committee** (referred to in Marathi as the **सुकाणू समिती** or *Sukanu Samiti*) was established via the GR dated **December 26, 2022**. \n\nIts primary role across these resolutions is to **oversee, review, guide, and facilitate the uniform implementation of the National Education Policy (NEP) 2020** across all state universities and higher education institutions (HEIs) in Maharashtra.\n\nThe specific roles, responsibilities, and contributions of the Steering Committee as detailed in the documents include:\n\n### 1. Primary Objectives\n* **Review and Guidance:** To review the implementation of recommendations made by various subject-wise sub-committees formed for NEP 2020, identify administrative, financial, or statutory difficulties, and suggest solutions and guidance.\n* **Ensuring Uniformity:** To ensure that the curriculum and credit frameworks are implemented in a uniform and standardized manner across all non-agricultural, deemed, self-financed, and cluster universities in the state.\n\n### 2. Key Areas of Responsibility (Scope of Work)\nAs outlined in the GR dated December 26, 2022, the committee's scope of work covers:\n* **Curriculum & Credit Frameworks:** Overseeing the transition of undergraduate programs to 3-to-4-year durations and postgraduate programs to 1-to-2-year durations.\n* **Multiple Entry & Exit Options:** Implementing flexible entry and exit options for students.\n* **Alternative Learning Modes:** Integrating Open and Distance Learning (ODL) and Online Programmes into the curriculum and determining credit structures.\n* **Internships & Skill Development:** Designing systems and methodologies to incorporate internships, apprenticeships, and hands-on field experience into degree programs.\n* **Uniform Academic Calendar:** Suggesting measures to align the academic schedules of all state universities.\n* **Credit Equivalence:** Standardizing the credit-awarding systems across different universities to ensure seamless credit transfers.\n* **KRA Dashboard:** Providing directives for creating Key Result Area (KRA) dashboards to monitor the performance of HEIs.\n* **Branding & Communication:** Promoting model HEIs and ensuring that the core tenets of NEP 2020 are effectively communicated to all stakeholders.\n\n### 3. Specific Contributions and Directives Highlighted in the GRs\n* **Postgraduate Credit Distribution:** The committee formulated and recommended the credit distribution framework for 2-year PG programs (including 1-year PG options with exit routes) in May 2023, which was mandated for implementation starting from the academic year 2023–24.\n* **Industry-Academia Linkages:** The committee is tasked with holding interactive meetings with industry associations, professional organizations, and Sector Skill Councils to facilitate smooth internship and apprenticeship opportunities for students.\n* **School Structure Guidelines:** The committee is responsible for developing detailed guidelines on creating \"School structures\" (such as choosing between School Specific Core and Department Specific Core subjects).\n* **Academic Bank of Credits (ABC):** The committee monitors and drives the registration of colleges and the enrollment of students on the ABC portal to facilitate credit redemption and transfer.\n* **Continuous Monitoring:** The state government utilizes the Steering Committee as its primary vehicle to periodically review and monitor how effectively universities and colleges are executing these directives.",
+      "evidence": [
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "महाराषर शासन ईचच व तंत णशकण णवभाग",
+          "quote": "राष्ट्रीय शैक्षणणक धोरण, 2020 ची राज्यातील ऄंमलबजावणीच्या ऄनुषंगाने गठीत ईपसणममयांच्या ऄहवालातील णशफारशींच्या ऄंमलबजावणीसंदभात अढावा घेउन येणा-या ऄडचणी णनवारणासाठी ईपाययोजना सुचणवण्यासाठी व मागगदशगन करणेसाठी णद. २६.१२.२०२२ च्या शासन णनणगयान्वये स्थापन करण्यात अलेल्या सुकाणू सणमतीने ऄभ्यासक्रम व श्रेयांक अराखड्यासंदभात ऄंतणरम ऄहवाल सादर केला होता. सदर ऄंतणरम ऄहवालावर णद. १९ व २० एणप्रल, २०२३ रोजी म"
+        },
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "<u>पसतावना</u> -",
+          "quote": "राष्ट्रीय शैक्षणिक धोरि, 2020 ची राज्यातील अंमलबजाविीच्या अनुषंगाने गठीत उपसणममयांच्या अहवालातील णशफारशींच्या अंमलबजाविीसंदर्भात आढावा घेऊन येिा-या अडचिी णनवारिासाठी उपाययोजना सुचणवण्यासाठी व मागगदशगन करिेसाठी णद. २६.०१२.२०२२ च्या शासन णनिगयान्वये सुकािू सणमती स्थापन करण्यात आली आहे. सुकािू सणमतीने अभ्यासक्रम व श्रेयांक आराखड्यासंदर्भात सादर केलेल्या अंतणरम अहवालावर णद. १९ व २० एणप्रल २०२३  \nशासन "
+        },
+        {
+          "document": "202212261620157508",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राषरीय शैकणिक धोरि, 2020 ची राजयातील अंमलबजाविीचया अनुषंगाने गठीत उपसणमतयांचया अहवालातील णशफारशीचया अंमलबजाविीसंदरात आढावा घेऊन येिा-या अडचिी णनवारिासाठी उपाययोजना सुचणवणयासाठी व मागगदशगन करिेसाठी थापन करणयाबाबत. सुकािू सणमती स  \nमहाराषर शासन उचच व तंत णशकि णवराग शासन णनिगय कमांक : एनईपी-2022/प.क.09/णवणश-3, णशकाना मंत्रालय, मुंबई 400 032, णदनांक: 26 णडसेंबर, 2022  \n<u>सदरः-</u> 1. शासन णनिगय, उच्च"
+        }
+      ]
+    },
+    {
+      "query": "What is the purpose of the revised credit framework Government Resolution issued on 16 May 2023?",
+      "term_score": {
+        "query": "What is the purpose of the revised credit framework Government Resolution issued on 16 May 2023?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers all key facts from the ideal answer regarding the revised guidelines for curriculum and credit framework for PG programs, including exit options and implementation from the academic year 2023-24, while also providing additional correct and relevant context."
+      },
+      "response_text": "Based on the Government Resolution (GR) issued by the Higher and Technical Education Department, Government of Maharashtra, on **16 May 2023** (GR No. NEP-2022/P.K.09/Vishi-3 Shikana), the purpose of the revised credit framework is as follows:\n\n### 1. **Implementation of NEP 2020**\nThe overarching purpose is to implement the **National Education Policy (NEP) 2020** in the state of Maharashtra. The policy aims to transform India into a global knowledge superpower by providing quality, innovative, and research-oriented education, and by addressing the shortage of skilled manpower in science, technology, education, and industrial sectors.\n\n### 2. **Revised Guidelines for Postgraduate (PG) Programs**\nThe specific purpose of this GR is to issue **revised guidelines and directives regarding the curriculum and credit distribution framework for a 2-year Postgraduate (PG) degree program, which includes an exit option / 1-year Postgraduate program** (*एक्झिट पर्याय / एक वर्षाच्या पदव्युत्तर अभ्यासक्रमासह २ वर्षांच्या पदव्युत्तर अभ्यासक्रमासाठी श्रेयांक वितरणासंदर्भातील सुधारित मार्गदर्शक सूचना*).\n\n### 3. **Uniform Implementation Across the State**\nTo ensure a uniform and standardized implementation of the curriculum and credit framework across all non-agricultural, deemed, self-financed, and cluster universities, as well as higher education institutions in Maharashtra, starting from the **Academic Year 2023-24**.\n\n### 4. **Adoption of Steering Committee Recommendations**\nThe GR was issued to formally adopt and execute the recommendations submitted on **9 May 2023** by the **Steering Committee (सुकाणू समिती)**, which was established to oversee the implementation of NEP 2020, review the credit framework, and resolve any operational challenges.\n\n### 5. **Statutory Authority**\nThese directives are issued under the statutory provisions of **Section 5 (81) of the Maharashtra Public Universities Act, 2016**, making it mandatory for universities and autonomous colleges to adopt this framework (within 10 days of its issuance).",
+      "evidence": [
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "राजयामधये राषरीय शैकणिक धोरि, 2020 चया अंमलबजाविीचया अनुषंगाने गठीत करणयात आलेल या णशफाशी या सुकािू सणमतीच नुसार एकझिट पयाय / एक वषाचया पदवयुतर अभयासकमासह 2 वषाचया पदवयुतर अभयासकमासाठी शेयांक णवतरिासंदरातील सुधाणरत मागगदशगक सूचना.  \nमहाराषर शासन उचच व तंत णशकि णवराग शासन णनिगय कमांक: एनईपी-2022/प.क.09/णवणश-3 णशकाना मंत्रालय, मुंबई 400 032, णदनांक: 16 मे, २०२३  \n<u>सदर</u> - 1. शासन णनिगय क्रमांक: "
+        },
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "<u>पसतावना</u> -",
+          "quote": "7. संचालक, उच्च णशक्षि/ तंत्रणशक्षि/ कला/ ग्रंथालय  \n8. प्रधान सणचव, उच्च व तंत्र णशक्षि णवर्भाग, यांचे स्वीय सहाययक, मंत्रालय, मुंबई,  \n9. उप सणचव (णवणश), उच्च व तंत्र णशक्षि णवर्भाग, यांचे स्वीय सहाययक, मंत्रालय, मुंबई,  \n10. णनवडनस्ती (णवणश-3).  \n6 पैकी 3 पृष्ट्ठ  \nशासन णनिगय क्रमांकः एनईपी-2022/प.क.09/णवणश-3 णशकाना  \nशासन णनिगय कमांक: एनईपी-2022/प.क.09/णवणश-3 णशकाना णदनांक 16.05.2023 सोबतचे पण"
+        },
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "<u>पसतावना</u> -",
+          "quote": "सदर सुकािू सणमतीने एक्झिट पयाय / एक वषाच्या पदव्युत्तर अभ्यासक्रमासह 2 वषांच्या पदव्युत्तर अभ्यासक्रमासाठी श्रेयांक णवतरिासंदर्भात णदनांक 09.05.2023 च्या पत्रान्वये णशफारशी केल्या आहेत. सदर णशफारशींची राज्यामध्ये एकसमान प्रमािात अंमलबजाविी होण्यासाठी  तशा सुचना व णनदेश  जारी करण्याची  बाब शासनाच्या णवचाराधीन होती.  \n<u>शासन णनिय:-</u>  \nएक्झिट पयाय / एक वषाच्या पदव्युत्तर अभ्यासक्रमासह 2 वषांच्या "
+        }
+      ]
+    },
+    {
+      "query": "Does any of the uploaded documents specify the salary of Assistant Professors in Maharashtra universities?",
+      "term_score": {
+        "query": "Does any of the uploaded documents specify the salary of Assistant Professors in Maharashtra universities?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly states that no documents specify the salary, matching the core message of the ideal answer, and provides additional relevant context without being incorrect."
+      },
+      "response_text": "Based on the uploaded government documents, **none of them specify the exact salary or pay scale** (such as specific pay matrices, starting basic pay, or salary figures) for Assistant Professors in Maharashtra universities. \n\nThe documents do, however, mention the following related details:\n1. **Selection and Appointment Process:** A Government Resolution (No. Sankirna-2025/E-860421/Vishi-1, dated February 28, 2025) outlines the selection procedure for Assistant Professors in non-agricultural universities in Maharashtra. It specifies a weightage of **80% for academic credentials, research, and teaching**, and **20% for the interview performance**.\n2. **UGC Regulations Alignment:** The selection process is aligned with the University Grants Commission (UGC) Regulations dated July 18, 2018, which were implemented in the state of Maharashtra via the Government Resolution dated **March 8, 2019** (and subsequent amendments).\n3. **General Salary Guidelines:** Other documents (such as Government Resolution No. Manyata-2023/P.K.63/Tanshi-4) state generally that institutions must pay their teachers and staff salaries and allowances **\"as per rules\"** (*नियमानुसार वेतन व भत्ते*), but they do not list the actual numerical pay scales.",
+      "evidence": [
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "िाचा:-",
+          "quote": "Section: िाचा:-\n\n# िाचा:-  \n1. भारताचे राजपत्र: असाधारण, भाग III-षिभाग 4, युजीसी नोषिषफकेर्न षदनाांक 18 जुलै 2018.  \n2. उच्च ि तांत्र षर्क्षण षिभाग, र्ासन षनणशय, क्रमाांक सांकीणश-2018/प्र.क्र.56/18/षिषर्-1, षदनाांक 8 माचश 2019.  \n3. उच्च ि तांत्रषर्क्षण षिभाग, र्ुद्धीपत्र क्रमाांक सांकीणश-2018/प्र.क्र.56/18/षिषर्-1, षदनाांक 10 मे 2019.  \n4. उच्च आषण तांत्र षर्क्षण षिभाग, र्ासन षनणशय क्र.सांकीणश-23"
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "पसतािना :-",
+          "quote": "णक उच्च षर्क्षण देणाऱ्या सांस्थामधील अध्यापकाांकरीता षिद्यापीठ अनुदान आयोगाकडून र्ैक् अिशता आषण अनुिांषगक बाबी षिषित करण्यात येतात. षिद्यापीठ अनुदान आयोगाकडून षद. १८ जुलै, २०१८ च्या अषधसूचनेद्वारे उच्च षर्क्षण देणाऱ्या सांस्थाांकषरता “Minimum qualifications for appointment of teachers and other academic staff in Universities and Colleges and Measures for the maintenance of standards in Higher Educ"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "अटी व िती:-",
+          "quote": "- ७) संस्ेने अभ्यासक्रम चालखवण्यास पूणषवेळ खिक्षकवृंद व इतर तांखत्रक कमषचारी िासन खनयमाप्रमाणे खनयुक् करावेत. त्यांना खनयमानुसार वेतन व भत्ते कमषचाऱयांना देण्यात यावेत तसेच खिक्षकवृंद व इतर कमषचाऱयांच्या वेतन व भत्ते इत्यादीबाबत तसेच खवद्यार्थ्यांकडून िासनाकडे तक्रारी आल्यास संस्ेवर कडक कारवाई करण्यात येईल.  \n- ८) संस्ेतील ग रंालयास आवश्यक ती पुसतके, खनयतकाखलके अखिल भारतीय तंत्रखिक्षण"
+        }
+      ]
+    },
+    {
+      "query": "According to the Government Resolution dated 30 June 2023, why were government approvals issued to unaided professional institutions for the academic year 2023-24?",
+      "term_score": {
+        "query": "According to the Government Resolution dated 30 June 2023, why were government approvals issued to unaided professional institutions for the academic year 2023-24?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer fully covers both key reasons provided in the ideal answer (AICTE approval and DTE recommendation) and provides additional, correct, and relevant context regarding the specific purposes of these approvals."
+      },
+      "response_text": "According to the **Government Resolution (GR) No. Manyata-2023/C.R.63/TE-4 dated 30 June 2023** issued by the Higher and Technical Education Department, Government of Maharashtra, government approvals were issued to unaided professional institutions for the academic year 2023-24 for the following reasons and purposes:\n\n### 1. Primary Basis for Approvals\n* **AICTE Alignment:** The approvals were issued in accordance with the recognition/approval granted by the **All India Council for Technical Education (AICTE), New Delhi**.\n* **Directorate Proposal:** They were based on the proposal submitted by the **Director of Technical Education, Maharashtra State**, via a letter dated 26 June 2023 (Letter No. 2/NGC/AICTE Approval/2023/571).\n\n### 2. Specific Purposes of the Approvals\nThe approvals were granted to permanently unaided professional institutions to facilitate various institutional and academic changes for the academic year 2023-24, which are categorized under Annexures A to J:\n* **Starting New Institutions:** Approving the establishment of new unaided professional institutions in the state (e.g., Engineering, MBA, PGDM, MCA) *(Annexure A)*.\n* **Course and Intake Variations:** \n  * Starting new courses in existing institutions, increasing intake capacity, or restoring intake *(Annexure B)*.\n  * Starting new courses in the regional language (Marathi) *(Annexure C)*.\n  * Decreasing intake capacity, closing divisions, or closing existing courses *(Annexure D)*.\n* **Supernumerary Seats (OCI/PIO/Foreign Nationals/NRI):** Approving new seats or extending the validity of existing seats for Overseas Citizens of India (OCI), Persons of Indian Origin (PIO), Foreign Nationals, Children of Indian Workers in Gulf Countries, and Non-Resident Indians (NRI) *(Annexure E)*.\n* **Administrative Changes:** \n  * Changing the names of existing courses *(Annexure F)*.\n  * Changing the names of existing institutions *(Annexure G)*.\n  * Changing the location/site address of existing institutions *(Annexure H)*.\n* **Vocational Courses (B.Voc):** \n  * Starting new B.Voc. courses or increasing intake in existing B.Voc. courses *(Annexure I)*.\n  * Closing existing B.Voc. courses or reducing their intake *(Annexure J)*.\n\n### 3. Governing Conditions\nThese approvals were issued subject to the prevailing terms and conditions (*प्रचलीत अटी व शर्तींच्या अधीन राहून*) governing professional education in the state.",
+      "evidence": [
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "अखिल भारतीय तंत खिकण पखरषदेने खदलेलया मानयतेस अनुसरन िैकखणक वषष 2023-24 कखरता िाजगी खवना यावसाखयक अभयासकमांचया अनुदाखनत व संस्ांना खवखवध मानयता देणयाबाबत.  \nमहाराषर िासन उचच व तंत खिकण खवभाग िासन खनणषय क. मानयता-2023/प.क.63/तांखि-4 मादाम कामा रोड, हुतात्मा राजगुरु चौक,  \nमंत्रालय खवसतार भवन, मुंबई-400 032. खदनांक: 30 जून, 2023.  \n<u>वाचा</u> :   संचालक, तंत्र खिक्षण यांचे पत्र क्र.२/एनजीसी/अेआयसीट"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "संचालक, तंत्रखिक्षण यांनी प्रसताखवत केल्याप्रमाणे िैक्षखणक वषष 2023-24 पासून सोबतच्या Annexure - A ते J मधील संस्ांच्या नावासमोर दिषखवल्याप्रमाणे िासन मान्यता देण्याची बाब िासनाच्या खवचाराधीन होती.  \nिासन खनणषय : अखिल भारतीय तंत्र खिक्षण पखरषद, नवी खदल्ली यांनी खदलेल्या मान्यतेस अनुसरून संचालक, तंत्र खिक्षण यांनी प्रसताखवत केल्याप्रमाणे,  िैक्षखणक वषष 2023-2024 पासून िालील तक् यात दिषखवल्यानुसार A"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "<u>पसतावना :</u> - अखिल भारतीय तंत्र खिक्षण पखरषद, नवी खदल्ली यांनी खदलेल्या मान्यतेस अनुसरुन राज्यात नखवन संस्ा सुरू करणे तसेच खवद्यमान खवनाअनुदाखनत संस्ांमध्ये नवीन अभ्यासक्रम, प्रवेि क्षमतेत वाढ /घट, अभ्यासक्रम बंद, पीआयओ / एनआरआयच्या जागा, संस्ेच्या नांवात बदल, अभ्यासक्रमाच्या नांवात बदल इ. साठी कायम खवनाअनुदाखनत व्यावसाखयक अभ्यासक्रमांच्या संस्ाना द्यावयाच्या मान्यतेबाबत संचालक, तंत्रखिक्षण य"
+        }
+      ]
+    },
+    {
+      "query": "What types of proposals are covered by the Government Resolution on AICTE approvals for unaided institutions?",
+      "term_score": {
+        "query": "What types of proposals are covered by the Government Resolution on AICTE approvals for unaided institutions?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer covers all key facts from the ideal answer and provides extensive, correct details for each type of proposal, making it more comprehensive and accurate."
+      },
+      "response_text": "Based on the Government Resolution (GR) of the Higher and Technical Education Department, Government of Maharashtra (GR No. Manyata-2023/C.R.63/TE-4, dated June 30, 2023), the following types of proposals are covered for AICTE approvals in unaided professional institutions:\n\n1. **Approval of New Unaided Institutions (Annexure A):** Approval for starting new private unaided institutions (e.g., Engineering, MBA, PGDM, MCA).\n2. **Increase in Intake / Starting New Courses / Division Full / Intake Restoration (Annexure B):** Approval for increasing the intake capacity, starting new courses/programs, completing divisions, or restoring previously reduced intake in existing unaided institutions.\n3. **New Courses in Regional Language (Annexure C):** Approval for starting new courses in the regional language (Marathi) in existing unaided institutions.\n4. **Course Closure / Division Closure / Reduction in Intake (Annexure D):** Approval for closing existing courses, closing divisions, or reducing the intake capacity in existing undergraduate (UG) and postgraduate (PG) courses.\n5. **OCI / PIO / Foreign Nationals / Children of Indian Workers in Gulf Countries and NRI Seats (Annexure E):** Approval for new seats or extension of validity for existing seats allocated under these categories (up to 15% over the approved intake for OCI/PIO/FN/CIWGC and up to 5% within the approved intake for NRI).\n6. **Change of Course Name (Annexure F):** Approval for changing the nomenclature/name of existing courses in existing institutions.\n7. **Change in Name of Existing Institutions (Annexure G):** Approval for changing the official name of existing institutions.\n8. **Change of Site / Location Address (Annexure H):** Approval for shifting or changing the location/address of existing institutions.\n9. **New B.Voc. Courses / Increase in Intake in Existing B.Voc. Courses (Annexure I):** Approval for starting new Bachelor of Vocation (B.Voc.) courses or increasing intake in existing B.Voc. courses under the National Skills Qualifications Framework (NSQF).\n10. **Closure / Reduction in Intake of Existing B.Voc. Courses (Annexure J):** Approval for closing or reducing the intake capacity of existing B.Voc. courses under the NSQF.",
+      "evidence": [
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "अखिल भारतीय तंत खिकण पखरषदेने खदलेलया मानयतेस अनुसरन िैकखणक वषष 2023-24 कखरता िाजगी खवना यावसाखयक अभयासकमांचया अनुदाखनत व संस्ांना खवखवध मानयता देणयाबाबत.  \nमहाराषर िासन उचच व तंत खिकण खवभाग िासन खनणषय क. मानयता-2023/प.क.63/तांखि-4 मादाम कामा रोड, हुतात्मा राजगुरु चौक,  \nमंत्रालय खवसतार भवन, मुंबई-400 032. खदनांक: 30 जून, 2023.  \n<u>वाचा</u> :   संचालक, तंत्र खिक्षण यांचे पत्र क्र.२/एनजीसी/अेआयसीट"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "संचालक, तंत्रखिक्षण यांनी प्रसताखवत केल्याप्रमाणे िैक्षखणक वषष 2023-24 पासून सोबतच्या Annexure - A ते J मधील संस्ांच्या नावासमोर दिषखवल्याप्रमाणे िासन मान्यता देण्याची बाब िासनाच्या खवचाराधीन होती.  \nिासन खनणषय : अखिल भारतीय तंत्र खिक्षण पखरषद, नवी खदल्ली यांनी खदलेल्या मान्यतेस अनुसरून संचालक, तंत्र खिक्षण यांनी प्रसताखवत केल्याप्रमाणे,  िैक्षखणक वषष 2023-2024 पासून िालील तक् यात दिषखवल्यानुसार A"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "|अ.क.|अज / पसताव|सहपत|\n|---|---|---|\n|i.|ि.व. 2023-24 मधय 2 अखभयाखतकी, 4 एमबीए, व 2 पीजीडीएम<br>अभयासकमाचया अिा एकण 08 नवीन खवनाअनदाखनत ससाना मानयता<br>खदलली असलयान सदर ससाना िासन मानयता दणयात यत आह.|Annexure A|\n|ii.|<br>खवदमान खवनाअनदाखनत िकखणक ससातील सधया सर असललया<br>अभयासकमाचया पवि कमतत वाढ, नवीन अभयासकम सर करण, तकडी<br>पण करण, पवि कमता पववत करण इ. साठी अखिल भारतीय ततखिकण<br>पखरषद, नवी खदली या"
+        }
+      ]
+    },
+    {
+      "query": "The NEP implementation documents repeatedly refer to implementation from the academic year 2023-24. Which major reforms are scheduled for implementation during that academic year?",
+      "term_score": {
+        "query": "The NEP implementation documents repeatedly refer to implementation from the academic year 2023-24. Which major reforms are scheduled for implementation during that academic year?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer covers all key facts mentioned in the ideal answer, including revised curriculum and credit frameworks, revised postgraduate guidelines, exit options, and student awareness initiatives like the School Connect campaign, while also providing extensive and accurate additional details."
+      },
+      "response_text": "Based on the provided government policy documents, the major reforms scheduled for implementation starting from the academic year **2023-24** include:\n\n### 1. First-Phase Applicability of the Credit and Curricular Framework\nThe new credit and curricular framework is made applicable to the following non-AICTE/non-regulated programs:\n* **Undergraduate (UG):** B.A., B.Sc., B.Com., and all non-AICTE professional UG degree programs.\n* **Postgraduate (PG):** M.A., M.Sc., M.Com., and all non-AICTE professional PG degree programs.\n\n### 2. Introduction of Three/Four-Year UG Degree Programs\n* **Three/Four-Year UG Structure:** The three-year/four-year degree programs are introduced starting in AY 2023-24. (The fourth-year Honours/Honours with Research program will subsequently begin in AY 2026-27).\n* **Multiple Entry and Exit Options:** Students are offered flexibility with exit options:\n  * **UG Certificate:** After 1 year (minimum 40–44 credits).\n  * **UG Diploma:** After 2 years (minimum 80–88 credits).\n  * **Three-Year Bachelor’s Degree:** After 3 years (minimum 120–132 credits).\n\n### 3. Revamping of Two-Year Postgraduate (PG) Programs\n* **Curriculum Redesign:** Universities and Autonomous Institutes must design and commence the revamped curriculum for Two-Year PG programs (M.A., M.Sc., M.Com.) starting in AY 2023-24.\n* **DSC-Based Specialization:** Initially, specializations in PG programs will be based on **Discipline Specific Core (DSC)** only.\n* **Research Methodology & Internship:** \n  * A mandatory **Research Methodology** component (4 credits) is introduced in the first semester of the PG program.\n  * An **Internship/On-the-Job Training (OJT)** of 4 credits is introduced in the second semester (to be completed during the summer break).\n\n### 4. Adoption of Learning Outcomes-Based Curriculum (LOCF)\n* In accordance with the National Higher Education Qualifications Framework (NHEQF) and the National Credit Framework (NCrF), institutions must adopt a **Learning Outcomes-based Approach** to curriculum planning, teaching, and assessment. \n* The credit framework establishes **40 credits per year** for 1,200 learning hours.\n\n### 5. Implementation of the 6 Curricular Verticals\nUniversities and colleges must statutorily adopt and release faculty-wise baskets across **6 distinct verticals** for student choice:\n1. **Major**\n2. **Minor**\n3. **Generic / Open Elective Courses**\n4. **Vocational and Skill Enhancement Courses (VSEC)**\n5. **Ability Enhancement Courses (AEC)**, **Indian Knowledge System (IKS)**, and **Value Education Courses (VEC)**\n6. **Field Projects / Internship / Apprenticeship / Community Engagement and Service** (corresponding to the Major subject, Co-curricular courses, and Research projects).\n\n### 6. Institutional and Administrative Reforms\n* **NEP Implementation Cells:** Establishment of dedicated NEP Implementation Cells at Universities (headed by the Pro-Vice-Chancellor) and Autonomous Colleges (headed by the Principal).\n* **Institutional Development Plan (IDP):** All Higher Education Institutions (HEIs) must develop an IDP to project growth, assess human resource requirements (faculty/staff), upgrade physical and ICT infrastructure, and implement end-to-end digitization.\n* **Industry-Academia Linkages:** Strengthening collaboration with industry associations, MSMEs, and Sector Skill Councils to facilitate smooth internships and apprenticeships.\n* **Sensitization Campaigns:** Execution of rigorous communication plans (such as the *School Connect* campaigns) to sensitize students, parents, and faculty about the new credit systems and flexible options.",
+      "evidence": [
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "**1.  NEP Implementation in First Phase:**",
+          "quote": "Section: **1.  NEP Implementation in First Phase:**\n\n# **1.  NEP Implementation in First Phase:**  \nThe credit and curricular framework is to be made applicable, in the first phase, to the following programs (other than those regulated by AICTE, PCI, BCI, CoA, NCTE etc) with effect from Academic Year 2023-24:  \nUG: B.A., B.Sc., B.Com. and all Non-AICTE professional UG degree programs.  \nPG: M.A., "
+        },
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "महाराषर शासन ईचच व तंत णशकण णवभाग > <u>शासन णनणय:-</u>",
+          "quote": "### <u>शासन णनणय:-</u>  \nशैक्षणणक वषग 2023-24 पासून पणहल्या टप्प्यात, कला, वाणणज्य अणण णवज्ञान शाखेतील (AICTE, PCI, BCI, CoA, NCTE पदवी व पदव्युत्तर ऄभ्यासक्रमांसाठी व आतर ऄभ्यासक्रमांसाठी आ. सारखया णनयामक संसथांची मानयता अवशयक ऄसलेले ऄभयासकम वगळून) सोबत जोडलेल्या पणरणशष््ानुसार, ऄभ्यासक्रम व श्रेयांक अराखड्या संदभात सुधाणरत णनदेश जारी करण्यात येत ऄसून सदर णनदेशांची वषग 2023-24 पासून ऄंमलबजावणी कर"
+        },
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "**9. Directives for State Universities and Colleges**",
+          "quote": "through the design and implementation of curricular framework with effect from ACADEMIC YEAR 202324 for the Graduate, and Master’s level Education based on the recommendations given by Steering Committee and Directives issued by Higher and Technical Education Department, Government of Maharashtra."
+        }
+      ]
+    },
+    {
+      "query": "What is the objective of the revised curriculum and credit framework issued under NEP 2020?",
+      "term_score": {
+        "query": "What is the objective of the revised curriculum and credit framework issued under NEP 2020?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer covers all key facts from the ideal answer, including flexibility, holistic education, multiple entry/exit options, and employability, while also providing extensive correct details and additional relevant objectives."
+      },
+      "response_text": "Based on the government policy documents, the objectives of the revised curriculum and credit framework issued under the National Education Policy (NEP) 2020 are as follows:\n\n### 1. **Holistic and Multidisciplinary Education**\n* To provide students with the opportunity to experience a full range of holistic and multidisciplinary education, alongside a focused study on their chosen major and minor subjects.\n* To foster interdisciplinary thinking and rigorous research-based specialization.\n\n### 2. **Flexibility and Learner Autonomy**\nThe curriculum framework offers several key flexibilities to learners:\n* **Disciplinary Flexibility:** The freedom to move from one discipline of study to another.\n* **Course Choice:** The opportunity for learners to choose courses of their interest across all disciplines.\n* **Alternative Learning Modes:** The flexibility to switch between different modes of learning, including offline, Open and Distance Learning (ODL), online, and hybrid modes.\n\n### 3. **Multiple Entry and Exit Options**\n* To allow students multiple entry and exit points during their undergraduate journey, awarding qualifications based on the cumulative credits earned:\n  * **UG Certificate:** After 1 year (40–44 credits)\n  * **UG Diploma:** After 2 years (80–88 credits)\n  * **Three-Year Bachelor’s Degree:** After 3 years (120–132 credits)\n  * **Bachelor’s Degree (Honours / Honours with Research):** After 4 years (160–176 credits)\n\n### 4. **Institutional Mobility**\n* To enable students to move from one institution to another, facilitating seamless credit transfers and encouraging multi-institutional learning.\n\n### 5. **Skill Development and Capacity Building**\n* To equip students with necessary skills and knowledge to address human resource shortages in science, technology, education, and industrial sectors.\n* To develop all human capacities in a moral, integrated, and well-rounded manner, ultimately transforming India into a \"knowledge superpower.\"\n\n*(Source: Section 2: Credit Framework under Three/Four-Years UG Programme with Multiple Entry and Multiple Exit options & Preamble of the Government Resolution)*",
+      "evidence": [
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "**2. Credit Framework under Three/Four-Years UG Programme with Multiple Entry and Multiple Exit options:** > **Credit Framework**",
+          "quote": "- **(e)** The NEP 2020 curriculum framework offers  \n- i. The flexibility to move from one discipline of study to another;  \n- ii. The opportunity for learners to choose the courses of their interest in all disciplines;  \n- iii. The multiple entry and exit options with the award of UG certificate/ UG diploma/ or three-year degree depending upon the number of credits secured;  \n- iv. The flexibilit"
+        },
+        {
+          "document": "2 - Informing students about educational changes beneficial to students in line with the implementation of National Education Policy-2020",
+          "year": 2020,
+          "section": "Section not available",
+          "quote": "4. या स्कुल कनेक्ट अणियान 2.0 या संपकव अणियानाची उणदेशष््े पुढीलप्रमािे आिेत.  \n(१) राष्ट्रीय शैक्षणिक धोरि २०२० मधील णवद्यार्थीकेंद्री बदलांणवषयी आणि त्यांच्या णितकारक पणरिामाणवषयी णवद्यार्थी आणि पालकांना मागवदशवन करिे.  \n(२) णवद्यापीठांनी तयार केलेल्या अनुिवाणध्ष्ट्ठत, बिुणवद्याशाखीय लवणचक अभ्यासक्रमाणवषयी सणवस्तर माणिती उपलब्ध करून देिे.  \n(३) मूल्यमापनातील श्रेयांक पद्धती आणि त्यामुळे आलेली लव"
+        },
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "**2. Credit Framework under Three/Four-Years UG Programme with Multiple Entry and Multiple Exit options:**",
+          "quote": "The structure of the Three/Four-year bachelor’s degree programme allows the opportunity to the students to experience the full range of holistic and multidisciplinary education in addition to a focus on the chosen major and minors as per their choices and the feasibility of exploring learning in different institutions. The minimum and maximum credit structure for different levels under the Three/F"
+        }
+      ]
+    },
+    {
+      "query": "I'm planning to start a new engineering college. Which uploaded document should I look at first?",
+      "term_score": {
+        "query": "I'm planning to start a new engineering college. Which uploaded document should I look at first?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies the primary document mentioned in the ideal answer and provides extensive, accurate, and highly relevant details, while also offering valuable additional context for different types of engineering colleges."
+      },
+      "response_text": "Based on the uploaded government documents, the first document you should look at depends on whether you are planning to start a **Diploma-level** engineering college (Polytechnic) or a **Degree/Post-Graduate-level** engineering college in Maharashtra. \n\nHere is the breakdown of which document to look at first and the key sections to review:\n\n---\n\n### 1. For a Diploma-Level Engineering College (Polytechnic)\nYou should first look at **The Maharashtra State Board of Technical Education Act, 1997**.\n\n*   **Why:** This Act regulates all diploma-level technical and engineering education in the state of Maharashtra.\n*   **Key Sections to Review First:**\n    *   **Chapter IV (Permission, Affiliation, Conferring Autonomous Status and Equivalence):**\n        *   **Section 25 (Conditions of Affiliation):** Outlines the mandatory undertakings your management must comply with. This includes providing suitable and adequate physical facilities (buildings, laboratories, libraries, equipment, hostels), ensuring sufficient financial resources for continued maintenance, and hiring qualified teaching and non-teaching staff.\n        *   **Section 26 (Procedure for Permission):** Details the timeline and process for starting a new institution. The management must apply in the prescribed form to the Member-Secretary of the Board **before the last day of October** of the year preceding the year for which permission is sought.\n        *   **Section 27 (Procedure for Affiliation):** Explains the process of securing first-time affiliation from the Board after receiving permission from the State Government. It specifies that no students can be admitted until first-time affiliation is granted.\n\n---\n\n### 2. For a Degree or Post-Graduate-Level Engineering College\nYou should look at the **Higher and Technical Education Department Government Resolution (GR) No. Manyata-2023/C.R.63/TE-4 (dated June 30, 2023)**.\n\n*   **Why:** This GR details the state government's terms, conditions, and approval processes for private un-aided professional institutions that have received approval from the All India Council for Technical Education (AICTE).\n*   **Key Aspects to Review First:**\n    *   **AICTE Approval Process Handbook:** The GR emphasizes that the establishment, admissions, and course extensions must strictly align with the norms laid down in the **AICTE Approval Process Handbook** (specifically referenced for the academic year 2023–24).\n    *   **State Terms and Conditions (अटी व शर्ती):** Section 1 of the GR lists 19 mandatory conditions that your institution must fulfill, including:\n        *   **Infrastructure & Facilities (Condition 8):** Fulfilling all AICTE standards regarding libraries (books, journals, reading rooms), laboratories, classrooms, and other educational amenities.\n        *   **Staffing (Condition 7):** Appointing full-time teaching and technical staff as per government regulations and paying them prescribed salaries and allowances.\n        *   **Fees (Condition 6):** Charging fees strictly as prescribed by the Fees Regulating Authority (शुल्क नियामक प्राधिकरण). Any excess charging will invite action under the Maharashtra Educational Institutions (Prohibition of Capitation Fee) Act, 1987.\n        *   **Anti-Ragging (Condition 9):** Strict implementation of the Maharashtra Prohibition of Ragging Act, 1999.",
+      "evidence": [
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "अटी व िती:-",
+          "quote": "- 17) बी.व्होक. अभ्यासक्रमाचे प्रवेि हे अखिल भारतीय तंत्र खिक्षण पखरषद ,नवी खदल्ली यांनी त्यांच्या अप्रॅुव्हल प्रोसेस हॅण्डबुक 2023 - 24 मध्ये नमूद केल्याप्रमाणे संस्ासतरावर करावेत .  \n- 18) बी.व्होक. अभ्यासक्रमाच्या मुदतवाढीस अखिल भारतीय तंत्रखिक्षण पखरषद , नवी खदल्ली यांची मान्यता घेण्याची कायषवाही संस्ेने खनयमाप्रमाणे करावी ."
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "<u>पसतावना :</u> - अखिल भारतीय तंत्र खिक्षण पखरषद, नवी खदल्ली यांनी खदलेल्या मान्यतेस अनुसरुन राज्यात नखवन संस्ा सुरू करणे तसेच खवद्यमान खवनाअनुदाखनत संस्ांमध्ये नवीन अभ्यासक्रम, प्रवेि क्षमतेत वाढ /घट, अभ्यासक्रम बंद, पीआयओ / एनआरआयच्या जागा, संस्ेच्या नांवात बदल, अभ्यासक्रमाच्या नांवात बदल इ. साठी कायम खवनाअनुदाखनत व्यावसाखयक अभ्यासक्रमांच्या संस्ाना द्यावयाच्या मान्यतेबाबत संचालक, तंत्रखिक्षण य"
+        },
+        {
+          "document": "Manyata-2023/C.R.63/TE-4",
+          "year": 2023,
+          "section": "Section not available",
+          "quote": "अखिल भारतीय तंत खिकण पखरषदेने खदलेलया मानयतेस अनुसरन िैकखणक वषष 2023-24 कखरता िाजगी खवना यावसाखयक अभयासकमांचया अनुदाखनत व संस्ांना खवखवध मानयता देणयाबाबत.  \nमहाराषर िासन उचच व तंत खिकण खवभाग िासन खनणषय क. मानयता-2023/प.क.63/तांखि-4 मादाम कामा रोड, हुतात्मा राजगुरु चौक,  \nमंत्रालय खवसतार भवन, मुंबई-400 032. खदनांक: 30 जून, 2023.  \n<u>वाचा</u> :   संचालक, तंत्र खिक्षण यांचे पत्र क्र.२/एनजीसी/अेआयसीट"
+        }
+      ]
+    },
+    {
+      "query": "Which document discusses the regulation of admissions through the Centralized Admission Process (CAP), and which document discusses government approval of institutions after AICTE approval?",
+      "term_score": {
+        "query": "Which document discusses the regulation of admissions through the Centralized Admission Process (CAP), and which document discusses government approval of institutions after AICTE approval?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate correctly identifies both documents and accurately describes their respective functions, providing comprehensive and precise details that fully address the query."
+      },
+      "response_text": "Based on the retrieved government documents, here are the details of the documents discussing these topics:\n\n### 1. Regulation of Admissions through the Centralized Admission Process (CAP)\n* **Document:** **Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015**\n* **Details:** \n  * **Section 2(c)** defines the **Centralized Admission Process (CAP)** as the centralized process of admission carried out by the competent authority through a single-window system in a transparent manner for admitting students to various professional courses.\n  * **Chapter II (Sections 4 & 6)** regulates the manner of admissions, stating that admissions to professional courses in every unaided institution (excluding institutional quotas) must be carried out by the competent authority through the Centralized Admission Process (CAP) on the basis of the Common Entrance Test (CET) merit.\n\n---\n\n### 2. Government Approval of Institutions after AICTE Approval\n* **Document:** **Higher and Technical Education Department Government Resolution No. Manyata-2023/C.R.63/TE-4, Dated- 30th June, 2023** \n  *(Marathi Title: \"अखिल भारतीय तंत्र शिक्षण परिषदेने दिलेल्या मान्यतेस अनुसरून शैक्षणिक वर्ष २०२३-२४ करिता खाजगी विनाअनुदानित व्यावसायिक अभ्यासक्रमांच्या संस्थांना विविध मान्यता देण्याबाबत\")*\n* **Details:** \n  * This Government Resolution (GR) discusses the state government's formal approval of private unaided professional educational institutions for the academic year 2023–24, following the initial approval granted by the **All India Council for Technical Education (AICTE)**, New Delhi. \n  * It covers approvals for starting new institutions, introducing new courses, changing intake capacities (increases/reductions), closing courses, and changing institution names or locations (detailed across Annexures A to J).",
+      "evidence": [
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER  I",
+          "quote": "( _c_ ) “Centralized Admission Process (CAP)” means the centralized process of admission carried out by the competent authority through single window system in a transparent manner for admitting the students for various professional courses in educational institutions ;  \n( _d_ ) “Common Entrance Test (CET)” means the entrance test conducted for determination of merit of the candidates by Centrali"
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER II",
+          "quote": "( _c_ ) the Competent Authority shall supervise and guide the entire Centralized Admission Process in such manner as it may specify with a view to ensuring that the process is fair, transparent, merit-based and non-exploitative.  \n> Irregular **5.** Any admission made in contravention of the provisions of this Act  \n> admissions or the rules made thereunder shall be void. void."
+        },
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER III",
+          "quote": "( _7_ ) Admission to every seat excluding institutional quota shall be made on the basis of merit secured at the Common Entrance Test (CET)  followed by Centralized Admission Process of the State, subject to the reservation policy of the State :  \nProvided that, nothing in this sub-section shall apply to the Centralized Admission Process, being conducted for the academic year 2015-2016."
+        }
+      ]
+    },
+    {
+      "query": "Which uploaded document should I refer to if I want to know how the Maharashtra State Board of Technical Education is constituted?",
+      "term_score": {
+        "query": "Which uploaded document should I refer to if I want to know how the Maharashtra State Board of Technical Education is constituted?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer correctly identifies the document and the relevant chapter, and further enhances the answer by providing specific sections and their content, which is highly accurate and helpful."
+      },
+      "response_text": "To know how the Maharashtra State Board of Technical Education (MSBTE) is constituted, you should refer to the following document:\n\n* **Document Name:** **The Maharashtra State Board of Technical Education Act, 1997** (Maharashtra Act No. XXXVIII of 1997, as modified up to October 3, 2012).\n\n### Relevant Sections to Refer to:\n* **Chapter II (Establishment and Constitution of the Governing Council and Board):**\n  * **Section 3 (Establishment of Board):** Details the establishment of the Board by the Government.\n  * **Section 5 (Constitution of Board):** Specifies the composition of the Board, including the Chairman (Director of Technical Education, Maharashtra State), the Member-Secretary (Director of MSBTE), and various *Ex-officio* (Class A) and Nominated (Class B) members.\n  * **Section 7A (Establishment of Governing Council):** Details the constitution of the Governing Council, which acts as the apex body to control and monitor matters pertaining to diploma-level technical education.",
+      "evidence": [
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "# Y  \nPRINTED IN INDIA BY THE MANAGER, GOVERNMENT CENTRAL PRESS, MUMBAI AND PUBLISHED BY THE DIRECTOR, GOVERNMENT PRINTING, STATIONERY AND PUBLICATION, MAHARASHTRA STATE, MUMBAI 400 004.  \n**2012**  \n**[** _Price : Rs. 18.00_ **]**  \n(i)  \n###### **1997 : Mah. XXXVIII ]**  \n###### **THE MAHARASHTRA STATE BOARD OF TECHNICAL EDUCATION ACT, 1997.**  \n###### **CONTENTS**  \nPREAMBLE.  \nSECTIONS.  \n####"
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "_(l)_ “ teacher ” means a member of the teaching staff (other than Principal or the Head of Institute of a Diploma Level Institution) recognised by the Board.  \n###### CHAPTER II  \nESTABLISHMENT AND CONSTITUTION OF THE<sup>2</sup> [GOVERNING COUNCIL AND BOARD]  \n> Establish- **3.** The Government shall, by notification in the _Official Gazette,_ ment of Board. establish for the purposes of this Ac"
+        },
+        {
+          "document": "XXXVIII",
+          "year": 1997,
+          "section": "Y",
+          "quote": "> Incorpora- **4.** The Board established under section 3 shall be a body corporate tion of Board. having perpetual succession and a common seal,and shall have power to contract, to acquire, hold and dispose of property, both movable and immovable, and to do all things necessary for the purpose of this Act and may sue and be sued by its corporate name.  \nConstitution 3[ **5.** ( _1_ ) The Board sh"
+        }
+      ]
+    },
+    {
+      "query": "I heard NEP introduced four-year undergraduate programmes. What do these uploaded documents say about that?",
+      "term_score": {
+        "query": "I heard NEP introduced four-year undergraduate programmes. What do these uploaded documents say about that?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer covers all key facts from the ideal answer regarding the flexible four-year undergraduate program, multiple entry/exit options with specific qualifications and credit requirements, re-entry conditions, and the use of Academic Bank of Credits, while also providing extensive additional, correct, and relevant details."
+      },
+      "response_text": "Based on the uploaded government policy documents, here is what is specified regarding the **Four-Year Undergraduate (UG) Programmes** introduced under the National Education Policy (NEP) 2020:\n\n### 1. **Implementation Timeline**\n* The three/four-year UG degree programmes are introduced with effect from the **Academic Year 2023-24**.\n* The fourth-year Honours / Honours with Research programme (Level 6.0) will commence from the **Academic Year 2026-27**.\n\n---\n\n### 2. **Credit Framework and Qualifications**\nThe programme is structured with a credit system across different levels, allowing students to exit at various stages with specific qualifications:\n\n| Level | Qualification Title | Minimum Credits | Maximum Credits | Semesters | Duration |\n| :--- | :--- | :---: | :---: | :---: | :---: |\n| **4.5** | **UG Certificate** | 40 | 44 | 2 | 1 Year |\n| **5.0** | **UG Diploma** | 80 | 88 | 4 | 2 Years |\n| **5.5** | **Three-Year Bachelor’s Degree** | 120 | 132 | 6 | 3 Years |\n| **6.0** | **Bachelor’s Degree - Honours** <br>_OR_<br>**Bachelor’s Degree - Honours with Research** | 160 | 176 | 8 | 4 Years |\n\n* *Note:* Credits offered per semester will range from a minimum of 20 to a maximum of 22.\n\n---\n\n### 3. **Multiple Entry and Exit Options**\nStudents have the flexibility to exit and re-enter the academic system under the following conditions:\n* **UG Certificate (Exit after 1 Year):** Awarded upon securing a minimum of 40 credits, provided the student completes an additional 4 credits in work-based vocational courses or an internship/apprenticeship during the summer vacation, alongside 6 credits from skill-based courses earned during the first two semesters.\n* **UG Diploma (Exit after 2 Years):** Awarded upon securing a minimum of 80 credits, provided they secure an additional 4 credits in skill-based vocational courses during the summer vacation.\n* **Three-Year UG Degree (Exit after 3 Years):** Awarded upon securing a minimum of 120 credits.\n* **Four-Year UG Degree (Honours / Honours with Research):** Awarded upon successfully completing all 8 semesters (160–176 credits) either continuously or with opted exits and re-entries.\n* **Re-entry / Lateral Entry:** Students who exit can re-enter the programme (at the same or a different institution) within **3 years of exit**, utilizing credits accumulated in the **Academic Bank of Credits (ABC)**. They must complete the entire degree within a maximum period of **7 years** from their initial date of admission.\n\n---\n\n### 4. **The Fourth Year (Honours vs. Honours with Research)**\n* **Honours with Research:** In the fourth year, students opting for the \"Honours with Research\" stream will work on a **12-credit research project or dissertation** in their respective Major Subject.\n* **Eligibility for Research Stream:** As per UGC guidelines, students must secure a **minimum CGPA of 7.5** (or a minimum of 75%) in their three-year degree to be eligible for the fourth-year Honours with Research programme.\n\n---\n\n### 5. **Institutional Guidelines for Offering the Fourth Year**\n* The fourth year of the UG programme will **not** be granted to colleges as \"natural growth.\" Affiliated colleges running only 3-year programmes must seek formal permission to extend their offerings to the 4th year.\n* **Automatic Permissions:** \n  * Colleges already permitted to run Post-Graduate (PG) programmes along with UG programmes in the same Major are automatically allowed to conduct the 4th-year UG Honours programme.\n  * Colleges with approved PG programmes and Ph.D. Research Centres are automatically allowed to start the 4th-year UG Honours with Research programme.\n* For colleges running only 3-year programmes, universities will establish mechanisms to facilitate their students' admission to the 4th-year honours programme in other colleges.",
+      "evidence": [
+        {
+          "document": "20-23",
+          "year": 2020,
+          "section": "**2. Credit Framework under Three/Four-Years UG Programme with Multiple Entry and Multiple Exit options:** > **Credit Framework**",
+          "quote": "### **Credit Framework**  \n|**Levels**|**Qualification**<br>|**Credit Req**|**uirements**|**Semester**||\n|---|---|---|---|---|---|\n||**Title**|**Minimum**|**Maximum**||**Year**|\n|**4.5**|UG<br>Certificate|40|44|2|1|\n|**5.0**|UG Diploma|80|88|4|2|\n|**5.5**|Three Year<br>Bachelor’s<br>Degree|120|132|6|3|\n|**6.0**<br>|Bachelor’s<br>Degree-<br>Honours<br>**Or**<br>Bachelor’s<br>Degree-<br>Honours with"
+        },
+        {
+          "document": "NEP-2022",
+          "year": 2020,
+          "section": "**__________________________________________________________**",
+          "quote": "# **__________________________________________________________**  \nVide G.R.  No. NEP-2022 /CR No. 09/VISHI-3 /शिकाना dated April 20, 2023, the Directive, covering the Credit distribution structure for Four Year UG Honours/ Honours with Research Degree Programme with Multiple Entry and Exit options, was issued. In continuation of Section 8 of this GR- ‘ Design of PG / Master’s Programmes’, the ill"
+        },
+        {
+          "document": "202212261620157508",
+          "year": 2020,
+          "section": "<u>शासन णनिय:</u>",
+          "quote": "|अ.क.|सणमती सदसयाच नाव|पदनाम|\n|---|---|---|\n|14.|<br> डॉ. शलद दवळािकर, प.णशकि सचालक, उचच णशकि,<br>महाराषर  राजय, पि|सदसय सणचव|  \n2. उपरोक्त सणमतीची कायगकक्षा खालीलप्रमािे असेल:-  \n- 1) णवणवध णवद्याशाखेतील पदवी अभ्यासक्रम तीन ते चार वषग कालावधीचे व पदव्युत्तर अभ्यासक्रम दोन ते एक वषग कालावधीचे करिे संदर्भात अंमलबजाविी.  \n- 2) बहुणवद्याशाखीय पदवी रचना व अभ्यासक्रम (Multiple Disciplinary) तसेच Multip"
+        }
+      ]
+    },
+    {
+      "query": "fees?",
+      "term_score": {
+        "query": "fees?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 3.0,
+        "justification": "The candidate correctly identifies the need for clarification and provides relevant examples, but it misses the specific contexts of fees mentioned within the available documents that the ideal answer provides."
+      },
+      "response_text": "Could you please clarify which specific document, policy, or topic you are interested in regarding fees? (For example, school fees, passport fees, RTI application fees, or court fees?) Once you provide more details, I will be happy to search the government documents and assist you!",
+      "evidence": []
+    },
+    {
+      "query": "What is the procedure for obtaining a passport in Maharashtra?",
+      "term_score": {
+        "query": "What is the procedure for obtaining a passport in Maharashtra?",
+        "matched_terms": 0,
+        "total_terms": 0,
+        "score": 0.0,
+        "passed": false
+      },
+      "judge_score": {
+        "score": 5.0,
+        "justification": "The candidate answer accurately states that the information is not available in the provided documents, aligns with the ideal answer, and provides valuable additional context explaining why and how to obtain a passport."
+      },
+      "response_text": "Based on the indexed government policy documents, the specific procedure for obtaining a passport in Maharashtra is **not available**. \n\nThe provided documents primarily consist of Maharashtra state-level acts, rules, and department circulars (such as the *Maharashtra State Board of Technical Education Act, 1997*, and state scholarship schemes for higher education abroad). \n\nBecause passports in India are a central subject administered by the **Ministry of External Affairs (MEA), Government of India**, rather than the state government of Maharashtra, the official guidelines and application procedures are not covered within these state-level policy documents. \n\nTo obtain a passport in Maharashtra, you would typically need to follow the central government's procedure by registering on the official **Passport Seva Portal** (https://www.passportindia.gov.in), filling out the online application, paying the fee, scheduling an appointment at a Passport Seva Kendra (PSK) or Post Office Passport Seva Kendra (POPSK) in Maharashtra, and undergoing police verification.",
+      "evidence": [
+        {
+          "document": "MAHENG/2009/35528",
+          "year": 2015,
+          "section": "**¨É½þÉ®úÉ¹]Åõ ¶ÉÉºÉxÉ ®úÉVÉ{ÉjÉ +ºÉÉvÉÉ®úhÉ ¦ÉÉMÉ +É`ö** > **¨É½þÉ®úÉ¹]Åõ Ê´ÉvÉÉxÉ¨ÉÆb÷³ýÉSÉä +ÊvÉÊxÉªÉ¨É ´É ®úÉVªÉ{ÉÉ±ÉÉÆxÉÒ |ÉJªÉÉÊ{ÉiÉ Eäò±Éä±Éä +vªÉÉnäù¶É ´É Eäò±Éä±Éä Ê´ÉÊxÉªÉ¨É +ÉÊhÉ Ê´ÉÊvÉ ´É xªÉÉªÉ Ê´É¦ÉÉMÉÉEòbÚ÷xÉ +É±Éä±ÉÒ Ê´ÉvÉäªÉEäò (<ÆOÉVÉÒ +xÉÖ´ÉÉnù).** > CHAPTER  I",
+          "quote": "( _o_ ) “Person of Indian Origin (PIO)” means a person who is a citizen of a country other than India but who, at any time, was a citizen of India; or in whose case either parent or any grandparent was a citizen of India by virtue of the provisions of Part II of the Constitution of India or under the Citizenship Act, 1955;  \n( _p_ ) “prescribed” means prescribed by rules made under this  \nAct;"
+        },
+        {
+          "document": "Selection-GR-13_10_2023_-202310131100027108",
+          "year": 2023,
+          "section": "महाराषर शासन > 2) पदवयुतर पदवी / पदवयुतर पदशवका अभयासकम:",
+          "quote": "मागणी क्र.डब्ल्यू-3, 2203 तंत्रशशक्षण-107 शशष्यवृत्त्या (00)(01) गुणवंत मुलामुलींना परदेशात उच्च शशक्षणासाठी शशष्यवृत्ती मंजूर करणे (2203 3551) (कायषक्रम)”  \nवरील खचासाठी संचालक, तंत्र शशक्षण, महाराष्र राज्य, मुंबई यांना प्राशधकृत करण्यात येत असून त्यांच्या कायालयातील आहरण व संशवतरण  अशधकारी असलेले लेखाशधकारी यांनी सदर रक्कम आहशरत करुन अदा करावी.  \n5.    सदर शासन शनणषय महाराष्र शासनाच्या www.mahar"
+        },
+        {
+          "document": "1 - Regarding providing procedures to bring more transparency in the recruitment process of teachers in non-agricultural schools",
+          "year": 2025,
+          "section": "रासन षनणशय:-",
+          "quote": "२.         िरील कायशपध्दतीचे कािेकोरपणे पालन करण्यात येईल, या अिीच्या अधीन रािून राज्य  षिद्यापीठाांमधील सध्या सुरू असलेली अध्यापकाांची षनिड प्रषक्रया पूणश करण्यास याद्वारे मान्यता देण्यात येत  आिे. तसेच, भषिष्ट्यात िोणारी राज्य षिद्यापीठाांमधील अध्यापकाांच्या षनिड प्रषक्रयेकषरता याच कायशपध्दतीचा अिलांब करण्यात यािा.  \n<u>www.maharashtra.gov.in</u> ३.       सदर र्ासन षनणशय मिाराष्ट्र र्ासनाच्या या"
+        }
+      ]
+    }
+  ]
+}
