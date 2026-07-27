@@ -50,7 +50,7 @@ Raw Text:
             client,
             model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.0),
+            config=types.GenerateContentConfig(temperature=0.0, thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL)),
         )
         formatted = getattr(response, "text", "") or ""
         if formatted and len(formatted.strip()) >= 50:
@@ -185,7 +185,7 @@ def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout
                     client,
                     model=os.getenv("SPEC_MODEL_NAME", "gemini-2.5-flash"),
                     contents=[uploaded_file, prompt],
-                    config=types.GenerateContentConfig(temperature=0.0),
+                    config=types.GenerateContentConfig(temperature=0.0, thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL)),
                 )
                 result = getattr(response, "text", "") or ""
                 if result and len(result.strip()) >= 100:

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import concurrent.futures
 from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
@@ -191,12 +192,20 @@ def execute_search_tool(
     model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
     
     query_vectors = []
-    for q_var in query_variations:
+    
+    def embed_single_variation(q_var):
         try:
             resp = embed_content_safe(gemini_client, model=model_name, contents=q_var, config=config)
-            query_vectors.append(resp.embeddings[0].values)
+            return resp.embeddings[0].values
         except Exception:
-            pass
+            return None
+            
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(embed_single_variation, query_variations))
+        
+    for res in results:
+        if res is not None:
+            query_vectors.append(res)
             
     if not query_vectors:
         return json.dumps({"error": "Failed to generate embeddings."}), []

@@ -55,6 +55,8 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "queued_prompt" not in st.session_state:
     st.session_state.queued_prompt = None
+if "query_cache" not in st.session_state:
+    st.session_state.query_cache = {}
 
 def queue_prompt(prompt_text: str) -> None:
     st.session_state.queued_prompt = prompt_text
@@ -132,42 +134,90 @@ if prompt:
         st.markdown(prompt)
 
     try:
-        # Step 1: Embedding & Search
-        with st.spinner("Assistant is processing the query..."):
-            retrieval_result = run_retrieval(
-                gemini_client=gemini_client,
-                qdrant_client=qdrant_client,
-                query=prompt,
-                collection_name="gov_docs",
-                chat_history=st.session_state.chat_history,
-            )
-
-        with st.chat_message("assistant", avatar="assets/logo.png"):
-            if isinstance(retrieval_result, dict):
-                if retrieval_result.get("status") in ("empty", "error"):
-                    response_text = retrieval_result.get("response_text", "An error occurred.")
-                    st.markdown(response_text)
-                else:
-                    answer_stream = retrieval_result.get("answer_stream")
-                    response_text = st.write_stream(answer_stream)
+        if prompt in st.session_state.query_cache:
+            cache_entry = st.session_state.query_cache[prompt]
+            if isinstance(cache_entry, str):
+                response_text = cache_entry
+                evidence_list = []
             else:
-                if retrieval_result is None:
-                    response_text = (
-                        "Sorry, I could not find an exact answer in the indexed government documents."
-                    )
-                    st.markdown(response_text)
-                else:
-                    response_text = st.write_stream(
-                        (chunk.text if hasattr(chunk, "text") else chunk) for chunk in retrieval_result if chunk
-                    )
+                response_text = cache_entry.get("response_text", "Error")
+                evidence_list = cache_entry.get("evidence", [])
 
+            with st.chat_message("assistant", avatar="assets/logo.png"):
+                st.markdown("⚡ *(Cached Response)*\n\n" + response_text)
+                if evidence_list:
+                    with st.expander("📚 View Sources"):
+                        for ev in evidence_list:
+                            st.markdown(f"**Document:** {ev.get('document', 'Unknown')}")
+                            if ev.get('year'):
+                                st.markdown(f"**Year:** {ev.get('year')}")
+                            st.markdown(f"**Section:** {ev.get('section', 'N/A')}")
+                            st.info(f'"{ev.get("quote", "")}..."')
+                            st.divider()
+            
             st.session_state.messages.append({"role": "assistant", "content": response_text})
-            st.session_state.chat_history.append({"role": "user", "text": prompt})
-            st.session_state.chat_history.append({"role": "model", "text": response_text})
-
             render_copy_button(response_text, key=f"live-{len(st.session_state.messages)}")
-
             _save_session()
+        else:
+            # Step 1: Embedding & Search
+            with st.status("Initializing Agent...", expanded=True) as status:
+                def update_status(msg):
+                    status.write(msg)
+                    
+                retrieval_result = run_retrieval(
+                    gemini_client=gemini_client,
+                    qdrant_client=qdrant_client,
+                    query=prompt,
+                    collection_name="gov_docs",
+                    chat_history=st.session_state.chat_history,
+                    status_callback=update_status,
+                )
+                status.update(label="Response generated!", state="complete", expanded=False)
+
+            with st.chat_message("assistant", avatar="assets/logo.png"):
+                evidence_list = []
+                if isinstance(retrieval_result, dict):
+                    if retrieval_result.get("status") in ("empty", "error"):
+                        response_text = retrieval_result.get("response_text", "An error occurred.")
+                        st.markdown(response_text)
+                    else:
+                        answer_stream = retrieval_result.get("answer_stream")
+                        response_text = st.write_stream(answer_stream)
+                        evidence_list = retrieval_result.get("evidence", [])
+                else:
+                    if retrieval_result is None:
+                        response_text = (
+                            "Sorry, I could not find an exact answer in the indexed government documents."
+                        )
+                        st.markdown(response_text)
+                    else:
+                        response_text = st.write_stream(
+                            (chunk.text if hasattr(chunk, "text") else chunk) for chunk in retrieval_result if chunk
+                        )
+                
+                if evidence_list:
+                    with st.expander("📚 View Sources"):
+                        for ev in evidence_list:
+                            st.markdown(f"**Document:** {ev.get('document', 'Unknown')}")
+                            if ev.get('year'):
+                                st.markdown(f"**Year:** {ev.get('year')}")
+                            st.markdown(f"**Section:** {ev.get('section', 'N/A')}")
+                            st.info(f'"{ev.get("quote", "")}..."')
+                            st.divider()
+
+                # Save to cache
+                st.session_state.query_cache[prompt] = {
+                    "response_text": response_text,
+                    "evidence": evidence_list
+                }
+                
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
+                st.session_state.chat_history.append({"role": "user", "text": prompt})
+                st.session_state.chat_history.append({"role": "model", "text": response_text})
+
+                render_copy_button(response_text, key=f"live-{len(st.session_state.messages)}")
+
+                _save_session()
 
     except Exception as e:
         st.error(_friendly_error(e))

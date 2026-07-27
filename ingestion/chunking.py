@@ -146,7 +146,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
                             client,
                             model=os.getenv("SPEC_MODEL_NAME", "gemini-2.5-flash"),
                             contents=tr_prompt,
-                            config=types.GenerateContentConfig(temperature=0.0),
+                            config=types.GenerateContentConfig(temperature=0.0, thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL)),
                         )
                         tr_text = getattr(tr_resp, "text", "") or ""
                     except Exception as exc:

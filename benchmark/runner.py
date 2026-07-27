@@ -12,7 +12,7 @@ from retrieval import run_retrieval
 logger = get_logger(__name__)
 
 
-BENCHMARK_FILE = Path("benchmark.json")
+BENCHMARK_FILE = Path("benchmark/benchmark.json")
 
 
 def load_benchmark_cases() -> List[Dict[str, Any]]:

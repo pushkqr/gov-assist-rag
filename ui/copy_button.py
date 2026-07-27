@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 def render_copy_button(text: str, key: str):
     """Render a small copy-to-clipboard button for a chat response."""
     escaped = text.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$").replace("</", "<\\/")
-    components.html(
+    st.html(
         f"""
         <style>body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; }}</style>
         <button id="copy-{key}" style="
@@ -39,6 +39,5 @@ def render_copy_button(text: str, key: str):
                 }});
             }});
         </script>
-        """,
-        height=32,
+        """
     )
