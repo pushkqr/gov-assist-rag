@@ -11,24 +11,29 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 - **Resilient Multi-Stage PDF Parsing Pipeline**:
   - **Stage 1: PyMuPDF4LLM**: High-speed (0.4–0.9s) native Markdown parser generating structural `#`, `##`, `###` headers for text PDFs.
   - **Stage 2: Google Cloud Document AI OCR**: High-accuracy OCR processor for scanned/image-based PDFs.
-  - **Stage 3: LLM Semantic Markdown Structuring**: Uses `Gemini 2.5 Flash` to automatically format raw OCR text into structured Markdown headers (`# Subject`, `## Section`, `### Subsection`), backed by a rule-based regex formatter fallback.
-  - **Stage 4: Gemini Vision API**: Multimodal extraction safety net with a **30-second hard timeout**.
+  - **Stage 3: LLM Semantic Markdown Structuring**: Uses a fast, lightweight LLM to automatically format raw OCR text into structured Markdown headers (`# Subject`, `## Section`, `### Subsection`), backed by a rule-based regex formatter fallback.
+  - **Stage 4: Multimodal Vision API**: Multimodal extraction safety net with a **30-second hard timeout**.
 - **High-Speed GCP Batch Translation**:
   - Automatically translates Devanagari/Marathi text and transliterates proper names (award winners, districts, departments) using **GCP Cloud Translation v3 (`translate_text`)**.
-  - Uses smart sub-batching (< 25,000 characters per call) to translate all Marathi passages in a section in **1 single API call (~1.2s)** with Gemini LLM fallback.
+  - Uses smart sub-batching (< 25,000 characters per call) to translate all Marathi passages in a section in **1 single API call (~1.2s)** with a generative LLM fallback.
 - **Hybrid API Routing (Vertex AI + AI Studio)**:
-  - **Dense & Sparse Embeddings**: Dedicated AI Studio client via `GEMINI_API_KEY` (`gemini-embedding-001`, 1536-dim).
+  - **Dense & Sparse Embeddings**: Dedicated AI Studio client via `GEMINI_API_KEY` (High-dimensional Dense Embeddings).
   - **Generation & LLM Judge**: Vertex AI.
   - **Translation & OCR**: GCP Cloud Translation v3 and GCP Document AI.
-- **Hybrid Search Engine**: Combines **Dense Vector Search** (`gemini-embedding-001`) with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
-- **True Agentic RAG Pipeline**: An autonomous function-calling Supervisor agent (`SPEC_MODEL_NAME`) routes queries, extracts keywords, and seamlessly escalates from fast lookups to deep analytical retrieval natively. Includes robust execution loops (`MAX_ITERATIONS = 3`) and graceful fallbacks.
+- **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
+- **True Agentic RAG Pipeline**: An autonomous function-calling Supervisor agent (Configurable Generative Model) routes queries, extracts keywords, and seamlessly escalates from fast lookups to deep analytical retrieval natively.
+  - **Massively Parallelized**: Uses `ThreadPoolExecutor` to execute multiple `search_policy_docs` tools and query variations concurrently, bypassing sequential execution bottlenecks.
+  - **Latency Optimized**: Explicitly enforces `thinking_level=MINIMAL` to eliminate hidden reasoning latency.
+  - **API Burst Limiter**: Built-in concurrency limiter (`max_workers=2`) and graceful error handling to prevent API `429 RESOURCE_EXHAUSTED` crashes.
 - **Automated Metadata Filtering**: Extracts implicit constraints (such as publication year or section titles) directly from queries using LLM filter parsing.
 - **Contextual Conversation Memory**: Rewrites follow-up questions into standalone queries while preventing topic-drift contamination from prior conversation history.
-- **Grounded Benchmark & Evaluation Harness**: 30-case dataset (`benchmark.json`) audited directly against corpus contents, combining term-match scoring and a balanced LLM judge evaluator to output detailed performance reports and letter grades (A–D).
+- **Grounded Benchmark & Evaluation Harness**: 30-case dataset (`benchmark/benchmark.json`) audited directly against corpus contents, combining term-match scoring and a balanced LLM judge evaluator to output detailed performance reports and letter grades (A–D).
 - **Streamlit Control Room UI**: Streamlit-based dark theme UI styled with **Inter** and **JetBrains Mono**, featuring:
+  - **Agent Transparency Streaming**: Real-time `st.status` widget that live-streams the Agent's thought processes (e.g., "Analyzing query intent...", "Searching knowledge base...") directly to the user without technical jargon.
+  - **Source Citations Expander**: A dedicated `st.expander` rendering the exact documents, sections, and verbatim quotes used as evidence for the generated answer.
+  - **Instant Query Caching**: Intercepts exact repeated queries in the UI via `st.session_state` to render instant answers with a "⚡ (Cached Response)" badge.
   - **One-Click Copy**: Native, iframe-free copy buttons dynamically injected via `st.html()`.
   - **Session Persistence**: Automatic saving and restoration of chat history across page refreshes (`temp/chat_session.json`).
-  - **Live Agentic Status**: Real-time loading spinners indicating the Supervisor's execution loop state.
 - **Automated Unit Test Suite**: 23 unit tests in `tests/` covering parsing, sub-batch translation, API routing, ingestion state, retrieval logic, and evaluation metrics.
 
 ---
