@@ -1,28 +1,5 @@
 [
   {
-    "query": "What is the purpose of the Architects Act, 1972?",
-    "expected_tags": ["Architects Act 1972", "Purpose", "Registration"],
-    "expected_answer": "The Act provides for the registration of architects and matters connected therewith."
-  },
-  {
-    "query": "Who constitutes the Council of Architecture under the Architects Act?",
-    "expected_tags": [
-      "Architects Act 1972",
-      "Council of Architecture",
-      "Constitution"
-    ],
-    "expected_answer": "The Central Government constitutes the Council of Architecture by notification in the Official Gazette."
-  },
-  {
-    "query": "Where is the head office of the Council of Architecture located?",
-    "expected_tags": [
-      "Architects Act 1972",
-      "Council of Architecture",
-      "Head Office"
-    ],
-    "expected_answer": "The head office of the Council is at Delhi or at another place specified by the Central Government through notification."
-  },
-  {
     "query": "What does CAP stand for in the Maharashtra Unaided Private Professional Educational Institutions Act?",
     "expected_tags": ["Admission Act 2015", "CAP", "Definitions"],
     "expected_answer": "CAP stands for Centralized Admission Process, the centralized admission process carried out by the competent authority through a single-window system for admissions to professional courses."
@@ -37,49 +14,6 @@
     "expected_answer": "The Competent Authority is the Commissioner of State CET appointed by the Government to conduct CET through the Centralized Admission Process for admissions into private professional educational institutions."
   },
   {
-    "query": "Which chapter of the Maharashtra State Board of Technical Education Act deals with affiliation and autonomous status?",
-    "expected_tags": ["MSBTE Act 1997", "Affiliation", "Autonomous Status"],
-    "expected_answer": "Chapter IV deals with permission, affiliation, conferment of autonomous status, equivalence, and closure of institutions."
-  },
-  {
-    "query": "Who has the power to issue directions to the Maharashtra State Board of Technical Education?",
-    "expected_tags": ["MSBTE Act 1997", "Government Directions", "Board"],
-    "expected_answer": "The Government has the power to issue directions to the Board."
-  },
-  {
-    "query": "How many scholarship beneficiaries are available for postgraduate degree/diploma students under the 2023-24 overseas scholarship GR?",
-    "expected_tags": [
-      "Overseas Scholarship 2023-24",
-      "Beneficiaries",
-      "Postgraduate"
-    ],
-    "expected_answer": "From the academic year 2023-24 onward, the number of beneficiaries for postgraduate degree/postgraduate diploma programmes was increased from 10 to 30."
-  },
-  {
-    "query": "Why did the number of scholarship beneficiaries become 40 under the overseas scholarship scheme?",
-    "expected_tags": [
-      "Overseas Scholarship 2023-24",
-      "Beneficiaries",
-      "Reasoning"
-    ],
-    "expected_answer": "The total became 40 because postgraduate degree/postgraduate diploma beneficiaries were increased from 10 to 30 while the Ph.D. quota remained 10."
-  },
-  {
-    "query": "I want information about GST registration for a private company.",
-    "expected_tags": ["Negative", "Out of Scope"],
-    "expected_answer": "Sorry, I couldn't find any information about GST registration for private companies in the uploaded Acts, Government Resolutions, notifications, or circulars."
-  },
-  {
-    "query": "Why was the School Connect 2.0 campaign introduced by the Higher and Technical Education Department?",
-    "expected_tags": ["School Connect 2.0", "NEP 2020", "Awareness"],
-    "expected_answer": "The campaign was introduced to create awareness among students about student-centric educational changes under the National Education Policy (NEP) 2020 and to provide continuous guidance before they enter higher education."
-  },
-  {
-    "query": "Which student groups are expected to benefit from the School Connect 2.0 campaign?",
-    "expected_tags": ["School Connect 2.0", "Target Students", "NEP 2020"],
-    "expected_answer": "The circular focuses on students studying in Classes 9, 10 and 12, particularly those preparing to transition into higher education."
-  },
-  {
     "query": "Name three national initiatives that universities are instructed to inform students about under School Connect 2.0.",
     "expected_tags": [
       "School Connect 2.0",
@@ -91,41 +25,6 @@
     "expected_answer": "The circular includes initiatives such as Apprenticeship Embedded Degree Programme (AEDP), SWAYAM, Vidyalaxmi Loan Scheme, SATHEE, Internship, IKS, Mahaswayam and PM-USP."
   },
   {
-    "query": "What is the objective of the SATHEE portal mentioned in the School Connect 2.0 circular?",
-    "expected_tags": ["School Connect 2.0", "SATHEE", "Competitive Exams"],
-    "expected_answer": "The SATHEE portal is intended to provide quality learning support for students preparing for JEE, NEET and other entrance examinations, especially those who cannot afford expensive coaching."
-  },
-  {
-    "query": "According to the 28 February 2025 Government Resolution, why was a new recruitment procedure introduced for teachers in non-agricultural universities?",
-    "expected_tags": ["Teacher Recruitment", "Transparency", "UGC"],
-    "expected_answer": "The procedure was introduced to make the recruitment process more transparent, impartial and balanced while considering directions received from the Chancellor's office and the applicable UGC Regulations."
-  },
-  {
-    "query": "Under the new teacher recruitment procedure, what two major aspects are considered together while selecting candidates?",
-    "expected_tags": [
-      "Teacher Recruitment",
-      "Selection Process",
-      "Academic Credentials",
-      "Interview"
-    ],
-    "expected_answer": "The revised procedure considers both the candidate's academic credentials and interview performance together during the selection process."
-  },
-  {
-    "query": "Why was a Steering Committee established under the NEP-2020 Government Resolution dated 26 December 2022?",
-    "expected_tags": ["NEP 2020", "Steering Committee", "Implementation"],
-    "expected_answer": "The Steering Committee was established to review implementation of the NEP-2020 subcommittee recommendations, resolve implementation challenges, suggest corrective measures and provide guidance."
-  },
-  {
-    "query": "The NEP documents mention a Steering Committee several times. What is its primary role across these Government Resolutions?",
-    "expected_tags": [
-      "NEP 2020",
-      "Steering Committee",
-      "Implementation",
-      "Multi-document"
-    ],
-    "expected_answer": "Across the NEP Government Resolutions, the Steering Committee is responsible for reviewing implementation of recommendations, addressing practical difficulties, issuing guidance and helping ensure uniform implementation of reforms across the State."
-  },
-  {
     "query": "What is the purpose of the revised credit framework Government Resolution issued on 16 May 2023?",
     "expected_tags": [
       "NEP 2020",
@@ -133,11 +32,6 @@
       "Postgraduate Programmes"
     ],
     "expected_answer": "The Government Resolution issues revised guidelines for the curriculum and credit framework relating to exit options, one-year postgraduate programmes and two-year postgraduate programmes for implementation from the academic year 2023-24."
-  },
-  {
-    "query": "Does any of the uploaded documents specify the salary of Assistant Professors in Maharashtra universities?",
-    "expected_tags": ["Negative", "Out of Scope"],
-    "expected_answer": "Sorry, I couldn't find any document in the uploaded collection that specifies the salary or pay scale of Assistant Professors."
   },
   {
     "query": "According to the Government Resolution dated 30 June 2023, why were government approvals issued to unaided professional institutions for the academic year 2023-24?",
@@ -150,35 +44,7 @@
     "expected_answer": "Government approval was granted because the All India Council for Technical Education (AICTE) had granted approvals and the Director of Technical Education had recommended the proposals for the academic year 2023-24."
   },
   {
-    "query": "What types of proposals are covered by the Government Resolution on AICTE approvals for unaided institutions?",
-    "expected_tags": [
-      "AICTE Approval",
-      "New Institutions",
-      "Increase Intake",
-      "New Courses",
-      "Annexures"
-    ],
-    "expected_answer": "The Government Resolution covers proposals such as establishing new unaided institutions, starting new courses, increasing or decreasing intake capacity, closing courses or divisions, introducing programmes in Marathi, changes in institution names, changes in programme names, and other approvals listed in Annexures A to J."
-  },
-  {
-    "query": "The NEP implementation documents repeatedly refer to implementation from the academic year 2023-24. Which major reforms are scheduled for implementation during that academic year?",
-    "expected_tags": [
-      "NEP 2020",
-      "2023-24",
-      "Curriculum Framework",
-      "Credit Framework",
-      "School Connect 2.0",
-      "Multi-document"
-    ],
-    "expected_answer": "Across the uploaded NEP documents, the academic year 2023-24 marks implementation of revised curriculum and credit frameworks, revised postgraduate credit guidelines including exit options, and student awareness initiatives such as the School Connect campaign."
-  },
-  {
-    "query": "What is the objective of the revised curriculum and credit framework issued under NEP 2020?",
-    "expected_tags": ["NEP 2020", "Curriculum Framework", "Credit Framework"],
-    "expected_answer": "The objective is to provide a flexible, holistic, and student-centric higher education system with multiple entry and exit options, enhanced employability through industry-academia linkages, and a learning outcomes-based approach."
-  },
-  {
-    "query": "I'm planning to start a new engineering college. Which uploaded document should I look at first?",
+    "query": "I'm planning to start a new engineering college and need to know about the government approval process after AICTE grants approval. Which uploaded document should I look at first?",
     "expected_tags": ["AICTE Approval", "New Institutions", "Recommendation"],
     "expected_answer": "The most relevant document is the Government Resolution dated 30 June 2023 regarding approvals for unaided professional institutions. It covers government approval for new institutions and related proposals based on AICTE approvals."
   },
@@ -198,18 +64,8 @@
     "expected_answer": "Refer to the Maharashtra State Board of Technical Education Act, 1997, particularly the chapter dealing with the establishment and constitution of the Board."
   },
   {
-    "query": "I heard NEP introduced four-year undergraduate programmes. What do these uploaded documents say about that?",
-    "expected_tags": ["NEP 2020", "UG Programmes", "Credit Framework"],
-    "expected_answer": "The documents outline a flexible four-year undergraduate programme with multiple entry and exit options (Certificate after 1 year, Diploma after 2 years, Bachelor's degree after 3 years, and Honours/Honours with Research after 4 years). It details credit distribution for major, minor, and vocational courses, and allows students to re-enter within three years of exiting using the Academic Bank of Credits."
-  },
-  {
     "query": "fees?",
     "expected_tags": ["Lazy Query", "Clarification"],
     "expected_answer": "Could you clarify what you mean by 'fees'? The uploaded documents discuss admission and fee regulation for unaided professional educational institutions, fee concessions under the Girls Free Education Government Resolution, scholarship approvals, and fee-related provisions in other contexts."
-  },
-  {
-    "query": "What is the procedure for obtaining a passport in Maharashtra?",
-    "expected_tags": ["Negative", "Out of Scope"],
-    "expected_answer": "Sorry, I couldn't find any information about passport application procedures in the uploaded Acts, Government Resolutions, notifications, or circulars."
   }
 ]

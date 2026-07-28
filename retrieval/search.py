@@ -6,41 +6,41 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
 from google.genai import types
-from qdrant_client import QdrantClient, models
-
-from core.embedding import get_sparse_model
+import weaviate
+import weaviate.classes as wvc
 from retrieval.query import generate_query_variations
 from retrieval.support import extract_response_text, build_context_text
 from core.utils import embed_content_safe, generate_content_safe
+from core.log_config import get_logger
+
+logger = get_logger(__name__)
 
 
-# Tool Declaration for Agent Supervisor
-search_policy_docs_tool = types.Tool(
-    function_declarations=[
-        types.FunctionDeclaration(
-            name="search_policy_docs",
-            description="Search indexed government policy documents, circulars, acts, and rules for factual answers.",
-            parameters=types.Schema(
-                type=types.Type.OBJECT,
-                properties={
-                    "query": types.Schema(
-                        type=types.Type.STRING,
-                        description="The search query or keywords to look up in government documents.",
-                    ),
-                    "year": types.Schema(
-                        type=types.Type.INTEGER,
-                        description="Optional publication year filter (e.g. 2025, 2020, 2019, 1961).",
-                    ),
-                    "fast_mode": types.Schema(
-                        type=types.Type.BOOLEAN,
-                        description="Set true for fast search, false for deep analytical multi-query search.",
-                    ),
+search_policy_docs_tool = {
+    "type": "function",
+    "function": {
+        "name": "search_policy_docs",
+        "description": "Search indexed government policy documents, circulars, acts, and rules for factual answers.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query or keywords to look up in government documents.",
                 },
-                required=["query"],
-            ),
-        )
-    ]
-)
+                "year": {
+                    "type": "integer",
+                    "description": "Optional publication year filter (e.g. 2025, 2020, 2019, 1961).",
+                },
+                "fast_mode": {
+                    "type": "boolean",
+                    "description": "Set true for fast search, false for deep analytical multi-query search.",
+                },
+            },
+            "required": ["query"],
+        },
+    }
+}
 
 
 def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
@@ -58,9 +58,13 @@ def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
         if not clean_sec:
             clean_sec = "Section not available"
 
+        doc_number = payload.get("doc_number", "Unknown document")
+        title = payload.get("document_title", "")
+        doc_label = f"{title} ({doc_number})" if title else doc_number
+        
         evidence.append(
             {
-                "document": payload.get("doc_number", "Unknown document"),
+                "document": doc_label,
                 "year": payload.get("year"),
                 "section": clean_sec,
                 "quote": quote,
@@ -105,73 +109,48 @@ Passages:
 
 def run_hybrid_search(
     gemini_client: genai.Client,
-    qdrant_client: QdrantClient,
+    weaviate_client: Any,
     query_vectors: List[List[float]],
     query_variations: List[str],
     standalone_query: str,
     collection_name: str,
-    query_filter: Optional[models.Filter],
-    fast_path: bool,
+    year_filter: Optional[int],
+    fast_mode: bool,
 ) -> Tuple[List[Any], List[Any], List[Dict[str, Any]]]:
     """Execute hybrid dense+BM25 search with RRF fusion, optional reranking, and evidence extraction."""
-    limit = 4 if fast_path else 25
-    rerank_limit = 3 if fast_path else 12
+    limit = 15 if fast_mode else 25
+    rerank_limit = 15 if fast_mode else 12
 
-    sparse_model = get_sparse_model()
-    query_vector = query_vectors[0]
-
-    # Main query sparse vector
-    main_sparse_emb = list(sparse_model.embed([standalone_query]))[0]
-    main_sparse_vec = models.SparseVector(
-        indices=main_sparse_emb.indices.tolist(),
-        values=main_sparse_emb.values.tolist(),
-    )
+    query_vector = query_vectors[0] if query_vectors else []
 
     has_keywords = bool(re.search(r"\b\d+[-/]?\d*\b|\b(section|circular|notification|act|rule|form|gst|hsn)\b", standalone_query, re.IGNORECASE))
-    dense_limit = limit if has_keywords else int(limit * 1.5)
-    bm25_limit = int(limit * 2.5) if has_keywords else limit
-
-    # Build prefetches across all query variations (Dense + BM25)
-    prefetch = []
-    for idx, q_var in enumerate(query_variations):
-        q_vec = query_vectors[idx] if idx < len(query_vectors) else query_vectors[0]
-        sparse_emb = list(sparse_model.embed([q_var]))[0]
-        sparse_vec = models.SparseVector(
-            indices=sparse_emb.indices.tolist(),
-            values=sparse_emb.values.tolist(),
-        )
-        prefetch.append(models.Prefetch(query=q_vec, using="dense", limit=dense_limit, filter=query_filter))
-        prefetch.append(models.Prefetch(query=sparse_vec, using="bm25", limit=bm25_limit, filter=query_filter))
-
-    if has_keywords:
-        prefetch.append(models.Prefetch(query=main_sparse_vec, using="bm25", limit=bm25_limit, filter=query_filter))
-
-    search_response = qdrant_client.query_points(
-        collection_name=collection_name,
-        prefetch=prefetch,
-        query=models.FusionQuery(fusion=models.Fusion.RRF),
+    
+    class DummyResult:
+        def __init__(self, props):
+            self.payload = props
+    
+    weaviate_collection = weaviate_client.collections.get("GovDocs")
+    
+    # Determine weight for alpha fusion (0 = pure keyword BM25, 1 = pure semantic dense vector)
+    alpha = 0.5 if has_keywords else 0.75
+    
+    weaviate_filters = None
+    if year_filter:
+        weaviate_filters = wvc.query.Filter.by_property("year").equal(year_filter)
+    
+    search_res = weaviate_collection.query.hybrid(
+        query=standalone_query,
+        vector=query_vector,
+        alpha=alpha,
         limit=limit,
+        filters=weaviate_filters
     )
-    current_results = search_response.points
-
-    # Fallback: if strict metadata filter yielded no results, retry without filter
-    if not current_results and query_filter is not None:
-        prefetch_no_filter = [
-            models.Prefetch(query=query_vector, using="dense", limit=limit),
-            models.Prefetch(query=main_sparse_vec, using="bm25", limit=limit),
-        ]
-        search_response = qdrant_client.query_points(
-            collection_name=collection_name,
-            prefetch=prefetch_no_filter,
-            query=models.FusionQuery(fusion=models.Fusion.RRF),
-            limit=limit,
-        )
-        current_results = search_response.points
+    current_results = [DummyResult(obj.properties) for obj in search_res.objects]
 
     if not current_results:
         return [], [], []
 
-    if fast_path:
+    if fast_mode:
         top_results = current_results[:rerank_limit]
     else:
         top_results = rerank_results(gemini_client, current_results, standalone_query, rerank_limit)
@@ -181,19 +160,19 @@ def run_hybrid_search(
 
 def execute_search_tool(
     gemini_client: genai.Client,
-    qdrant_client: QdrantClient,
+    weaviate_client: Any,
     collection_name: str,
     query: str,
     year: Optional[int] = None,
     fast_mode: bool = False,
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """Execute the search tool and format results for the LLM."""
-    # Build variations
+    query_variations = [query]
+    logger.info("Generating query variations...")
     query_variations = [query]
     if not fast_mode:
         query_variations = generate_query_variations(gemini_client, query)
 
-    # Embed query variations
     config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
     model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
     
@@ -201,14 +180,18 @@ def execute_search_tool(
     
     def embed_single_variation(q_var):
         try:
+            logger.info(f"Embedding variation: {q_var}")
             resp = embed_content_safe(gemini_client, model=model_name, contents=q_var, config=config)
             return resp.embeddings[0].values
-        except Exception:
+        except Exception as e:
+            logger.error(f"Embedding failed: {e}")
             return None
             
+    logger.info("Starting threadpool for embeddings...")
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(embed_single_variation, query_variations))
         
+    logger.info("Finished threadpool for embeddings.")
     for res in results:
         if res is not None:
             query_vectors.append(res)
@@ -216,20 +199,14 @@ def execute_search_tool(
     if not query_vectors:
         return json.dumps({"error": "Failed to generate embeddings."}), []
 
-    query_filter = None
-    if year:
-        query_filter = models.Filter(must=[models.FieldCondition(key="year", match=models.MatchValue(value=year))])
-
-    # Run hybrid search
     search_results, top_results, evidence = run_hybrid_search(
-        gemini_client, qdrant_client, query_vectors, query_variations,
-        query, collection_name, query_filter, fast_mode
+        gemini_client, weaviate_client, query_vectors, query_variations,
+        query, collection_name, year, fast_mode
     )
 
     if not evidence:
         return json.dumps({"results": "No relevant documents found. Try modifying the keywords or changing fast_mode to false."}), []
 
-    # Format for LLM
     context_text = build_context_text(top_results)
     
     result_dict = {

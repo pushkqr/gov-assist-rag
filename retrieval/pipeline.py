@@ -5,44 +5,13 @@ from typing import Any, Dict, List, Optional, Callable
 
 from google import genai
 from google.genai import types
-from qdrant_client import QdrantClient
+from cerebras.cloud.sdk import Cerebras
 
 from core.log_config import get_logger
 from retrieval.search import search_policy_docs_tool, execute_search_tool
 
 logger = get_logger(__name__)
 
-_QUERY_CACHE: Dict[str, Dict[str, Any]] = {}
-CACHE_FILE_PATH = "scratch/mimir_cache.json"
-
-def load_cache():
-    global _QUERY_CACHE
-    if os.path.exists(CACHE_FILE_PATH):
-        try:
-            with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
-                raw_cache = json.load(f)
-                for k, v in raw_cache.items():
-                    v["answer_stream"] = StreamingResponse(v["response_text"])
-                    _QUERY_CACHE[k] = v
-        except Exception as e:
-            logger.error(f"Failed to load cache: {e}")
-
-def save_cache():
-    try:
-        serializable_cache = {}
-        for k, v in _QUERY_CACHE.items():
-            serializable_cache[k] = {
-                "status": v["status"],
-                "response_text": v["response_text"],
-                "evidence": v["evidence"]
-            }
-        os.makedirs(os.path.dirname(CACHE_FILE_PATH), exist_ok=True)
-        with open(CACHE_FILE_PATH, "w", encoding="utf-8") as f:
-            json.dump(serializable_cache, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.error(f"Failed to save cache: {e}")
-
-load_cache()
 
 class StreamingResponse:
     """Wraps answer stream to support multiple UI iteration replays."""
@@ -65,7 +34,13 @@ class StreamingResponse:
             return
 
         for chunk in self._answer_stream:
-            text = getattr(chunk, "text", None) or str(chunk)
+            text = None
+            if hasattr(chunk, "text"):
+                text = chunk.text
+            elif hasattr(chunk, "choices") and chunk.choices:
+                delta = chunk.choices[0].delta
+                text = getattr(delta, "content", None)
+            
             if text:
                 self.captured_parts.append(text)
                 yield text
@@ -78,168 +53,138 @@ class StreamingResponse:
         return "".join(self.captured_parts)
 
 
+_MODEL_COUNTER = 0
+
 def run_retrieval(
     gemini_client: genai.Client,
-    qdrant_client: QdrantClient,
-    query: str,
+    cerebras_client: Cerebras,
+    weaviate_client: Optional[Any] = None,
+    query: str = "",
     collection_name: str = "gov_docs",
     chat_history: Optional[List[Dict[str, str]]] = None,
     status_callback: Optional[Callable[[str], None]] = None,
 ) -> Dict[str, Any]:
-    """Execute true agentic retrieval using Gemini Function Calling."""
+    """Execute direct Weaviate search followed by 1-shot Cerebras synthesis (Round-Robin load balanced)."""
+    global _MODEL_COUNTER
+    
     if chat_history is None:
         chat_history = []
         
     if status_callback:
         status_callback("Analyzing query intent...")
 
-    cache_key = f"{collection_name}:{query.strip().lower()}"
-    if cache_key in _QUERY_CACHE:
-        cached_result = _QUERY_CACHE[cache_key]
-        if cached_result.get("status") == "success":
-            return cached_result
-        del _QUERY_CACHE[cache_key]
-
-    system_instruction = (
-        "You are an expert Government Policy Assistant. "
-        "You must answer user questions accurately based ONLY on the provided government documents. "
-        "1. If the user's query is highly ambiguous (e.g. just a single word like 'leave?' or 'fees?'), DO NOT call the search tool. Directly ask the user to clarify which document or topic they are interested in. "
-        "2. Otherwise, you must use the `search_policy_docs` tool to retrieve factual evidence before answering. "
-        "3. You can set `fast_mode=True` for simple lookups, or `fast_mode=False` for deep analytical searches. If fast mode fails to find relevant information, call the tool again with `fast_mode=False` or different keywords. "
-        "4. DO NOT loop endlessly. If you have searched multiple times and cannot find the exact answer, STOP searching and state that the specific information is not available in the indexed documents. "
-        "5. Always synthesize your final answer clearly, citing the sections and documents returned by the search tool. "
-        "6. If the search tool returns a technical error (e.g. rate limits, 429, or API exhaustion), DO NOT output technical JSON or error codes. Gracefully inform the user that the knowledge base is temporarily busy and ask them to try again in a few seconds."
-    )
-
-    history_contents = []
-    for msg in chat_history:
-        role = "user" if msg["role"] == "user" else "model"
-        history_contents.append(types.Content(role=role, parts=[types.Part.from_text(text=msg["text"])]))
-
-    chat = gemini_client.chats.create(
-        model=os.getenv("SPEC_MODEL_NAME", "gemini-2.5-flash"),
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            tools=[search_policy_docs_tool],
-            temperature=0.0,
-        ),
-        history=history_contents if history_contents else None,
-    )
-
-    evidence_collected = []
-    
-    # 1. Send the initial query to the Agent
+    if status_callback:
+        status_callback("Searching knowledge base...")
+        
     try:
-        response = chat.send_message(query)
+        def search_tool_wrapper(query: str, year: Optional[int] = None, fast_mode: bool = False) -> str:
+            logger.info(f"LLM called search_tool(query='{query}', year={year}, fast_mode={fast_mode})")
+            results, ev = execute_search_tool(gemini_client, weaviate_client, collection_name, query, year, fast_mode)
+            evidence.extend(ev)
+            return results
+
+        evidence = []
+        search_json = search_tool_wrapper(query, year=None, fast_mode=True)
     except Exception as exc:
+        logger.error(f"Search tool failed: {exc}")
         return {
             "status": "error",
-            "response_text": f"Agent initiation failed: {exc}",
-            "answer_stream": None,
+            "response_text": f"Search failed: {exc}",
+            "answer_stream": StreamingResponse(f"Search failed: {exc}"),
             "evidence": [],
         }
 
-    # 2. Agent Execution Loop
-    MAX_ITERATIONS = 3
-    for iteration in range(MAX_ITERATIONS):
-        if response.function_calls:
-            if status_callback:
-                topics = [c.args.get("query") for c in response.function_calls if c.name == "search_policy_docs" and c.args and c.args.get("query")]
-                if topics:
-                    status_callback(f"Searching knowledge base for: {', '.join(topics)}...")
-                else:
-                    status_callback("Searching knowledge base...")
-                    
-            function_responses = []
-            
-            def execute_single_call(function_call):
-                if function_call.name == "search_policy_docs":
-                    args = function_call.args or {}
-                    t_query = args.get("query", query)
-                    t_year = args.get("year")
-                    t_fast = args.get("fast_mode", False)
-                    
-                    logger.info(f"Agent executing search_policy_docs(query={t_query}, year={t_year}, fast_mode={t_fast})")
-                    try:
-                        tool_result_json, tool_evidence = execute_search_tool(
-                            gemini_client, qdrant_client, collection_name,
-                            query=t_query, year=t_year, fast_mode=t_fast
-                        )
-                        return tool_result_json, tool_evidence
-                    except Exception as e:
-                        logger.error(f"Search tool failed: {e}")
-                        return json.dumps({"error": str(e)}), []
-                return None, []
+    context_text = "Retrieved Evidence:\n"
+    for idx, doc in enumerate(evidence):
+        context_text += f"Document: {doc.get('document')} Section: {doc.get('section')}\nQuote: {doc.get('quote')}\n\n"
 
-            # Execute all function calls concurrently (limit to 2 workers to prevent API rate limits)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-                results = list(executor.map(execute_single_call, response.function_calls))
+    _MODEL_COUNTER += 1
+    target_model = "gpt-oss-120b" if _MODEL_COUNTER % 2 != 0 else "gemma-4-31b"
+    logger.info(f"Selected model {target_model} for request #{_MODEL_COUNTER}")
 
-            # Gather responses in the exact order they were called
-            for call, (tool_result_json, tool_evidence) in zip(response.function_calls, results):
-                if tool_result_json:
-                    evidence_collected.extend(tool_evidence)
-                    function_responses.append(
-                        types.Part.from_function_response(
-                            name=call.name,
-                            response={"result": json.loads(tool_result_json)}
-                        )
-                    )
-            
-            try:
-                # Send ALL tool results back to the Agent in a single turn
-                if function_responses:
-                    response = chat.send_message(function_responses)
-                else:
-                    break
-            except Exception as exc:
-                return {
-                    "status": "error",
-                    "response_text": f"Tool feedback failed: {exc}",
-                    "answer_stream": None,
-                    "evidence": evidence_collected,
-                }
-        else:
-            # Model generated a final text response, break out of tool loop
-            if status_callback:
-                status_callback("Synthesizing final answer from retrieved sources...")
-            break
+    if status_callback:
+        status_callback(f"Synthesizing answer using {target_model}...")
 
-    # If the model still returned a function call after MAX_ITERATIONS (infinite loop guard),
-    # force it to generate a final text answer based on context so far.
-    if response.function_calls:
-        try:
-            response = chat.send_message(
-                "SYSTEM: Maximum search iterations reached. Please synthesize a final answer based on the context retrieved so far. If you cannot find the answer, state that the specific information is not found in the documents. Do NOT call the search tool again."
-            )
-        except Exception:
-            pass
+    system_prompt = (
+        "You are Mimir, an elite Government Policy AI Assistant serving as an instant, reliable decision-support engine for government officials, administrators, and policy experts. Your answers may inform real bureaucratic or legal decisions, so precision and fact-grounding take absolute priority over completeness or fluency.\n\n"
+        "## Input Format\n"
+        "You will receive a user question along with pre-retrieved context, injected as `Context: [Retrieved Evidence...]`. This context has already been pulled from the indexed corpus (Maharashtra State GRs, Education Policies, CCS Rules, Acts) by an upstream retrieval system. You do not have a search tool and cannot request additional retrieval — you must work entirely from what is given to you in this single pass.\n\n"
+        "## Core Directive: Strict Fact-Grounding\n"
+        "- Answer using ONLY the information present in the provided context. Never supplement with outside knowledge, training data, or general assumptions about government policy, even if you believe you know the answer.\n"
+        "- If the user's query is highly ambiguous (e.g., a single word like 'fees?' or 'leave?'), DO NOT attempt to summarize all context. Instead, explicitly ask the user to clarify what specific information they are looking for.\n"
+        "- If the context fully answers the question, provide a complete, definitive answer.\n"
+        "- If the context partially answers the question, answer only the part that is supported, and explicitly flag what remains unaddressed.\n"
+        "- If the user asks which document they should refer to, synthesize a list of ALL highly relevant documents present in the context and briefly summarize what each provides, rather than just picking one.\n"
+        "- If the context does not contain the answer, state plainly that the information is not available in the retrieved documents. Do not guess, infer beyond what's written, or pad the response with plausible-sounding filler. A clear \"not found\" is more valuable to a government official than a confident hallucination.\n"
+        "- Never fabricate a document name, section number, or citation. Cite only what actually appears in the provided context.\n\n"
+        "## Citation Requirements\n"
+        "- The document names provided in the context (e.g., 'MAHENG/2009/35528', 'Manyata-2023...', or Roman numerals) may be internal administrative codes rather than full descriptive titles. Do not refuse to answer simply because these codes don't perfectly match the human-readable name of an Act or Resolution in the user's query. If the text of the context contains the answer, provide the answer and cite the administrative code.\n"
+        "- Every factual claim must be tied to its source using the document name and section/clause as given in the context (e.g., \"According to GR-Unaided-30-June-2023, Section 2...\").\n"
+        "- If multiple documents are relevant, cite each distinctly rather than blending them into an unattributed summary.\n"
+        "- If the context includes conflicting information across documents, do not silently pick one. Surface the conflict, cite both sources, and note the discrepancy so the official can resolve it with appropriate authority.\n"
+        "- If a section or document name isn't clearly identifiable in the context, cite what identifying information is available (e.g., document title alone) rather than omitting citation entirely.\n\n"
+        "## Formatting\n"
+        "- Lead with the direct answer, not a preamble.\n"
+        "- Use bullet points or numbered lists when the answer involves multiple provisions, conditions, steps, or eligibility criteria — bureaucratic content is often enumerable and should be presented that way.\n"
+        "- Use short paragraphs for narrative or explanatory context where a list would be unnatural.\n"
+        "- Bold key terms, figures, deadlines, or conditions when it aids fast scanning by a busy official.\n"
+        "- Keep structure clean and scannable; avoid dense unbroken text blocks.\n\n"
+        "## Tone\n"
+        "- Professional, objective, and definitive, as befits an assistant used for decisions with real consequences. This doesn't mean cold — you can acknowledge the user's question naturally and respond in clear, direct prose, but every claim still traces back to the provided context.\n"
+        "- No hedging language (\"it seems,\" \"possibly,\" \"I think\") unless the context itself is ambiguous or conflicting — in which case state clearly that the ambiguity exists rather than hedging vaguely.\n"
+        "- Skip empty filler (\"Great question!\", \"I'd be happy to help\") — get to the substance quickly — but a brief, natural framing sentence before the answer is fine if it helps orient the reader, especially for complex multi-part questions.\n"
+        "- When information is unavailable, state this in one direct sentence and stop — do not apologize at length or speculate about where the answer might be found elsewhere.\n\n"
+        "## Boundaries\n"
+        "- When translating to Marathi or Hindi, strictly preserve official legal terminology (e.g., 'Competent Authority', 'Unaided') as used in the source documents or translate them to their exact official equivalents.\n"
+        "- If the user asks for a summary of a specific document, synthesize the key points from all retrieved chunks belonging to that document.\n"
+        "- Do not offer legal advice or personal recommendations on how an official should act; present the facts and provisions as documented, and let the reader apply them.\n"
+        "- Do not summarize or paraphrase away specific numbers, dates, eligibility thresholds, or procedural steps — these are often the exact details a government decision depends on. Preserve precision over brevity.\n"
+        "- If the question itself is ambiguous even with context available (e.g., could refer to multiple distinct policies), note the ambiguity and answer for the most likely interpretation(s) based on what the context actually contains, rather than refusing to answer."
+    )
+    
+    history_text = ""
+    for msg in chat_history:
+        role = "User" if msg["role"] == "user" else "Assistant"
+        history_text += f"{role}: {msg['text']}\n"
 
-    # Final fallback if it's completely stuck
-    final_text = response.text
-    if not final_text:
-        final_text = "I apologize, but I could not find a definitive answer in the indexed documents after multiple searches."
-        status_flag = "not_found"
+    if history_text:
+        user_prompt = f"Chat History:\n{history_text}\n\nContext:\n{context_text}\n\nLatest Question: {query}"
     else:
-        status_flag = "success"
+        user_prompt = f"Context:\n{context_text}\n\nQuestion: {query}"
 
-    # Dedup evidence
+    try:
+        stream = cerebras_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            model=target_model,
+            stream=True,
+            max_completion_tokens=8192,
+            temperature=0.0
+        )
+    except Exception as exc:
+        logger.error(f"Cerebras LLM failed: {exc}")
+        return {
+            "status": "error",
+            "response_text": f"Generation failed: {exc}",
+            "answer_stream": StreamingResponse(f"Generation failed: {exc}"),
+            "evidence": evidence,
+        }
+
+    # Dedup evidence for frontend
     unique_evidence = []
     seen = set()
-    for e in evidence_collected:
+    for e in evidence:
         k = e.get("quote", "")
         if k not in seen:
             seen.add(k)
             unique_evidence.append(e)
 
-    result = {
-        "status": status_flag,
-        "response_text": final_text,
-        "answer_stream": StreamingResponse(final_text),
+    return {
+        "status": "success",
+        "response_text": "", # Wil be populated dynamically by app.py if needed
+        "answer_stream": StreamingResponse(stream),
         "evidence": unique_evidence,
     }
-    
-    _QUERY_CACHE[cache_key] = result
-    save_cache()
-        
-    return result
+

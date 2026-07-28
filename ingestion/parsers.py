@@ -3,6 +3,9 @@ import re
 import time
 from typing import Optional
 
+import pymupdf4llm
+from google.api_core.client_options import ClientOptions
+from google.cloud import documentai_v1beta3 as documentai
 from google import genai
 from google.genai import types
 
@@ -10,18 +13,6 @@ from core.log_config import get_logger
 from core.utils import generate_content_safe
 
 logger = get_logger(__name__)
-
-try:
-    import pymupdf4llm
-except ImportError:
-    pymupdf4llm = None
-
-try:
-    from google.api_core.client_options import ClientOptions
-    from google.cloud import documentai_v1beta3 as documentai
-except ImportError:
-    documentai = None
-    ClientOptions = None
 
 
 def format_plain_text_with_llm(client: genai.Client, raw_text: str) -> str:
@@ -44,7 +35,7 @@ Requirements:
 4. Output ONLY the formatted Markdown.
 
 Raw Text:
-{raw_text[:30000]}
+{raw_text}
 """
         response = generate_content_safe(
             client,
@@ -118,9 +109,6 @@ def format_plain_text_to_markdown(text: str) -> str:
 
 def parse_pdf_with_document_ai(client: genai.Client, target_file: str) -> Optional[str]:
     """Parse PDF document using Google Cloud Document AI Document Processor (OCR)."""
-    if documentai is None or ClientOptions is None:
-        return None
-
     project_id = os.getenv("DOCAI_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
     location = os.getenv("DOCAI_LOCATION", "asia-south1")
     processor_id = os.getenv("DOCAI_PROCESSOR_ID")
@@ -202,8 +190,6 @@ def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout
 
 def parse_pdf_with_pymupdf(target_file: str) -> Optional[str]:
     """Parse PDF using local PyMuPDF library."""
-    if pymupdf4llm is None:
-        return None
     filename = os.path.basename(target_file)
     try:
         result = pymupdf4llm.to_markdown(target_file)

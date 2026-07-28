@@ -3,11 +3,11 @@ fastapi
 uvicorn
 jinja2
 google-genai
-qdrant-client[fastembed]
 python-dotenv
 
 # Document Parsing
 pymupdf4llm
 
 # Search
-fastembed
+cerebras-cloud-sdk
+weaviate-client>=4.5.0

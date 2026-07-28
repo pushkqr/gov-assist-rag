@@ -57,10 +57,23 @@ def extract_document_metadata(markdown_text: str, source_path: str, fallback_yea
             document_category = category
             break
 
+    supersedes = None
+    supersede_match = re.search(r"in\s+supersession\s+of\s+([^\n\.]+)", normalized, flags=re.IGNORECASE)
+    if supersede_match:
+        supersedes = supersede_match.group(1).strip()
+
+    references = None
+    ref_match = re.search(r"reference\s*[:-]\s*([^\n]+)", normalized, flags=re.IGNORECASE)
+    if ref_match:
+        references = ref_match.group(1).strip()
+
     return {
         "document_title": title,
         "year": year,
         "doc_number": doc_number,
         "issuing_authority": issuing_authority,
         "document_category": document_category,
+        "source_filename": os.path.basename(source_path),
+        "supersedes": supersedes,
+        "references": references,
     }

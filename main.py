@@ -1,15 +1,14 @@
-import os
 from dotenv import load_dotenv
-from google import genai
-from qdrant_client import QdrantClient, models
-from qdrant_client.models import Distance, PointStruct, VectorParams
+import weaviate
+import weaviate.classes as wvc
 
 from benchmark import load_benchmark_cases, print_benchmark_report, run_benchmark
 from ingestion import run_ingestion
+from ingestion.orgpedia_pipeline import run_orgpedia_ingestion
 from core.log_config import get_logger
 from retrieval import run_retrieval
 
-from core.utils import get_genai_client
+from core.utils import get_genai_client, get_cerebras_client
 
 logger = get_logger(__name__)
 
@@ -17,31 +16,44 @@ logger = get_logger(__name__)
 def main():
     load_dotenv()
     client = get_genai_client()
-    qdrant = QdrantClient(path="local_qdrant_db")
-    collection_name = "gov_docs"
+    cerebras_client = get_cerebras_client()
+    try:
+        weaviate_client = weaviate.connect_to_local()
+        print("Connected to Weaviate local instance.")
+    except Exception as e:
+        print(f"Failed to connect to Weaviate: {e}")
+        weaviate_client = None
 
     RUN_INGESTION = True
     RUN_RETRIEVAL = False
-    RUN_BENCHMARK = True
+    RUN_BENCHMARK = False
 
     if RUN_INGESTION:
         print("\n" + "=" * 50)
         print("MODULE: INGESTION PIPELINE")
         print("=" * 50)
 
-        if not qdrant.collection_exists(collection_name):
-            print(f"Creating Qdrant collection: '{collection_name}' with Hybrid Search support")
-            qdrant.create_collection(
-                collection_name=collection_name,
-                vectors_config={"dense": VectorParams(size=1536, distance=Distance.COSINE)},
-                sparse_vectors_config={"bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)},
-                hnsw_config=models.HnswConfigDiff(m=16, ef_construct=100),
-            )
-        else:
-            print(f"Using existing Qdrant collection: '{collection_name}' (incremental hash check active)")
+        if weaviate_client:
+            if not weaviate_client.collections.exists("GovDocs"):
+                print("Creating Weaviate collection: 'GovDocs'")
+                weaviate_client.collections.create(
+                    name="GovDocs",
+                    properties=[
+                        wvc.config.Property(name="page_content", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="document_title", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="doc_number", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="year", data_type=wvc.config.DataType.INT),
+                        wvc.config.Property(name="issuing_authority", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="document_category", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="source_filename", data_type=wvc.config.DataType.TEXT),
+                    ],
+                )
+            else:
+                print("Using existing Weaviate collection: 'GovDocs'")
 
-        records = run_ingestion(client, qdrant=qdrant, collection_name=collection_name, docs_dir="docs")
-        print("Upsert and indexing complete! All vector records are stored in Qdrant.")
+        records = run_ingestion(client, weaviate_client=weaviate_client, docs_dir="docs")
+        orgpedia_records = run_orgpedia_ingestion(client, weaviate_client=weaviate_client)
+        print("Upsert and indexing complete! All vector records are stored in Weaviate.")
 
     if RUN_BENCHMARK:
         print("\n" + "=" * 50)
@@ -49,7 +61,7 @@ def main():
         print("=" * 50)
         cases = load_benchmark_cases()
         if cases:
-            benchmark_report = run_benchmark(client, qdrant, cases)
+            benchmark_report = run_benchmark(client, cerebras_client, weaviate_client, cases)
             print_benchmark_report(benchmark_report)
         else:
             print("No benchmark cases found. Create a benchmark.json file.")
@@ -75,7 +87,7 @@ def main():
                 if not query.strip():
                     continue
 
-                retrieval_result = run_retrieval(client, qdrant, query, collection_name, chat_history)
+                retrieval_result = run_retrieval(client, cerebras_client, weaviate_client, query, collection_name, chat_history)
 
                 print(f"\n{'-' * 50}\nAssistant Response:\n")
                 full_answer = ""

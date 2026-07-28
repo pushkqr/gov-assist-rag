@@ -75,7 +75,7 @@ Return ONLY valid JSON with fields: "score" (integer 0-5) and "justification" (o
         return {"score": 0.0, "justification": f"judge failed: {exc}"}
 
 
-def run_benchmark(gemini_client, qdrant_client, cases: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
+def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
     """Run the benchmark suite and return structured results."""
     if cases is None:
         cases = load_benchmark_cases()
@@ -89,7 +89,8 @@ def run_benchmark(gemini_client, qdrant_client, cases: List[Dict[str, Any]] | No
 
         retrieval_result = run_retrieval(
             gemini_client=gemini_client,
-            qdrant_client=qdrant_client,
+            cerebras_client=cerebras_client,
+            weaviate_client=weaviate_client,
             query=case["query"],
             collection_name="gov_docs",
             chat_history=[],

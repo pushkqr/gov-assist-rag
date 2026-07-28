@@ -3,6 +3,7 @@ import time
 from functools import wraps
 
 from google import genai
+from cerebras.cloud.sdk import Cerebras
 from core.log_config import get_logger
 
 logger = get_logger(__name__)
@@ -26,6 +27,14 @@ def get_genai_client() -> genai.Client:
 
     api_key = os.getenv("GEMINI_API_KEY")
     return genai.Client(api_key=api_key) if api_key else genai.Client()
+
+
+def get_cerebras_client() -> Cerebras:
+    """Initialize Cerebras client."""
+    api_key = os.getenv("CEREBRAS_API_KEY")
+    if not api_key:
+        logger.warning("CEREBRAS_API_KEY not found in environment")
+    return Cerebras(api_key=api_key)
 
 
 def get_aistudio_client() -> genai.Client:

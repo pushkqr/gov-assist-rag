@@ -10,6 +10,7 @@ temp/
 *.csv
 docs/
 gcp-key.json
+weaviate_data/
 
 # Qdrant Database
 local_qdrant_db/

@@ -6,9 +6,7 @@ from typing import Any, Dict, List
 from google import genai
 from google.genai import types
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
-from qdrant_client import models
-
-from core.embedding import get_sparse_model
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from core.log_config import get_logger
 from core.utils import embed_content_safe, generate_content_safe
 
@@ -53,7 +51,6 @@ def translate_marathi_batch_gcp(chunks: List[str]) -> List[str]:
             request = translate.TranslateTextRequest(
                 contents=sb,
                 target_language_code="en",
-                source_language_code="mr",
                 parent=parent,
             )
             response = client.translate_text(request=request)
@@ -68,8 +65,6 @@ def translate_marathi_batch_gcp(chunks: List[str]) -> List[str]:
 
 def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Split document hierarchically and generate dense and sparse embeddings."""
-    sparse_model = get_sparse_model()
-
     headers_to_split_on = [
         ("PART-", "Document_Part"),
         ("#", "Header_1"),
@@ -138,9 +133,9 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
                     logger.debug(f"     [Gemini Translation Fallback {c_idx+1}/{len(child_texts)}]")
                     try:
                         tr_prompt = (
-                            "Translate the following Marathi government document text into concise English. "
+                            "Translate the following Indic (Marathi/Hindi) government document text into concise English. "
                             "Transliterate all proper names, award names, and district names cleanly. "
-                            f"Output ONLY the English text and names.\n\nMarathi Text:\n{ct[:600]}"
+                            f"Output ONLY the English text and names.\n\nIndic Text:\n{ct}"
                         )
                         tr_resp = generate_content_safe(
                             client,
@@ -157,9 +152,6 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
 
             enriched_child_texts.append(prefix)
 
-        # Embed enriched text (including English translation) in BM25 for dual-language sparse keyword search
-        sparse_embeddings = list(sparse_model.embed(enriched_child_texts))
-
         for i, child_text in enumerate(child_texts):
             logger.debug(f"     [Embedding {i+1}/{len(child_texts)}] Generating dense vector ({model_name})...")
             dense_response = embed_content_safe(client, model=model_name, contents=enriched_child_texts[i], config=config)
@@ -168,13 +160,8 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
                 continue
 
             dense_vector = dense_response.embeddings[0].values
-            sparse_vec = sparse_embeddings[i]
             vector_dict = {
                 "dense": dense_vector,
-                "bm25": models.SparseVector(
-                    indices=sparse_vec.indices.tolist(),
-                    values=sparse_vec.values.tolist(),
-                ),
             }
 
             payload_metadata = {

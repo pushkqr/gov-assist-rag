@@ -14,9 +14,11 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
-from qdrant_client import QdrantClient
 from google import genai
-from core.utils import get_genai_client
+import uvicorn
+import weaviate
+import weaviate.classes as wvc
+from core.utils import get_genai_client, get_cerebras_client
 from retrieval import run_retrieval
 
 logger = logging.getLogger(__name__)
@@ -28,8 +30,7 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-# Optional shared-secret auth — OFF by default. Set MIMIR_AUTH_TOKEN
-# to require `Authorization: Bearer <token>` on every API route before any PUBLIC deploy.
+
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
 _AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg"}
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
@@ -53,16 +54,17 @@ async def _auth_gate(request: Request, call_next):
             return JSONResponse({"detail": "This instance is not configured for remote access."}, status_code=403)
     return await call_next(request)
 
-# Global clients
 gemini_client = None
-qdrant_client = None
+cerebras_client = None
+weaviate_client = None
 
 @app.on_event("startup")
 async def startup_event():
-    global gemini_client, qdrant_client
+    global gemini_client, cerebras_client, weaviate_client
     try:
         gemini_client = get_genai_client()
-        qdrant_client = QdrantClient(path="local_qdrant_db")
+        cerebras_client = get_cerebras_client()
+        weaviate_client = weaviate.connect_to_local()
         logger.info("Clients initialized successfully.")
     except Exception as e:
         logger.error(f"Error initializing clients: {e}")
@@ -75,7 +77,6 @@ async def serve_landing(request: Request):
 async def serve_app(request: Request):
     return templates.TemplateResponse(request=request, name="app.html")
 
-# -- Mock endpoints to satisfy frontend dependencies --
 @app.get("/health")
 async def health():
     return {"auth": bool(_AUTH_TOKEN), "demo": False, "ready": True}
@@ -112,40 +113,41 @@ async def llm_config():
 async def ingest_status():
     return {"running": False}
 
-# -- Core Mimir Endpoints --
-
 class AskRequest(BaseModel):
     query: str
     history: List[Dict[str, Any]] = []
     workspace: Optional[str] = "default"
 
 @app.post("/ask-stream")
-async def ask_stream(req: AskRequest):
-    async def event_generator():
-        mapped_history = []
-        for h in req.history:
-            mapped_history.append({
-                "role": "user" if h.get("role") == "user" else "model",
-                "text": h.get("content", h.get("text", ""))
-            })
+async def ask_stream(request: Request):
+    data = await request.json()
+    query = data.get("query", "").strip()
+    history = data.get("history", [])
 
+    if not query:
+        return JSONResponse({"error": "Empty query"}, status_code=400)
+
+    formatted_history = []
+    for msg in history:
+        if isinstance(msg, dict) and "role" in msg and "text" in msg:
+            formatted_history.append({"role": msg["role"], "text": msg["text"]})
+
+    async def event_generator():
         try:
-            # We must run this in a threadpool since run_retrieval uses sync threads and requests
-            loop = asyncio.get_running_loop()
-            
-            def status_cb(msg):
-                # We could stream status to frontend if needed
-                pass
+            def sync_status(msg: str):
+                pass 
                 
+            loop = asyncio.get_running_loop()
             retrieval_result = await loop.run_in_executor(
                 None,
                 lambda: run_retrieval(
                     gemini_client=gemini_client,
-                    qdrant_client=qdrant_client,
-                    query=req.query,
+                    cerebras_client=cerebras_client,
+                    weaviate_client=weaviate_client,
+                    query=query,
                     collection_name="gov_docs",
-                    chat_history=mapped_history,
-                    status_callback=status_cb
+                    chat_history=formatted_history,
+                    status_callback=sync_status
                 )
             )
             
@@ -160,10 +162,8 @@ async def ask_stream(req: AskRequest):
             if answer_stream:
                 for chunk in answer_stream:
                     yield json.dumps({"t": chunk}) + "\n"
-                    # Small sleep to yield to event loop
                     await asyncio.sleep(0.01)
             
-            # Send done and citations
             yield json.dumps({"done": True, "citations": evidence}) + "\n"
             
         except Exception as e:
@@ -173,7 +173,53 @@ async def ask_stream(req: AskRequest):
     return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
 
+class SummarizeRequest(BaseModel):
+    doc_id: str
+
+@app.post("/summarize")
+async def summarize_doc(req: SummarizeRequest):
+    try:
+        weaviate_collection = weaviate_client.collections.get("GovDocs")
+        res = weaviate_collection.query.fetch_objects(
+            filters=wvc.query.Filter.by_property("doc_number").equal(req.doc_id),
+            limit=50
+        )
+        pts = res.objects
+        if not pts: return JSONResponse({"error": "Document not found."})
+        text = "\n".join([(p.properties.get("child_text") or p.properties.get("parent_context") or "") for p in pts])
+            
+        resp = gemini_client.models.generate_content(
+            model=os.getenv("GENAI_MODEL_NAME", "gemini-2.5-flash"),
+            contents=f"Summarize the following document concisely:\n\n{text[:30000]}"
+        )
+        return {"summary": resp.text}
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+class CompareRequest(BaseModel):
+    doc_id_1: str
+    doc_id_2: str
+
+@app.post("/compare")
+async def compare_docs(req: CompareRequest):
+    try:
+        def fetch(did):
+            weaviate_collection = weaviate_client.collections.get("GovDocs")
+            res = weaviate_collection.query.fetch_objects(
+                filters=wvc.query.Filter.by_property("doc_number").equal(did),
+                limit=50
+            )
+            pts = res.objects
+            return "\n".join([(p.properties.get("child_text") or p.properties.get("parent_context") or "") for p in pts])
+                
+        t1, t2 = fetch(req.doc_id_1), fetch(req.doc_id_2)
+        resp = gemini_client.models.generate_content(
+            model=os.getenv("GENAI_MODEL_NAME", "gemini-2.5-flash"),
+            contents=f"Compare these two documents and highlight the differences:\n\nDocument 1:\n{t1[:15000]}\n\nDocument 2:\n{t2[:15000]}"
+        )
+        return {"comparison": resp.text}
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
