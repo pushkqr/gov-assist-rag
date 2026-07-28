@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mimir — The well of institutional knowledge</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z'/><path d='M12 2v20'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @custom-variant dark (&:where(.dark, .dark *));
+  /* Cool yellow-tinted neutral palette — same as the app, so landing + app read as one cool blue-gray product. */
+  @theme {
+    --color-zinc-50:#f5f7fa; --color-zinc-100:#eef1f6; --color-zinc-200:#e0e5ee; --color-zinc-300:#cbd3e1;
+    --color-zinc-400:#93a0b5; --color-zinc-500:#64718a; --color-zinc-600:#475066; --color-zinc-700:#353d50;
+    --color-zinc-800:#222838; --color-zinc-900:#161b28; --color-zinc-950:#0d1119;
+    --color-slate-100:#eef1f6; --color-slate-200:#e0e5ee; --color-slate-300:#cbd3e1; --color-slate-400:#93a0b5;
+    --color-slate-500:#64718a; --color-slate-600:#475066; --color-slate-700:#353d50; --color-slate-800:#222838;
+    --color-slate-900:#141a27;
+  }
+  body{font-family:'Geist',system-ui,sans-serif}
+  html{scroll-behavior:smooth;font-size:19px}
+  .serif{font-family:'Instrument Serif','Spectral',Georgia,serif;font-weight:400}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .lx{animation:fadein .35s ease both}
+  #demo{transition:opacity .45s ease}
+  .mono{font-family:'Geist Mono',ui-monospace,monospace}
+  .lc-rail{position:absolute;height:2px;border-radius:2px;background:currentColor}
+  .lc-fill{position:absolute;height:2px;width:0;border-radius:2px;background:linear-gradient(90deg,#f59e0b,#eab308);box-shadow:0 0 8px rgba(245,158,11,.5);transition:width .1s linear}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #f59e0b;outline-offset:2px;border-radius:5px}
+  .lc-dot{background:#cbd5e1;transition:background .3s ease,box-shadow .3s ease}
+  .dark .lc-dot{background:#334155}
+  .lc-stage.lit .lc-dot{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.15)}
+  .lc-dot-hero{position:relative}
+  .lc-dot-hero::after{content:"";position:absolute;inset:0;border-radius:9999px;background:#f59e0b;animation:lcping 2.2s ease-out infinite}
+  @keyframes lcping{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(2.4);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.lc-dot-hero::after{animation:none}.mimir-mark{animation:none}.wv-f,.wv-b{animation:none}}
+  .wv{position:absolute;top:0;left:0;height:100%;width:200%}
+  .wv-f{animation:wflow 16s linear infinite}
+  .wv-b{animation:wflow 26s linear infinite}
+  @keyframes wflow{to{transform:translateX(-50%)}}
+  @keyframes lshimmer{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(-22deg)}}
+  .card{position:relative;background-image:radial-gradient(240px circle at var(--mx,-200px) var(--my,-200px), rgba(245,158,11,.16), transparent 60%);background-color:rgba(255,255,255,.78)}
+  .dark .card{background-color:rgba(14,20,32,.66)}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+  /* staggered scroll-reveal: a container's children cascade in one by one (--i set per child in JS) */
+  .stg>*{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,border-color .35s ease}
+  .stg.in>*{opacity:1;transform:none;transition-delay:calc(var(--i,0)*80ms)}
+  /* tactile hover-lift on cards (rounded-2xl/3xl only, so flow arrows are excluded) — elevation via shadow+border, no transform conflict with the reveal */
+  .stg.in>.rounded-2xl:hover,.stg.in>.rounded-3xl:hover{transition-delay:0s;box-shadow:0 22px 55px -26px rgba(2,8,20,.6);border-color:rgba(245,158,11,.5)}
+  /* benchmark proof bars grow in on reveal */
+  .evbar-fill{width:0;transition:width 1.05s cubic-bezier(.22,1,.36,1) .15s}
+  @media (prefers-reduced-motion:reduce){.reveal,.stg>*{opacity:1!important;transform:none!important;transition:none}.evbar-fill{transition:none}}
+  /* signature scroll moment — pinned scrollytelling: the forget hero plays out as you scroll */
+  .scrolly{height:260vh}
+  .scrolly-sticky{position:sticky;top:0;display:flex;min-height:100vh;align-items:center;padding:4rem 0}
+  .scrolly.noscroll{height:auto}
+  .scrolly.noscroll .scrolly-sticky{position:static;min-height:0}
+  .ss-el{opacity:0;transform:translateY(12px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+  .ss-el.show{opacity:1;transform:none}
+  .ss-diss{display:inline-block;transition:opacity .6s ease,transform .6s ease,filter .6s ease}
+  .ss-diss.gone{opacity:0;transform:translateY(8px) scale(.82);filter:blur(5px)}
+  #srail [data-s]{transition:color .35s ease,opacity .35s ease;opacity:.55}
+  #srail [data-s].on{color:#f59e0b;opacity:1}
+  .srail-line{flex:1;height:1px;margin:0 10px;background:currentColor;opacity:.2}
+  #ssQ.reask>div{box-shadow:0 0 0 2px rgba(245,158,11,.55);transition:box-shadow .35s ease}
+  @media (prefers-reduced-motion:reduce){.ss-el,.ss-diss{transition:none}}
+  .grad{background:linear-gradient(90deg,#d97706,#ca8a04);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .dark .grad{background:linear-gradient(90deg,#f59e0b,#eab308);-webkit-background-clip:text;background-clip:text}
+  .mimir-mark{font-weight:400;line-height:.82;letter-spacing:-.02em;font-size:clamp(5rem,29vw,24rem);margin-bottom:-.06em;background:linear-gradient(180deg,#d97706 0%,#ca8a04 46%,rgba(217,119,6,0) 88%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:lshimmer 7s ease-in-out infinite}
+  .dark .mimir-mark{background:linear-gradient(180deg,#f59e0b 0%,#eab308 46%,rgba(99,102,241,0) 88%);-webkit-background-clip:text;background-clip:text}
+  .bg-grid{background-image:radial-gradient(rgba(100,116,139,.13) 1px,transparent 1px);background-size:26px 26px}
+  .dark .bg-grid{background-image:radial-gradient(rgba(148,163,184,.07) 1px,transparent 1px)}
+</style>
+<style>
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.rise{opacity:0;animation:rise .85s cubic-bezier(.22,1,.36,1) forwards}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;animation:none}}
+@keyframes wwmarq{to{transform:translateX(-50%)}}
+.wwmarq{animation:wwmarq 38s linear infinite}
+.wwwrap:hover .wwmarq{animation-play-state:paused}
+.wwmask{-webkit-mask-image:linear-gradient(90deg,transparent,#000 11%,#000 89%,transparent);mask-image:linear-gradient(90deg,transparent,#000 11%,#000 89%,transparent)}
+@media (prefers-reduced-motion:reduce){.wwmarq{animation:none}}
+</style>
+</head>
+<body class="text-slate-900 antialiased dark:text-slate-100">
+<a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-zinc-950 focus:px-4 focus:py-2 focus:text-sm focus:text-white dark:focus:bg-white dark:focus:text-black">Skip to content</a>
+<div aria-hidden="true" class="bg-grid fixed inset-0 -z-10 bg-[#f6f8fc] dark:bg-[#0a0e1a]"></div>
+<div id="flowWave" aria-hidden="true" class="pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-48 overflow-hidden" style="opacity:.14;-webkit-mask-image:linear-gradient(0deg,#000,#000 40%,transparent);mask-image:linear-gradient(0deg,#000,#000 40%,transparent)">
+  <svg class="wv wv-b" viewBox="0 0 1440 90" preserveAspectRatio="none" fill="none"><path d="M0 55 Q120 30 240 55 T480 55 T720 55 T960 55 T1200 55 T1440 55" stroke="#eab308" stroke-width="2" stroke-opacity=".55" stroke-linecap="round"/></svg>
+  <svg class="wv wv-f" viewBox="0 0 1440 90" preserveAspectRatio="none" fill="none"><path d="M0 44 Q120 20 240 44 T480 44 T720 44 T960 44 T1200 44 T1440 44" stroke="#f59e0b" stroke-width="2" stroke-opacity=".6" stroke-linecap="round"/></svg>
+</div>
+
+<header class="sticky top-0 z-20 border-b border-zinc-300/70 bg-[#f4f7fc]/80 backdrop-blur dark:border-zinc-900 dark:bg-[#0a0e1a]/75">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pyramid-icon lucide-pyramid text-amber-600 dark:text-amber-400"><path d="M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z"/><path d="M12 2v20"/></svg>
+      <span class="serif text-xl leading-none tracking-tight">Mimir</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="https://github.com/pushkqr/mimir/tree/main/learning" target="_blank" rel="noopener" class="mr-1 hidden text-sm font-medium text-zinc-500 transition hover:text-zinc-900 sm:inline dark:text-zinc-400 dark:hover:text-zinc-100">Learn</a>
+      <button id="theme" aria-label="Toggle theme" class="grid h-8 w-8 place-items-center rounded-md border border-zinc-300 text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900">
+        <svg class="block dark:hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="hidden dark:block" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+      </button>
+      <a href="https://github.com/pushkqr/mimir" target="_blank" rel="noopener" aria-label="GitHub repository — code and docs" title="Code &amp; docs on GitHub" class="grid h-8 w-8 place-items-center rounded-md border border-zinc-300 text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.7 5.6.7 11.9c0 5 3.2 9.3 7.7 10.8.6.1.8-.2.8-.5v-2c-3.1.7-3.8-1.3-3.8-1.3-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.7 0-1.2.4-2.2 1.2-3-.1-.3-.5-1.5.1-3 0 0 .9-.3 3.1 1.2a10.7 10.7 0 0 1 5.6 0c2.2-1.5 3.1-1.2 3.1-1.2.6 1.5.2 2.7.1 3 .7.8 1.2 1.8 1.2 3 0 4.4-2.6 5.4-5.1 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5 4.5-1.5 7.7-5.8 7.7-10.8C23.3 5.6 18.3.5 12 .5z"/></svg>
+      </a>
+      <a href="/app" class="rounded-full bg-zinc-950 px-5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200">Launch app</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="mx-auto max-w-4xl px-5 pt-28 pb-20 text-center">
+  <div class="rise mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-300 px-3.5 py-1.5 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400" style="animation-delay:.05s"><span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span><span class="mono">secure · accurate · reliable</span></div>
+  <h1 class="rise serif text-6xl leading-[1.02] tracking-tight sm:text-7xl lg:text-[5.5rem]" style="animation-delay:.12s">AI-powered policy assistant that<br><span class="grad italic">knows the rules.</span></h1>
+  <p class="rise mx-auto mt-6 max-w-xl text-base leading-relaxed text-zinc-500 dark:text-zinc-400" style="animation-delay:.24s">It instantly <span class="font-medium text-zinc-900 dark:text-zinc-100">retrieves</span> current government policies and <span class="font-medium text-zinc-900 dark:text-zinc-100">synthesizes</span> accurate answers, saving hours of manual document review.</p>
+  <div class="rise mt-9 flex flex-wrap justify-center gap-3" style="animation-delay:.34s">
+    <a href="/app" class="rounded-full bg-zinc-950 px-7 py-3 text-sm font-medium text-white transition duration-200 hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200">Launch the app →</a>
+  </div>
+</section>
+
+
+
+
+<section class="border-t border-zinc-300 dark:border-zinc-900">
+  <div class="mx-auto max-w-5xl px-5 py-20">
+    <div class="reveal">
+      <div class="mb-1 text-center mono text-xs uppercase tracking-[0.18em] text-zinc-400">the platform</div>
+      <h2 class="serif mb-12 text-center text-3xl tracking-tight sm:text-4xl">Information you can rely on.</h2>
+      <div class="stg grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></div><div><h3 class="text-sm font-semibold">Persistent threads</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Every conversation is saved locally—pick it back up anytime.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></div><div><h3 class="text-sm font-semibold">Department-specific contexts</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Policy knowledge is safely sandboxed within your workspace.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><h3 class="text-sm font-semibold">Multi-turn context</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Ask a question, get an answer, then ask follow-up questions seamlessly.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><h3 class="text-sm font-semibold">Secure Architecture</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Protected by robust authentication—your data is safe.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h3 class="text-sm font-semibold">Lightning Fast</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Results are heavily cached, providing instant answers for repeated queries.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="m7 7.5 3.5 8.5M17 7.5 13.5 16M7.2 6.4h9.6"/></svg></div><div><h3 class="text-sm font-semibold">RAG Architecture</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Uses state-of-the-art vector similarity to find the most relevant policy documents.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg></div><div><h3 class="text-sm font-semibold">Extensible Platform</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Easily plug in new policy documents and keep everything up-to-date.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div><div><h3 class="text-sm font-semibold">Citations that open</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Click a chip to instantly view the original policy section that the AI referenced.</p></div></div>
+        <div class="rounded-2xl border border-zinc-200/90 bg-white/60 p-5 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:border-zinc-800/80 dark:bg-[#10151f]/50"><div class="mb-3 grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div><h3 class="text-sm font-semibold">High Accuracy</h3><p class="mt-1 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Provides deterministic answers based only on the policies provided.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+</main>
+<footer class="relative overflow-hidden border-t border-zinc-300 dark:border-zinc-900">
+  <div class="mx-auto max-w-5xl px-5 pt-20 pb-6 text-center">
+    <h2 class="serif text-3xl tracking-tight">Stop spending hours searching through outdated PDFs.</h2>
+    <a href="/app" class="mt-6 inline-block rounded-full bg-zinc-950 px-7 py-3 text-sm font-medium text-white transition duration-200 hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200">Launch the app →</a>
+    <p class="mt-8 text-xs text-zinc-400">Self-hosted · secure RAG architecture · <a href="https://github.com/pushkqr/mimir" target="_blank" rel="noopener" class="underline decoration-dotted underline-offset-2 transition hover:text-amber-600 dark:hover:text-amber-400">code &amp; docs on GitHub</a></p>
+  </div>
+  <div aria-hidden="true" class="relative mx-auto h-24 w-full max-w-6xl overflow-hidden" style="-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)">
+    <svg class="wv wv-b" viewBox="0 0 1440 60" preserveAspectRatio="none" fill="none"><path d="M0 37 Q90 19 180 37 T360 37 T540 37 T720 37 T900 37 T1080 37 T1260 37 T1440 37" stroke="#eab308" stroke-width="2" stroke-opacity=".35" stroke-linecap="round"/></svg>
+    <svg class="wv wv-f" viewBox="0 0 1440 60" preserveAspectRatio="none" fill="none"><defs><linearGradient id="lwave" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#eab308"/></linearGradient></defs><path d="M0 30 Q90 9 180 30 T360 30 T540 30 T720 30 T900 30 T1080 30 T1260 30 T1440 30" stroke="url(#lwave)" stroke-width="2.5" stroke-linecap="round"/></svg>
+  </div>
+  <div aria-hidden="true" class="reveal mimir-mark serif italic select-none px-2 text-center">Mimir</div>
+</footer>
+
+<script>
+ const root=document.documentElement;
+ if(localStorage.theme==='light')root.classList.remove('dark');
+ document.getElementById('theme').onclick=()=>{root.classList.toggle('dark');localStorage.theme=root.classList.contains('dark')?'dark':'light';};
+ document.querySelectorAll('.card').forEach(c=>{c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');});c.addEventListener('mouseleave',()=>{c.style.setProperty('--mx','-200px');c.style.setProperty('--my','-200px');});});
+ document.querySelectorAll('.stg').forEach(g=>[...g.children].forEach((c,i)=>c.style.setProperty('--i',i)));
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+ document.querySelectorAll('.reveal,.stg').forEach(el=>io.observe(el));
+
+
+
+ // flow wave — the river of Mimir: barely there at the top, grows a touch as you scroll, then fades out
+ // as the footer river takes over (the merge). rAF-throttled; respects reduced-motion.
+ (function(){
+   const fw=document.getElementById('flowWave');if(!fw)return;
+   if(matchMedia('(prefers-reduced-motion:reduce)').matches){fw.style.opacity='.12';return;}
+   const footer=document.querySelector('footer');let tick=false;
+   function apply(){tick=false;const sc=window.scrollY,vh=window.innerHeight;
+     const prog=Math.min(1,sc/(vh*1.1));let op=.12+prog*.34;
+     if(footer){const ft=footer.getBoundingClientRect().top;if(ft<vh)op*=Math.max(0,Math.min(1,ft/(vh*.7)));}
+     fw.style.opacity=op.toFixed(3);}
+   window.addEventListener('scroll',()=>{if(!tick){tick=true;requestAnimationFrame(apply);}},{passive:true});
+   apply();
+ })();
+
+
+
+</script>
+</body></html>

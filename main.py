@@ -64,9 +64,9 @@ def main():
 
         while True:
             try:
-                query = input("\n[GovAssist] Ask a question: ")
+                query = input("\n[Mimir] Ask a question: ")
                 if query.strip().lower() in ["exit", "quit"]:
-                    print("Exiting GovAssist...")
+                    print("Exiting Mimir...")
                     break
                 if query.strip().lower() == "clear":
                     chat_history.clear()
@@ -97,7 +97,7 @@ def main():
                 chat_history.append({"role": "model", "text": full_answer})
 
             except KeyboardInterrupt:
-                print("\nExiting GovAssist...")
+                print("\nExiting Mimir...")
                 break
 
 

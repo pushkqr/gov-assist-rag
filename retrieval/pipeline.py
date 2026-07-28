@@ -13,7 +13,36 @@ from retrieval.search import search_policy_docs_tool, execute_search_tool
 logger = get_logger(__name__)
 
 _QUERY_CACHE: Dict[str, Dict[str, Any]] = {}
+CACHE_FILE_PATH = "scratch/mimir_cache.json"
 
+def load_cache():
+    global _QUERY_CACHE
+    if os.path.exists(CACHE_FILE_PATH):
+        try:
+            with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
+                raw_cache = json.load(f)
+                for k, v in raw_cache.items():
+                    v["answer_stream"] = StreamingResponse(v["response_text"])
+                    _QUERY_CACHE[k] = v
+        except Exception as e:
+            logger.error(f"Failed to load cache: {e}")
+
+def save_cache():
+    try:
+        serializable_cache = {}
+        for k, v in _QUERY_CACHE.items():
+            serializable_cache[k] = {
+                "status": v["status"],
+                "response_text": v["response_text"],
+                "evidence": v["evidence"]
+            }
+        os.makedirs(os.path.dirname(CACHE_FILE_PATH), exist_ok=True)
+        with open(CACHE_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(serializable_cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save cache: {e}")
+
+load_cache()
 
 class StreamingResponse:
     """Wraps answer stream to support multiple UI iteration replays."""
@@ -65,7 +94,7 @@ def run_retrieval(
         status_callback("Analyzing query intent...")
 
     cache_key = f"{collection_name}:{query.strip().lower()}"
-    if cache_key in _QUERY_CACHE and not chat_history:
+    if cache_key in _QUERY_CACHE:
         cached_result = _QUERY_CACHE[cache_key]
         if cached_result.get("status") == "success":
             return cached_result
@@ -93,7 +122,6 @@ def run_retrieval(
             system_instruction=system_instruction,
             tools=[search_policy_docs_tool],
             temperature=0.0,
-            thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL),
         ),
         history=history_contents if history_contents else None,
     )
@@ -211,7 +239,7 @@ def run_retrieval(
         "evidence": unique_evidence,
     }
     
-    if not chat_history:
-        _QUERY_CACHE[cache_key] = result
+    _QUERY_CACHE[cache_key] = result
+    save_cache()
         
     return result

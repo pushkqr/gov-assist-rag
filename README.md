@@ -1,40 +1,33 @@
-# GovAssist
+# Mimir
 
-GovAssist is an AI-powered Retrieval-Augmented Generation (RAG) system and interactive chat surface designed specifically for querying, comparing, and analyzing government policy documents, circulars, and notifications.
+Mimir is an AI-powered Retrieval-Augmented Generation (RAG) system and interactive chat surface designed specifically for querying, comparing, and analyzing government policy documents, circulars, and notifications.
 
-Built for citation-backed grounding and high-precision retrieval, responses are synthesized strictly from indexed local government documents, eliminating hallucinated policy text.
+Built for citation-backed grounding and high-precision retrieval, responses are synthesized strictly from indexed local documents, eliminating hallucinated policy text. Named after the Norse figure who guarded the Well of Wisdom, Mimir represents memory and institutional knowledge you can rely on.
 
 ---
 
 ## Key Features & Capabilities
 
-- **Resilient Multi-Stage PDF Parsing Pipeline**:
-  - **Stage 1: PyMuPDF4LLM**: High-speed (0.4–0.9s) native Markdown parser generating structural `#`, `##`, `###` headers for text PDFs.
-  - **Stage 2: Google Cloud Document AI OCR**: High-accuracy OCR processor for scanned/image-based PDFs.
-  - **Stage 3: LLM Semantic Markdown Structuring**: Uses a fast, lightweight LLM to automatically format raw OCR text into structured Markdown headers (`# Subject`, `## Section`, `### Subsection`), backed by a rule-based regex formatter fallback.
-  - **Stage 4: Multimodal Vision API**: Multimodal extraction safety net with a **30-second hard timeout**.
-- **High-Speed GCP Batch Translation**:
-  - Automatically translates Devanagari/Marathi text and transliterates proper names (award winners, districts, departments) using **GCP Cloud Translation v3 (`translate_text`)**.
-  - Uses smart sub-batching (< 25,000 characters per call) to translate all Marathi passages in a section in **1 single API call (~1.2s)** with a generative LLM fallback.
-- **Hybrid API Routing (Vertex AI + AI Studio)**:
-  - **Dense & Sparse Embeddings**: Dedicated AI Studio client via `GEMINI_API_KEY` (High-dimensional Dense Embeddings).
-  - **Generation & LLM Judge**: Vertex AI.
-  - **Translation & OCR**: GCP Cloud Translation v3 and GCP Document AI.
-- **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant.
-- **True Agentic RAG Pipeline**: An autonomous function-calling Supervisor agent (Configurable Generative Model) routes queries, extracts keywords, and seamlessly escalates from fast lookups to deep analytical retrieval natively.
-  - **Massively Parallelized**: Uses `ThreadPoolExecutor` to execute multiple `search_policy_docs` tools and query variations concurrently, bypassing sequential execution bottlenecks.
-  - **Latency Optimized**: Explicitly enforces `thinking_level=MINIMAL` to eliminate hidden reasoning latency.
-  - **API Burst Limiter**: Built-in concurrency limiter (`max_workers=2`) and graceful error handling to prevent API `429 RESOURCE_EXHAUSTED` crashes.
-- **Automated Metadata Filtering**: Extracts implicit constraints (such as publication year or section titles) directly from queries using LLM filter parsing.
-- **Contextual Conversation Memory**: Rewrites follow-up questions into standalone queries while preventing topic-drift contamination from prior conversation history.
-- **Grounded Benchmark & Evaluation Harness**: 30-case dataset (`benchmark/benchmark.json`) audited directly against corpus contents, combining term-match scoring and a balanced LLM judge evaluator to output detailed performance reports and letter grades (A–D).
-- **Streamlit Control Room UI**: Streamlit-based dark theme UI styled with **Inter** and **JetBrains Mono**, featuring:
-  - **Agent Transparency Streaming**: Real-time `st.status` widget that live-streams the Agent's thought processes (e.g., "Analyzing query intent...", "Searching knowledge base...") directly to the user without technical jargon.
-  - **Source Citations Expander**: A dedicated `st.expander` rendering the exact documents, sections, and verbatim quotes used as evidence for the generated answer.
-  - **Instant Query Caching**: Intercepts exact repeated queries in the UI via `st.session_state` to render instant answers with a "⚡ (Cached Response)" badge.
-  - **One-Click Copy**: Native, iframe-free copy buttons dynamically injected via `st.html()`.
-  - **Session Persistence**: Automatic saving and restoration of chat history across page refreshes (`temp/chat_session.json`).
-- **Automated Unit Test Suite**: 23 unit tests in `tests/` covering parsing, sub-batch translation, API routing, ingestion state, retrieval logic, and evaluation metrics.
+- **Lightweight, High-Performance Architecture**: 
+  - Entirely powered by **FastAPI** for lightning-fast backend endpoints.
+  - A beautiful, zero-dependency vanilla JS/CSS frontend with native **Dark Mode** and mobile-responsive layouts.
+  - Streamed Server-Sent Events (SSE) for real-time answer generation.
+
+- **Agentic RAG Pipeline**:
+  - Uses Google Gemini for query understanding, dense embeddings (`gemini-embedding-001`), and generative answering.
+  - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant for unparalleled retrieval accuracy.
+
+- **Robust Authentication & Security**:
+  - Built-in token-based authentication middleware. Set `MIMIR_AUTH_TOKEN` in your environment to protect the backend endpoints.
+  - The public landing page remains accessible, while the `/app` surface and `/ask` endpoints are locked securely behind the gate.
+
+- **Instant Query Caching**: 
+  - Answers are automatically cached and persisted to `scratch/mimir_cache.json`.
+  - Exact repeated queries instantly bypass the LLM and retrieval layers, returning the cached response in milliseconds to save API costs and drastically improve UX.
+
+- **Contextual Conversation Memory**:
+  - Persistent threads saved locally on the client using `localStorage`.
+  - Workspace segregation allows you to sandbox different policy domains (e.g., HR policies vs. IT policies).
 
 ---
 
@@ -43,61 +36,33 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 ```text
 rag/
 ├── main.py                             # CLI entry point (Ingestion, Retrieval, Benchmark)
-├── app.py                              # Streamlit web application entry point
-├── benchmark.json                      # Standardized 30-case grounded evaluation dataset
-├── test_docai.py                       # Document AI pilot testing script
-├── test_cloud_translate.py             # GCP Cloud Translation v3 batch pilot script
-├── test_models.py                      # Vertex AI model verification script
+├── app.py                              # FastAPI server and core endpoints (/ask, /workspaces)
 ├── requirements.txt                    # Python dependencies
 │
-├── temp/                               # Session State Persistence
-│   └── chat_session.json               # Server-side serialized chat history
+├── templates/                          # Frontend UI (Vanilla HTML/JS/CSS)
+│   ├── landing.html                    # Public-facing landing page
+│   └── app.html                        # Authenticated chat interface
 │
 ├── scratch/                            # Temporary & Persisted State
-│   └── ingestion_state.json            # File hashing & incremental ingestion state tracker
+│   ├── ingestion_state.json            # File hashing & incremental ingestion state tracker
+│   └── mimir_cache.json                # Persistent JSON query cache
 │
 ├── core/                               # Shared Core Infrastructure
-│   ├── __init__.py                     # Exports get_logger, get_sparse_model
-│   ├── log_config.py                   # Central logging configuration (DEBUG=true/false)
 │   ├── embedding.py                    # BM25 sparse embedding model singleton
-│   └── utils.py                        # API rate-limit retry, throttle, & AI Studio routing
+│   └── utils.py                        # API rate-limit retry, throttle, & LLM routing
 │
 ├── ingestion/                          # Ingestion Pipeline
-│   ├── __init__.py                     # Exports run_ingestion
 │   ├── pipeline.py                     # Ingestion orchestrator & hash skip logic
-│   ├── parsers.py                      # PyMuPDF -> DocAI OCR -> Gemini Vision parser sequence
-│   ├── metadata.py                     # Metadata extraction (year, category, doc_number)
-│   ├── chunking.py                     # Hierarchical child chunking & GCP batch translation
-│   └── state.py                        # File hashing & incremental ingestion state manager
+│   └── parsers.py                      # PyMuPDF4LLM -> Markdown parser sequence
 │
 ├── retrieval/                          # Retrieval & Generation Pipeline
-│   ├── __init__.py                     # Exports run_retrieval
-│   ├── pipeline.py                     # Hybrid search & streaming response orchestrator
+│   ├── pipeline.py                     # Hybrid search, caching, & streaming response orchestrator
 │   ├── search.py                       # RRF fusion, LLM reranking, & evidence extraction
-│   ├── query.py                        # Contextualization & multi-query expansion
-│   └── support.py                      # Context formatting & response extraction helpers
+│   └── query.py                        # Contextualization & multi-query expansion
 │
-├── benchmark/                          # Corpus Evaluation & Benchmark Harness
-│   ├── __init__.py                     # Exports run_benchmark, load_benchmark_cases
-│   ├── runner.py                       # Benchmark execution & LLM judge runner
-│   └── evaluation.py                   # Term-matching scoring metrics
-│
-├── ui/                                 # Streamlit Frontend & Design System
-│   ├── style.css                       # Theme tokens, typography, & custom scrollbars
-│   ├── style.py                        # CSS injector utility
-│   ├── components.py                   # Top branding strip, logo loader & welcome screen
-│   ├── sidebar.py                      # Control room metrics & quick-action triggers
-│   └── copy_button.py                  # Clipboard copy button component
-│
-└── tests/                              # Automated Unit Test Suite (23 Tests)
-    ├── test_parsers.py                 # Markdown header formatting & section fallback tests
-    ├── test_chunking.py                # GCP sub-batch translation & chunking tests
-    ├── test_core_utils.py              # Vertex AI & AI Studio routing tests
-    ├── test_ingestion.py               # Document metadata extraction tests
-    ├── test_ingestion_state.py         # File hashing & state tracking tests
-    ├── test_retrieval.py               # Fast-path & context deduplication tests
-    ├── test_evaluation.py              # Term-match scoring tests
-    └── test_benchmark.py              # Benchmark execution tests
+└── benchmark/                          # Corpus Evaluation & Benchmark Harness
+    ├── benchmark.json                  # Standardized 30-case grounded evaluation dataset
+    └── runner.py                       # Benchmark execution & LLM judge runner
 ```
 
 ---
@@ -107,16 +72,16 @@ rag/
 ### 1. Prerequisites
 
 - Python 3.10+
-- Google Gemini API Key (AI Studio)
-- Google Cloud Project with Vertex AI and Document AI enabled
+- Google Gemini API Key
+- [Qdrant](https://qdrant.tech/) (Runs locally by default via `qdrant-client`)
 
 ### 2. Installation
 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/your-username/gov-assist-rag.git
-   cd rag
+   git clone https://github.com/pushkqr/mimir.git
+   cd mimir
    ```
 
 2. **Create and activate a virtual environment**:
@@ -136,38 +101,35 @@ rag/
    ```
 
 4. **Configure environment variables**:
-   Create a `.env` file in the root directory:
+   Create a `.env` file in the root directory. You can copy the provided `.env.example`:
 
    ```env
-   GEMINI_API_KEY=your_ai_studio_api_key
-   GOOGLE_CLOUD_PROJECT=your_gcp_project_id
-   GOOGLE_CLOUD_LOCATION=asia-south1
-   TRANSLATE_LOCATION=global
-   USE_VERTEX_AI=True
-   USE_AISTUDIO_FOR_EMBEDDINGS=True
+   # Required: Your Google AI API key
+   GOOGLE_API_KEY=your_api_key_here
 
-   # Document AI Configuration
-   DOCAI_LOCATION=asia-south1
-   DOCAI_PROCESSOR_ID=your_docai_processor_id
-
-   # Models & Verbosity
-   EMBED_MODEL_NAME=gemini-embedding-001
+   # Model Configuration
    GEN_MODEL_NAME=gemini-2.5-flash
-   SPEC_MODEL_NAME=gemini-2.5-flash
-   DEBUG=false
+   EMBED_MODEL_NAME=gemini-embedding-001
+
+   # Security
+   # Set this to protect your app. Leave empty for public access.
+   MIMIR_AUTH_TOKEN=your_secure_password
    ```
 
 ---
 
 ## Usage
 
-### Launching the Web Interface
+### Launching the Web Application
 
-Start the Streamlit GovAssist Control Room:
+Start the FastAPI server via Uvicorn:
 
 ```bash
-streamlit run app.py
+python app.py
+# or
+uvicorn app:app --reload
 ```
+Navigate to `http://localhost:8000/` to view the landing page, or `http://localhost:8000/app` to access the chat interface.
 
 ### Ingestion & CLI Pipeline (`main.py`)
 
@@ -176,7 +138,7 @@ To ingest documents, test interactive CLI retrieval, or run corpus benchmarks, c
 ```python
 RUN_INGESTION = True    # Re-index PDFs in docs/
 RUN_RETRIEVAL = False   # Run interactive CLI chat
-RUN_BENCHMARK = True    # Run corpus benchmark evaluation
+RUN_BENCHMARK = False   # Run corpus benchmark evaluation
 ```
 
 Then execute:
@@ -185,16 +147,8 @@ Then execute:
 python main.py
 ```
 
-### Running Unit Tests
-
-To run the full automated unit test suite (23 tests):
-
-```bash
-python -m unittest discover -s tests
-```
-
 ---
 
 ## Disclaimer
 
-GovAssist is designed for administrative decision support. While it prioritizes strict retrieval-based grounding, always verify outputs against official published government circulars and gazette notifications.
+Mimir is designed for administrative decision support. While it prioritizes strict retrieval-based grounding, always verify outputs against official published government circulars and gazette notifications.

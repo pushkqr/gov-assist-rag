@@ -1,8 +1,9 @@
 # Core
-streamlit
+fastapi
+uvicorn
+jinja2
 google-genai
 qdrant-client[fastembed]
-sentence-transformers
 python-dotenv
 
 # Document Parsing

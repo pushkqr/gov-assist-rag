@@ -154,7 +154,7 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
 
     print("\n")
     print("=" * 72)
-    print("  GOVASSIST BENCHMARK REPORT")
+    print("  MIMIR BENCHMARK REPORT")
     print("=" * 72)
     print(f"  Total Cases : {n}")
     print(f"  Avg Judge   : {avg_judge:.1f} / 5.0")

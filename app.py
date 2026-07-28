@@ -1,229 +1,179 @@
-import os
 import json
+import logging
+import asyncio
 from pathlib import Path
-import streamlit as st
+import os
+import hmac
 from dotenv import load_dotenv
-from google import genai
-from qdrant_client import QdrantClient
+load_dotenv(override=True)
 
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
+
+from qdrant_client import QdrantClient
+from google import genai
 from core.utils import get_genai_client
 from retrieval import run_retrieval
-from ui.style import load_css
-from ui.components import render_top_strip, render_welcome_screen
-from ui.sidebar import render_sidebar
-from ui.copy_button import render_copy_button
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-st.set_page_config(
-    page_title="GovAssist | Government RAG Assistant",
-    page_icon="assets/logo.png",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+app = FastAPI(title="Mimir")
 
-load_css()
+BASE_DIR = Path(__file__).parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 
-SESSION_FILE = Path("temp/chat_session.json")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-def _load_session():
-    """Load persisted chat session from disk if available."""
-    if SESSION_FILE.exists():
-        try:
-            data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
-            return data.get("messages", []), data.get("chat_history", [])
-        except (json.JSONDecodeError, KeyError):
-            return [], []
-    return [], []
+# Optional shared-secret auth — OFF by default. Set MIMIR_AUTH_TOKEN
+# to require `Authorization: Bearer <token>` on every API route before any PUBLIC deploy.
+_AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg"}
+_LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
-def _save_session():
-    """Persist current chat session to disk."""
-    SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SESSION_FILE.write_text(
-        json.dumps({
-            "messages": st.session_state.messages,
-            "chat_history": st.session_state.chat_history,
-        }, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+def _is_authenticated(request: Request) -> bool:
+    if not _AUTH_TOKEN: return False
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer "): return False
+    return hmac.compare_digest(h[len("Bearer "):], _AUTH_TOKEN)
 
-if "messages" not in st.session_state:
-    saved_msgs, saved_history = _load_session()
-    st.session_state.messages = saved_msgs
-    st.session_state.chat_history = saved_history
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "queued_prompt" not in st.session_state:
-    st.session_state.queued_prompt = None
-if "query_cache" not in st.session_state:
-    st.session_state.query_cache = {}
+def _is_loopback_client(request: Request) -> bool:
+    return bool(request.client) and request.client.host in _LOOPBACK_HOSTS
 
-def queue_prompt(prompt_text: str) -> None:
-    st.session_state.queued_prompt = prompt_text
+@app.middleware("http")
+async def _auth_gate(request: Request, call_next):
+    if request.url.path not in _AUTH_OPEN:
+        if _AUTH_TOKEN:
+            if not _is_authenticated(request):
+                return JSONResponse({"detail": "Unauthorized — provide the access token."}, status_code=401)
+        elif not _is_loopback_client(request):
+            return JSONResponse({"detail": "This instance is not configured for remote access."}, status_code=403)
+    return await call_next(request)
 
-def clear_chat() -> None:
-    st.session_state.messages = []
-    st.session_state.chat_history = []
-    st.session_state.queued_prompt = None
-    if SESSION_FILE.exists():
-        SESSION_FILE.unlink()
+# Global clients
+gemini_client = None
+qdrant_client = None
 
-@st.cache_resource(show_spinner=False)
-def get_clients() -> tuple[genai.Client, QdrantClient]:
-    """Create singleton clients to avoid local Qdrant lock collisions on reruns."""
-    gemini = get_genai_client()
-    qdrant = QdrantClient(path="local_qdrant_db")
-    return gemini, qdrant
-
-try:
-    gemini_client, qdrant_client = get_clients()
-except Exception as e:
-    err_text = str(e)
-    if "already accessed by another instance" in err_text:
-        st.error(
-            "Failed to initialize clients: local_qdrant_db is locked by another running process. "
-            "Stop any other Python/Streamlit process using this folder, then restart this app."
-        )
-    else:
-        st.error(f"Failed to initialize clients: {e}")
-    st.stop()
-
-# ── Error Formatting ──
-def _friendly_error(exc: Exception) -> str:
-    """Convert raw exceptions into user-friendly messages."""
-    msg = str(exc).lower()
-    if "getaddrinfo" in msg or "name resolution" in msg or "connection" in msg:
-        return "Unable to reach the AI service. Please check your internet connection and try again."
-    if "429" in msg or "quota" in msg or "exhausted" in msg:
-        return "The system is currently rate-limited. Please wait a moment and try again."
-    if "api key" in msg or "permission" in msg or "401" in msg or "403" in msg:
-        return "Authentication error. Please verify your API key configuration."
-    return f"An unexpected error occurred: {exc}"
-
-# ── Layout ──
-render_sidebar(clear_chat, queue_prompt)
-
-st.markdown('<div class="shell">', unsafe_allow_html=True)
-
-gen_model = os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it")
-embed_model = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
-
-render_top_strip(gen_model, embed_model)
-
-
-# Welcome Screen
-if not st.session_state.messages:
-    render_welcome_screen()
-
-# Render Chat History
-for idx, msg in enumerate(st.session_state.messages):
-    avatar = "assets/user.jpg" if msg["role"] == "user" else "assets/logo.png"
-    with st.chat_message(msg["role"], avatar=avatar):
-        st.markdown(msg["content"])
-        if msg["role"] == "assistant":
-            render_copy_button(msg["content"], key=f"history-{idx}")
-
-# Handle Input
-typed_prompt = st.chat_input("Ask anything from your government docs knowledge base...")
-prompt = st.session_state.queued_prompt if st.session_state.queued_prompt else typed_prompt
-st.session_state.queued_prompt = None
-
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="assets/user.jpg"):
-        st.markdown(prompt)
-
+@app.on_event("startup")
+async def startup_event():
+    global gemini_client, qdrant_client
     try:
-        if prompt in st.session_state.query_cache:
-            cache_entry = st.session_state.query_cache[prompt]
-            if isinstance(cache_entry, str):
-                response_text = cache_entry
-                evidence_list = []
-            else:
-                response_text = cache_entry.get("response_text", "Error")
-                evidence_list = cache_entry.get("evidence", [])
+        gemini_client = get_genai_client()
+        qdrant_client = QdrantClient(path="local_qdrant_db")
+        logger.info("Clients initialized successfully.")
+    except Exception as e:
+        logger.error(f"Error initializing clients: {e}")
 
-            with st.chat_message("assistant", avatar="assets/logo.png"):
-                st.markdown("⚡ *(Cached Response)*\n\n" + response_text)
-                if evidence_list:
-                    with st.expander("📚 View Sources"):
-                        for ev in evidence_list:
-                            st.markdown(f"**Document:** {ev.get('document', 'Unknown')}")
-                            if ev.get('year'):
-                                st.markdown(f"**Year:** {ev.get('year')}")
-                            st.markdown(f"**Section:** {ev.get('section', 'N/A')}")
-                            st.info(f'"{ev.get("quote", "")}..."')
-                            st.divider()
+@app.get("/", response_class=HTMLResponse)
+async def serve_landing(request: Request):
+    return templates.TemplateResponse(request=request, name="landing.html")
+
+@app.get("/app", response_class=HTMLResponse)
+async def serve_app(request: Request):
+    return templates.TemplateResponse(request=request, name="app.html")
+
+# -- Mock endpoints to satisfy frontend dependencies --
+@app.get("/health")
+async def health():
+    return {"auth": bool(_AUTH_TOKEN), "demo": False, "ready": True}
+
+@app.get("/workspaces")
+async def workspaces():
+    return {"workspaces": [{"id": "default", "name": "Mimir Workspace"}]}
+
+@app.get("/systems")
+async def systems():
+    return {"systems": []}
+
+@app.get("/curation")
+async def curation():
+    return {"findings": []}
+
+@app.get("/curation/aging")
+async def curation_aging():
+    return {"aging": []}
+
+@app.get("/timeline")
+async def timeline():
+    return {"events": []}
+
+@app.get("/graph")
+async def graph():
+    return {"nodes": [], "edges": []}
+
+@app.get("/llm-config")
+async def llm_config():
+    return {"provider": "gemini"}
+
+@app.get("/ingest-status")
+async def ingest_status():
+    return {"running": False}
+
+# -- Core Mimir Endpoints --
+
+class AskRequest(BaseModel):
+    query: str
+    history: List[Dict[str, Any]] = []
+    workspace: Optional[str] = "default"
+
+@app.post("/ask-stream")
+async def ask_stream(req: AskRequest):
+    async def event_generator():
+        mapped_history = []
+        for h in req.history:
+            mapped_history.append({
+                "role": "user" if h.get("role") == "user" else "model",
+                "text": h.get("content", h.get("text", ""))
+            })
+
+        try:
+            # We must run this in a threadpool since run_retrieval uses sync threads and requests
+            loop = asyncio.get_running_loop()
             
-            st.session_state.messages.append({"role": "assistant", "content": response_text})
-            render_copy_button(response_text, key=f"live-{len(st.session_state.messages)}")
-            _save_session()
-        else:
-            # Step 1: Embedding & Search
-            with st.status("Initializing Agent...", expanded=True) as status:
-                def update_status(msg):
-                    status.write(msg)
-                    
-                retrieval_result = run_retrieval(
+            def status_cb(msg):
+                # We could stream status to frontend if needed
+                pass
+                
+            retrieval_result = await loop.run_in_executor(
+                None,
+                lambda: run_retrieval(
                     gemini_client=gemini_client,
                     qdrant_client=qdrant_client,
-                    query=prompt,
+                    query=req.query,
                     collection_name="gov_docs",
-                    chat_history=st.session_state.chat_history,
-                    status_callback=update_status,
+                    chat_history=mapped_history,
+                    status_callback=status_cb
                 )
-                status.update(label="Response generated!", state="complete", expanded=False)
-
-            with st.chat_message("assistant", avatar="assets/logo.png"):
-                evidence_list = []
-                if isinstance(retrieval_result, dict):
-                    if retrieval_result.get("status") in ("empty", "error"):
-                        response_text = retrieval_result.get("response_text", "An error occurred.")
-                        st.markdown(response_text)
-                    else:
-                        answer_stream = retrieval_result.get("answer_stream")
-                        response_text = st.write_stream(answer_stream)
-                        evidence_list = retrieval_result.get("evidence", [])
-                else:
-                    if retrieval_result is None:
-                        response_text = (
-                            "Sorry, I could not find an exact answer in the indexed government documents."
-                        )
-                        st.markdown(response_text)
-                    else:
-                        response_text = st.write_stream(
-                            (chunk.text if hasattr(chunk, "text") else chunk) for chunk in retrieval_result if chunk
-                        )
+            )
+            
+            status = retrieval_result.get("status")
+            if status == "error":
+                yield json.dumps({"error": retrieval_result.get("response_text")}) + "\n"
+                return
                 
-                if evidence_list:
-                    with st.expander("📚 View Sources"):
-                        for ev in evidence_list:
-                            st.markdown(f"**Document:** {ev.get('document', 'Unknown')}")
-                            if ev.get('year'):
-                                st.markdown(f"**Year:** {ev.get('year')}")
-                            st.markdown(f"**Section:** {ev.get('section', 'N/A')}")
-                            st.info(f'"{ev.get("quote", "")}..."')
-                            st.divider()
+            answer_stream = retrieval_result.get("answer_stream")
+            evidence = retrieval_result.get("evidence", [])
+            
+            if answer_stream:
+                for chunk in answer_stream:
+                    yield json.dumps({"t": chunk}) + "\n"
+                    # Small sleep to yield to event loop
+                    await asyncio.sleep(0.01)
+            
+            # Send done and citations
+            yield json.dumps({"done": True, "citations": evidence}) + "\n"
+            
+        except Exception as e:
+            logger.error(f"Error in ask-stream: {e}")
+            yield json.dumps({"error": str(e)}) + "\n"
+            
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
-                # Save to cache
-                st.session_state.query_cache[prompt] = {
-                    "response_text": response_text,
-                    "evidence": evidence_list
-                }
-                
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
-                st.session_state.chat_history.append({"role": "user", "text": prompt})
-                st.session_state.chat_history.append({"role": "model", "text": response_text})
 
-                render_copy_button(response_text, key=f"live-{len(st.session_state.messages)}")
 
-                _save_session()
-
-    except Exception as e:
-        st.error(_friendly_error(e))
-
-st.markdown(
-    '<div class="footer-note">GovAssist may generate mistakes. Verify with official published circulars.</div>',
-    unsafe_allow_html=True,
-)
-st.markdown("</div>", unsafe_allow_html=True)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

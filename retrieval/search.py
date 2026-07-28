@@ -52,11 +52,17 @@ def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
         parent_context = (payload.get("parent_context") or "").strip()
         quote = child_text[:400] if child_text else parent_context[:400]
         section_parts = [payload.get(k) for k in ["Document_Part", "Header_1", "Header_2", "Header_3"] if payload.get(k)]
+        raw_section = " > ".join(str(p) for p in section_parts) if section_parts else "Section not available"
+        clean_sec = raw_section.split(" > ")[-1] if " > " in raw_section else raw_section
+        clean_sec = "".join(c for c in clean_sec if ord(c) < 128).strip()
+        if not clean_sec:
+            clean_sec = "Section not available"
+
         evidence.append(
             {
                 "document": payload.get("doc_number", "Unknown document"),
                 "year": payload.get("year"),
-                "section": " > ".join(str(p) for p in section_parts) if section_parts else "Section not available",
+                "section": clean_sec,
                 "quote": quote,
             }
         )

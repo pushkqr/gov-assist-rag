@@ -114,7 +114,7 @@ Output ONLY a valid JSON object, e.g., {{"year": 2025, "section_title": "Eligibi
 
 def build_generation_prompt(query: str, history_text: str, context_text: str) -> str:
     """Build grounded generation prompt for the final answer."""
-    return f"""You are GovAssist, an AI Question Answering Assistant for Government Documents.
+    return f"""You are Mimir, an AI Question Answering Assistant for Government Documents.
 
 Your task is to answer the user's question ONLY using the retrieved search results.
 

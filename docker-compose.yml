@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  mimir:
+    build: .
+    container_name: mimir-rag
+    ports:
+      - "8000:8000"
+    volumes:
+      # Map the data directories to persist state across container restarts
+      - ./docs:/app/docs
+      - ./scratch:/app/scratch
+      - ./local_qdrant_db:/app/local_qdrant_db
+      - ./temp:/app/temp
+    env_file:
+      - .env
+    restart: unless-stopped
