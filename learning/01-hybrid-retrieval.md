@@ -1,6 +1,6 @@
 # 01 — Hybrid Retrieval: The Best of Both Worlds
 
-**In one line:** Vector search finds concepts, keyword search finds exact part numbers, and Reciprocal Rank Fusion combines them so Mimir never misses a critical policy.
+**In one line:** Vector search finds concepts, keyword search finds exact part numbers, and Alpha Fusion combines them so Mimir never misses a critical policy.
 
 ---
 
@@ -22,21 +22,21 @@ If you search for *"Form 1040-EZ"*, BM25 is a sniper rifle. It will hit the exac
 
 ---
 
-## The Mimir Solution: Reciprocal Rank Fusion (RRF)
+## The Mimir Solution: Alpha Fusion
 
 We don't choose. We run both.
 
-When you ask a question, Mimir fires off two searches simultaneously to our Qdrant database:
-1. **The Vector Search:** Finds the top 20 chunks based on meaning and concepts.
-2. **The Sparse BM25 Search:** Finds the top 20 chunks based on exact keyword overlap.
+When you ask a question, Mimir fires off two searches simultaneously natively inside our Weaviate database:
+1. **The Vector Search:** Finds the top chunks based on meaning and concepts.
+2. **The Sparse BM25 Search:** Finds the top chunks based on exact keyword overlap.
 
-We then use a mathematical algorithm called **Reciprocal Rank Fusion (RRF)** to combine the two lists. 
+Weaviate then uses an algorithm called **Alpha Fusion** to combine the two lists. 
 
 ```python
 # The math behind the magic
-RRF_Score = 1 / (k + Vector_Rank) + 1 / (k + BM25_Rank)
+Hybrid_Score = (alpha * Vector_Score) + ((1 - alpha) * BM25_Score)
 ```
 
-If a document chunk ranks #1 in the Vector search, it gets a high score. If it ranks #1 in the Keyword search, it gets a high score. If it ranks highly in *both*, its score compounds and it rockets to the absolute top of the context window.
+If a document scores highly in the Vector search, it gets a high score. If it matches exactly in the Keyword search, it gets a high score. If it matches strongly in *both*, its score compounds and it rockets to the absolute top of the context window.
 
 This guarantees that whether a user is asking a vague conceptual question, or searching for a highly specific government statute number, the correct context is injected into the LLM prompt every single time.
