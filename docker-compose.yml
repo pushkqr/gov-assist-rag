@@ -4,8 +4,6 @@ services:
   mimir:
     build: .
     container_name: mimir-rag
-    ports:
-      - "8000:8000"
     volumes:
       # Map the data directories to persist state across container restarts
       - ./docs:/app/docs
@@ -15,3 +13,21 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    container_name: caddy-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - mimir
+
+volumes:
+  caddy_data:
+  caddy_config:

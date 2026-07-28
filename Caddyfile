@@ -1,0 +1,3 @@
+mimir.pushkqr.tech {
+    reverse_proxy mimir:8000
+}
