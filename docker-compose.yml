@@ -10,6 +10,9 @@ services:
       - ./scratch:/app/scratch
       - ./local_qdrant_db:/app/local_qdrant_db
       - ./temp:/app/temp
+      - ./gcp-key.json:/app/gcp-key.json:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
     env_file:
       - .env
     restart: unless-stopped
