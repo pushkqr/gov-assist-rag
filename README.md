@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/mimir-hero.svg" alt="Mimir Logo" width="100%"/>
+</div>
+
 # Mimir
 
 Mimir is an AI-powered Retrieval-Augmented Generation (RAG) system and interactive chat surface designed specifically for querying, comparing, and analyzing government policy documents, circulars, and notifications.

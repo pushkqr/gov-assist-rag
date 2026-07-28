@@ -450,7 +450,7 @@
    clearEmpty();const w=document.createElement('div');
    if(role==='user'){w.className='flex justify-end fadein';w.innerHTML='<div class="max-w-[82%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zinc-950 px-4 py-2.5 text-sm text-white dark:bg-white dark:text-black">'+html+'</div>';$('log').appendChild(w);$('log').scrollTop=$('log').scrollHeight;return w.firstChild;}
    w.className='flex justify-start gap-3 fadein';
-   const av=document.createElement('div');av.className='mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-500/10 text-amber-500';av.innerHTML='<svg width="17" height="9" viewBox="2 2 30 16" fill="none"><path d="M-20 10 Q-15 18 -10 10 T0 10 T10 10 T20 10 T30 10 T40 10" stroke="#eab308" stroke-width="2.6" stroke-linecap="round"/><path d="M-20 10 Q-15 2 -10 10 T0 10 T10 10 T20 10 T30 10 T40 10" stroke="#f59e0b" stroke-width="2.6" stroke-linecap="round"/></svg>';
+   const av=document.createElement('div');av.className='mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-500/10 text-amber-500';av.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z"/><path d="M12 2v20"/></svg>';
    const box=document.createElement('div');box.className='group min-w-0 max-w-[88%]';
    const c=document.createElement('div');c.className='whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-100';c.innerHTML=html;
    box.appendChild(c);w.appendChild(av);w.appendChild(box);$('log').appendChild(w);$('log').scrollTop=$('log').scrollHeight;return c;
