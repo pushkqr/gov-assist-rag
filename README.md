@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/mimir-hero.svg" alt="Mimir Logo" width="100%"/>
+  <img src="assets/mimir-hero.svg" alt="Mimir Logo" width="100%"/>
 </div>
 
 # Mimir
