@@ -19,15 +19,12 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 
 - **Agentic RAG Pipeline**:
   - Uses Google Gemini for query understanding, dense embeddings (`gemini-embedding-001`), and generative answering.
-  - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged via **Reciprocal Rank Fusion (RRF)** in Qdrant for unparalleled retrieval accuracy.
+  - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged natively in **Weaviate** using Alpha Fusion for unparalleled retrieval accuracy.
 
 - **Robust Authentication & Security**:
   - Built-in token-based authentication middleware. Set `MIMIR_AUTH_TOKEN` in your environment to protect the backend endpoints.
   - The public landing page remains accessible, while the `/app` surface and `/ask` endpoints are locked securely behind the gate.
 
-- **Instant Query Caching**: 
-  - Answers are automatically cached and persisted to `scratch/mimir_cache.json`.
-  - Exact repeated queries instantly bypass the LLM and retrieval layers, returning the cached response in milliseconds to save API costs and drastically improve UX.
 
 - **Contextual Conversation Memory**:
   - Persistent threads saved locally on the client using `localStorage`.
@@ -35,7 +32,67 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
 
 ---
 
-## Modular Architecture & Directory Tree
+## Architecture
+
+### System Flow
+The following sequence demonstrates how a user's query is processed from ingestion through to the streamed response:
+
+```mermaid
+sequenceDiagram
+    participant User as User / Frontend
+    participant API as FastAPI Backend
+    participant Search as Hybrid Search Engine
+    participant LLM as Generative LLM
+
+    User->>API: Submits Query
+    API->>LLM: Generate Query Variations
+    LLM-->>API: Returns Variations
+    API->>Search: Embed Queries & Run Hybrid Search (Dense + BM25)
+    Search-->>API: Top K Relevant Documents (Alpha Fusion)
+    API->>LLM: Build Prompt with Context & Query
+    LLM-->>API: Stream Answer (Server-Sent Events)
+    API-->>User: Stream Response & Citations to UI
+```
+
+### Component Architecture
+This diagram outlines the core services and their interactions:
+
+```mermaid
+graph TD
+    subgraph Frontend
+        UI[Vanilla JS/CSS UI]
+    end
+
+    subgraph Backend [FastAPI Server]
+        API[Core Endpoints]
+        Router[LLM Router & Rate Limiter]
+        Ingest[Ingestion Pipeline]
+        Ret[Retrieval Pipeline]
+    end
+
+    subgraph Data Layer
+        Weaviate[(Weaviate Vector DB)]
+        State[Ingestion State Cache]
+    end
+
+    subgraph External APIs
+        LLM[GenAI / LLM Providers]
+        DocAI[OCR / Document Parsing]
+    end
+
+    UI <-->|HTTP / SSE| API
+    API --> Ret
+    API --> Ingest
+    Ret --> Router
+    Ingest --> Router
+    Router <--> LLM
+    Ingest <--> DocAI
+    Ingest -->|Chunk & Embed| Weaviate
+    Ret <-->|Hybrid Search| Weaviate
+    Ingest <--> State
+```
+
+### Directory Tree
 
 ```text
 rag/
@@ -52,7 +109,6 @@ rag/
 │   └── mimir_cache.json                # Persistent JSON query cache
 │
 ├── core/                               # Shared Core Infrastructure
-│   ├── embedding.py                    # BM25 sparse embedding model singleton
 │   └── utils.py                        # API rate-limit retry, throttle, & LLM routing
 │
 ├── ingestion/                          # Ingestion Pipeline
@@ -60,8 +116,8 @@ rag/
 │   └── parsers.py                      # PyMuPDF4LLM -> Markdown parser sequence
 │
 ├── retrieval/                          # Retrieval & Generation Pipeline
-│   ├── pipeline.py                     # Hybrid search, caching, & streaming response orchestrator
-│   ├── search.py                       # RRF fusion, LLM reranking, & evidence extraction
+│   ├── pipeline.py                     # Hybrid search & streaming response orchestrator
+│   ├── search.py                       # Alpha fusion, LLM reranking, & evidence extraction
 │   └── query.py                        # Contextualization & multi-query expansion
 │
 └── benchmark/                          # Corpus Evaluation & Benchmark Harness
@@ -77,7 +133,7 @@ rag/
 
 - Python 3.10+
 - Google Gemini API Key
-- [Qdrant](https://qdrant.tech/) (Runs locally by default via `qdrant-client`)
+- [Weaviate](https://weaviate.io/) (Runs locally via `docker-compose`)
 
 ### 2. Installation
 
@@ -98,13 +154,19 @@ rag/
    source .venv/bin/activate
    ```
 
-3. **Install dependencies**:
+3. **Start Weaviate container**:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Install dependencies**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configure environment variables**:
+5. **Configure environment variables**:
    Create a `.env` file in the root directory. You can copy the provided `.env.example`:
 
    ```env
