@@ -89,7 +89,7 @@ Passages:
 """
     for idx, res in enumerate(results):
         payload = res.payload or {}
-        passage_text = payload.get("child_text") or payload.get("parent_context") or ""
+        passage_text = payload.get("translated_text") or payload.get("child_text") or payload.get("parent_context") or ""
         ranking_prompt += f"{idx}: {passage_text[:800]}\n\n"
 
     try:
@@ -131,8 +131,8 @@ def run_hybrid_search(
     
     weaviate_collection = weaviate_client.collections.get("GovDocs")
     
-    # Determine weight for alpha fusion (0 = pure keyword BM25, 1 = pure semantic dense vector)
-    alpha = 0.5 if has_keywords else 0.75
+    # Determine weight for alpha fusion (0.40 = 40% semantic dense vector, 60% BM25 keyword)
+    alpha = 0.40
     
     weaviate_filters = None
     if year_filter:
@@ -140,6 +140,7 @@ def run_hybrid_search(
     
     search_res = weaviate_collection.query.hybrid(
         query=standalone_query,
+        query_properties=["translated_text"],
         vector=query_vector,
         alpha=alpha,
         limit=limit,
@@ -167,11 +168,47 @@ def execute_search_tool(
     fast_mode: bool = False,
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """Execute the search tool and format results for the LLM."""
-    query_variations = [query]
+    import time
+    import requests
+    t_start = time.time()
+    
+    def is_indic(text: str) -> bool:
+        return any('\u0900' <= c <= '\u097f' for c in text)
+
+    def translate_marathi_batch_local(text: str) -> str:
+        try:
+            import os
+            url = os.environ.get("TRANSLATION_SERVICE_URL", "http://localhost:8000/translate")
+            response = requests.post(
+                url,
+                json={"text": text, "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"},
+                timeout=2.0
+            )
+            response.raise_for_status()
+            return response.json().get("translated_text", text)
+        except Exception as e:
+            logger.error(f"Local translation failed: {e}")
+            return text
+
+    if is_indic(query):
+        logger.info("Indic query detected. Translating query to English via local microservice...")
+        search_query = translate_marathi_batch_local(query)
+    else:
+        logger.info("English query detected. Bypassing translation API.")
+        search_query = query
+        
+    
+    t_translate = time.time()
+    logger.info(f"[PROFILING] Translation took: {t_translate - t_start:.3f}s")
+    
+    query_variations = [search_query]
     logger.info("Generating query variations...")
-    query_variations = [query]
     if not fast_mode:
-        query_variations = generate_query_variations(gemini_client, query)
+        query_variations = generate_query_variations(gemini_client, search_query)
+        
+    t_variations = time.time()
+    if not fast_mode:
+        logger.info(f"[PROFILING] Query expansion took: {t_variations - t_translate:.3f}s")
 
     config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
     model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
@@ -192,6 +229,9 @@ def execute_search_tool(
         results = list(executor.map(embed_single_variation, query_variations))
         
     logger.info("Finished threadpool for embeddings.")
+    t_embed = time.time()
+    logger.info(f"[PROFILING] Embeddings took: {t_embed - t_variations:.3f}s")
+    
     for res in results:
         if res is not None:
             query_vectors.append(res)
@@ -199,10 +239,13 @@ def execute_search_tool(
     if not query_vectors:
         return json.dumps({"error": "Failed to generate embeddings."}), []
 
+    t_weaviate_start = time.time()
     search_results, top_results, evidence = run_hybrid_search(
         gemini_client, weaviate_client, query_vectors, query_variations,
-        query, collection_name, year, fast_mode
+        search_query, collection_name, year, fast_mode
     )
+    t_weaviate = time.time()
+    logger.info(f"[PROFILING] Hybrid Search took: {t_weaviate - t_weaviate_start:.3f}s")
 
     if not evidence:
         return json.dumps({"results": "No relevant documents found. Try modifying the keywords or changing fast_mode to false."}), []

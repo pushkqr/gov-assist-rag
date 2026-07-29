@@ -18,7 +18,7 @@ from google import genai
 import uvicorn
 import weaviate
 import weaviate.classes as wvc
-from core.utils import get_genai_client, get_cerebras_client
+from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ async def startup_event():
     try:
         gemini_client = get_genai_client()
         cerebras_client = get_cerebras_client()
-        weaviate_client = weaviate.connect_to_local()
+        weaviate_client = get_weaviate_client()
         logger.info("Clients initialized successfully.")
     except Exception as e:
         logger.error(f"Error initializing clients: {e}")

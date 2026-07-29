@@ -123,6 +123,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
         gcp_trans_map = dict(zip(marathi_indices, gcp_translations))
 
         enriched_child_texts = []
+        translated_texts = []
         for c_idx, ct in enumerate(child_texts):
             prefix = f"Context: {full_context_prefix}\n\nContent: {ct}"
 
@@ -149,6 +150,11 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
 
                 if tr_text.strip():
                     prefix += f"\n\nEnglish Translation: {tr_text.strip()}"
+                    translated_texts.append(tr_text.strip())
+                else:
+                    translated_texts.append(ct)
+            else:
+                translated_texts.append(ct)
 
             enriched_child_texts.append(prefix)
 
@@ -170,6 +176,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
                 "parent_id": parent_id,
                 "parent_context": parent_context_with_section,
                 "child_text": child_text,
+                "translated_text": translated_texts[i],
                 "section_title": section_title,
             }
 

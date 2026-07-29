@@ -31,6 +31,8 @@ def run_ingestion(
     if not pdf_files:
         logger.info(f"No PDF files found in '{docs_dir}/'.")
         return []
+    
+
 
     logger.info(f"Found {len(pdf_files)} PDF files in '{docs_dir}/'.")
     all_processed_records = []

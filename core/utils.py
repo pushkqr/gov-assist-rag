@@ -37,6 +37,32 @@ def get_cerebras_client() -> Cerebras:
     return Cerebras(api_key=api_key)
 
 
+def get_weaviate_client():
+    """Initialize Weaviate client, connecting to a remote droplet if configured."""
+    import weaviate
+    from weaviate.classes.init import Auth
+    url = os.getenv("WEAVIATE_URL")
+    if url:
+        grpc_port = int(os.getenv("WEAVIATE_GRPC_PORT", "50051"))
+        host = url.replace("http://", "").replace("https://", "").split(":")[0].strip("/")
+        api_key = os.getenv("WEAVIATE_API_KEY")
+        auth = Auth.api_key(api_key) if api_key else None
+        
+        logger.info(f"Connecting to remote Weaviate at {host}")
+        return weaviate.connect_to_custom(
+            http_host=host,
+            http_port=8080,
+            http_secure=False,
+            grpc_host=host,
+            grpc_port=grpc_port,
+            grpc_secure=False,
+            auth_credentials=auth
+        )
+    else:
+        logger.info("Connecting to local Weaviate")
+        return weaviate.connect_to_local()
+
+
 def get_aistudio_client() -> genai.Client:
     """Initialize dedicated AI Studio genai.Client using GEMINI_API_KEY for embedding calls."""
     global _aistudio_client

@@ -63,6 +63,7 @@ def run_retrieval(
     collection_name: str = "gov_docs",
     chat_history: Optional[List[Dict[str, str]]] = None,
     status_callback: Optional[Callable[[str], None]] = None,
+    fast_mode: bool = False,
 ) -> Dict[str, Any]:
     """Execute direct Weaviate search followed by 1-shot Cerebras synthesis (Round-Robin load balanced)."""
     global _MODEL_COUNTER
@@ -84,7 +85,7 @@ def run_retrieval(
             return results
 
         evidence = []
-        search_json = search_tool_wrapper(query, year=None, fast_mode=True)
+        search_json = search_tool_wrapper(query, year=None, fast_mode=fast_mode)
     except Exception as exc:
         logger.error(f"Search tool failed: {exc}")
         return {
@@ -164,13 +165,25 @@ def run_retrieval(
             temperature=0.0
         )
     except Exception as exc:
-        logger.error(f"Cerebras LLM failed: {exc}")
-        return {
-            "status": "error",
-            "response_text": f"Generation failed: {exc}",
-            "answer_stream": StreamingResponse(f"Generation failed: {exc}"),
-            "evidence": evidence,
-        }
+        logger.error(f"Cerebras LLM failed ({exc}). Falling back to Gemini...")
+        try:
+            gemini_prompt = f"System Instructions:\n{system_prompt}\n\n{user_prompt}"
+            
+            stream = gemini_client.models.generate_content_stream(
+                model="gemini-2.5-flash",
+                contents=gemini_prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.0
+                )
+            )
+        except Exception as gemini_exc:
+            logger.error(f"Gemini fallback also failed: {gemini_exc}")
+            return {
+                "status": "error",
+                "response_text": f"Generation failed: Cerebras({exc}) & Gemini({gemini_exc})",
+                "answer_stream": StreamingResponse(f"Generation failed: {exc}"),
+                "evidence": evidence,
+            }
 
     # Dedup evidence for frontend
     unique_evidence = []

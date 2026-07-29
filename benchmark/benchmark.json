@@ -1,71 +1,218 @@
 [
   {
-    "query": "What does CAP stand for in the Maharashtra Unaided Private Professional Educational Institutions Act?",
-    "expected_tags": ["Admission Act 2015", "CAP", "Definitions"],
-    "expected_answer": "CAP stands for Centralized Admission Process, the centralized admission process carried out by the competent authority through a single-window system for admissions to professional courses."
-  },
-  {
-    "query": "Who is the Competent Authority under the Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015?",
+    "query": "What are the specific conditions or requirements for the approval process concerning Rajmata Jijau Mahila Vidyalaya and Kunbi Shikshan Prasarak Mandal's Mamasaheb Bhuvad College?",
     "expected_tags": [
-      "Admission Act 2015",
-      "Competent Authority",
-      "Definitions"
+      "University",
+      "prior accreditation",
+      "technical criteria",
+      "compliance report",
+      "apex institution"
     ],
-    "expected_answer": "The Competent Authority is the Commissioner of State CET appointed by the Government to conduct CET through the Centralized Admission Process for admissions into private professional educational institutions."
-  },
-  {
-    "query": "Name three national initiatives that universities are instructed to inform students about under School Connect 2.0.",
-    "expected_tags": [
-      "School Connect 2.0",
-      "AEDP",
-      "SWAYAM",
-      "SATHEE",
-      "Vidyalaxmi"
+    "expected_terms": [
+      "University",
+      "prior accreditation",
+      "technical criteria",
+      "compliance report",
+      "apex institution"
     ],
-    "expected_answer": "The circular includes initiatives such as Apprenticeship Embedded Degree Programme (AEDP), SWAYAM, Vidyalaxmi Loan Scheme, SATHEE, Internship, IKS, Mahaswayam and PM-USP."
+    "expected_answer": "For Rajmata Jijau Mahila Vidyalaya, the University is required to ensure that prior accreditation from the apex institution or concerned authority, if needed, is obtained before submitting the compliance report for final accreditation. Additionally, the University must ensure that other technical criteria and facilities, if required, are met during the submission of the compliance report for final accreditation. Similarly, for Kunbi Shikshan Prasarak Mandal's Mamasaheb Bhuvad College, if prior approval from the apex body or concerned authority is necessary, the University is responsible for ensuring it is obtained before the compliance report for final approval is submitted, along with meeting other technical criteria."
   },
   {
-    "query": "What is the purpose of the revised credit framework Government Resolution issued on 16 May 2023?",
+    "query": "What are my options if I am allotted a seat other than my first preference during a Centralised Admission Process (CAP) round, and how does it affect my participation in subsequent rounds?",
     "expected_tags": [
-      "NEP 2020",
-      "Credit Framework",
-      "Postgraduate Programmes"
+      "CAP",
+      "First preference",
+      "ARC",
+      "Betterment",
+      "Option form"
     ],
-    "expected_answer": "The Government Resolution issues revised guidelines for the curriculum and credit framework relating to exit options, one-year postgraduate programmes and two-year postgraduate programmes for implementation from the academic year 2023-24."
+    "expected_terms": [
+      "CAP",
+      "First preference",
+      "ARC",
+      "Betterment",
+      "Option form"
+    ],
+    "expected_answer": "If you are allotted a seat other than your first preference in a CAP round, you have a few options:\n\n1.  **Freeze the Allotment:** If you are satisfied with the allotted seat and do not wish to participate in further CAP rounds, you can 'freeze' the offered seat through your candidate login. After freezing, you must report to the Admission Reporting Centre (ARC) for document verification and payment of the seat acceptance fee. Subsequently, you report to the allotted institute to seek admission. If you fail to report to the ARC, your claim on the seat is forfeited, and it becomes available for fresh allotment. Once frozen and accepted, this becomes your final allotment, and you cannot participate in subsequent CAP rounds.\n\n2.  **Accept and Participate for Betterment:** If you accept the seat by reporting to the ARC for confirmation of seat acceptance (without freezing), you remain eligible for participation in subsequent rounds for 'betterment'. This means you can try for a higher preference in later rounds.\n\n3.  **Do Not Accept and Participate Further:** If you do not accept the seat by not reporting to the ARC for confirmation of seat acceptance, your claim on the allotted seat is forfeited, and it becomes available for fresh allotment. However, you remain eligible for participation in the subsequent CAP rounds.\n\nFor CAP Round-II and III, if you accepted a seat other than your first preference and reported to ARC for confirmation, you can fill in and/or edit your online option form. You need not fill the preference already allotted. If an upward preference is allotted in these rounds, your earlier seat allotment is automatically cancelled; otherwise, your previous allotment stands retained. There is no further betterment option after Round III, meaning the allotment made or retained in Round III is final for participating candidates."
   },
   {
-    "query": "According to the Government Resolution dated 30 June 2023, why were government approvals issued to unaided professional institutions for the academic year 2023-24?",
+    "query": "What are the mandatory conditions an applicant must fulfill to be eligible for the foreign scholarship scheme, especially regarding employment, academic admission, and legal declarations?",
     "expected_tags": [
-      "AICTE Approval",
-      "Government Approval",
-      "Unaided Institutions",
+      "\u0905\u0936\u0928\u0935\u093e\u092f\u0923 \u0905\u091f\u0940",
+      "\u0928\u093e-\u0939\u0930\u0915\u0924 \u092a\u094d\u0930\u092e\u093e\u0923\u092a\u0924\u094d\u0930",
+      "\u092a\u094d\u0930\u0936\u0924\u091c\u094d\u091e\u093e\u092a\u0924\u094d\u0930",
+      "\u091c\u093e\u092e\u0940\u0928\u0926\u093e\u0930",
+      "Unconditional Offer Letter"
+    ],
+    "expected_terms": [
+      "\u0905\u0936\u0928\u0935\u093e\u092f\u0923 \u0905\u091f\u0940",
+      "\u0928\u093e-\u0939\u0930\u0915\u0924 \u092a\u094d\u0930\u092e\u093e\u0923\u092a\u0924\u094d\u0930",
+      "\u092a\u094d\u0930\u0936\u0924\u091c\u094d\u091e\u093e\u092a\u0924\u094d\u0930",
+      "\u091c\u093e\u092e\u0940\u0928\u0926\u093e\u0930",
+      "Unconditional Offer Letter"
+    ],
+    "expected_answer": "To be eligible for the foreign scholarship scheme, an applicant must meet several mandatory conditions. If employed, they must submit a No-Objection Certificate (NOC) from their employer and manage all their administrative matters (like leave and salary) independently. Academically, the applicant must secure admission to a university or educational institution ranked within the top 200 in the THE/QS World Ranking and possess an Unconditional Offer Letter; conditional offers are not accepted. Legally, the applicant is required to provide an affidavit on Non-Judicial Stamp Paper attested by a Public Notary, arrange for two guarantors each providing a separate Surety Bond, and submit a health certificate from a registered medical officer. Additionally, they must provide a bond agreeing to stay abroad only for the required study duration and a Record Release Consent Form. The applicant is solely responsible for obtaining their passport and visa, which must be specific to the approved course and institution. Upon selection, they must submit all necessary documents and agreements, including an undertaking to repay any excess funds received and a bond to serve the Maharashtra state after completing their studies. Furthermore, after completing their education and securing employment or starting a business, or within two years, whichever is earlier, they are required to repay 10% of the scholarship amount to a dedicated PLA account."
+  },
+  {
+    "query": "What are the conditions and timelines under which my appointment or service can be terminated, or I might face other penalties?",
+    "expected_tags": [
+      "termination",
+      "probation period",
+      "character verification",
+      "computer knowledge certificate",
+      "6 months"
+    ],
+    "expected_terms": [
+      "termination",
+      "probation period",
+      "character verification",
+      "computer knowledge certificate",
+      "6 months"
+    ],
+    "expected_answer": "Your appointment or service can be terminated without prior notice if your work or conduct during the probation period is found to be improper, substandard, or unsatisfactory. Furthermore, failure to submit the medical report and character verification report within 6 months from the date of the appointment order will lead to termination without prior notice. Similarly, if you do not provide the computer handling/usage certificate, as required, within two years from the date of the appointment order, your services will be terminated without prior notice. An unsatisfactory report from the verification of your character and antecedents will result in your appointment being terminated with one month's notice, without giving any specific reason. If you have not passed the Hindi and Marathi language examinations (and are not exempted), failure to pass them within the stipulated time will lead to a cut in your wages. Finally, you must join the post within one month from the date of the order; otherwise, your appointment will be cancelled without prior intimation, and you will lose any seniority admissible to you."
+  },
+  {
+    "query": "What is the primary function of the Oversight Committee constituted by the Government of Maharashtra, and for which specific university's compliance report was it initially formed?",
+    "expected_tags": [
+      "Oversight Committee",
+      "compliance reports",
+      "Sponsoring Boards",
+      "Self-financing Universities",
+      "Chhatrapati Shivaji University"
+    ],
+    "expected_terms": [
+      "Oversight Committee",
+      "compliance reports",
+      "Sponsoring Boards",
+      "Self-financing Universities",
+      "Chhatrapati Shivaji University"
+    ],
+    "expected_answer": "The Oversight Committee, constituted by the Government of Maharashtra's Department of Higher and Technical Education on February 7, 2018, is primarily responsible for verifying the compliance reports received from the Sponsoring Boards of Self-financing Universities. Specifically, it was formed to verify the compliance report submitted on January 10, 2018, by the Sponsoring Board of St.Welfred Education Society, Panvel, regarding the establishment of Chhatrapati Shivaji University, Panvel. The committee is mandated to monitor and verify these reports and must submit its own report to the Government within one month of its constitution, with a possible extension of up to three additional months."
+  },
+  {
+    "query": "What is the approved intake for the Computer Science and Engineering (Under Graduate) course at Maharashtra Institute of Technology, Aurangabad for the academic year 2023-24?",
+    "expected_tags": [
+      "Maharashtra Institute of Technology",
+      "Aurangabad",
+      "Computer Science and Engineering",
+      "240",
       "2023-24"
     ],
-    "expected_answer": "Government approval was granted because the All India Council for Technical Education (AICTE) had granted approvals and the Director of Technical Education had recommended the proposals for the academic year 2023-24."
-  },
-  {
-    "query": "I'm planning to start a new engineering college and need to know about the government approval process after AICTE grants approval. Which uploaded document should I look at first?",
-    "expected_tags": ["AICTE Approval", "New Institutions", "Recommendation"],
-    "expected_answer": "The most relevant document is the Government Resolution dated 30 June 2023 regarding approvals for unaided professional institutions. It covers government approval for new institutions and related proposals based on AICTE approvals."
-  },
-  {
-    "query": "Which document discusses the regulation of admissions through the Centralized Admission Process (CAP), and which document discusses government approval of institutions after AICTE approval?",
-    "expected_tags": [
-      "Admission Act 2015",
-      "AICTE Approval",
-      "Comparison",
-      "CAP"
+    "expected_terms": [
+      "Maharashtra Institute of Technology",
+      "Aurangabad",
+      "Computer Science and Engineering",
+      "240",
+      "2023-24"
     ],
-    "expected_answer": "The Maharashtra Unaided Private Professional Educational Institutions (Regulation of Admissions and Fees) Act, 2015 defines and regulates the Centralized Admission Process (CAP), while the Government Resolution dated 30 June 2023 deals with granting government approval to institutions following AICTE approval."
+    "expected_answer": "For the academic year 2023-24, the Maharashtra Institute of Technology in Aurangabad has an approved intake of 240 for its Under Graduate Computer Science and Engineering program. This represents an increase of 60 seats from the previous academic year (2022-23), where the intake was 180."
   },
   {
-    "query": "Which uploaded document should I refer to if I want to know how the Maharashtra State Board of Technical Education is constituted?",
-    "expected_tags": ["MSBTE Act 1997", "Board Constitution", "Navigation"],
-    "expected_answer": "Refer to the Maharashtra State Board of Technical Education Act, 1997, particularly the chapter dealing with the establishment and constitution of the Board."
+    "query": "What was the Government of Maharashtra's decision regarding Smt. Gayatri Bhaskar Sonawane's probation period, and what are the key details of this resolution?",
+    "expected_tags": [
+      "Pakas-3418/ No. 123/18/ Tanshi-7",
+      "Smt. Gayatri Bhaskar Sonawane",
+      "probation period",
+      "December 10, 2018",
+      "Nashik"
+    ],
+    "expected_terms": [
+      "Pakas-3418/ No. 123/18/ Tanshi-7",
+      "Smt. Gayatri Bhaskar Sonawane",
+      "probation period",
+      "December 10, 2018",
+      "Nashik"
+    ],
+    "expected_answer": "The Government of Maharashtra, Department of Higher and Technical Education, issued Government Resolution No. Pakas-3418/ No. 123/18/ Tanshi-7 on December 10, 2018. This resolution states that Smt. Gayatri Bhaskar Sonawane, an Advocate in the Department of Electrical Engineering at Government Technological University, Nashik, who is in the Maharashtra Technical College Teachers Service Group A cadre, has satisfactorily completed her two-year probation period. Therefore, her probation period, which completed on 27/06/2014, is being terminated with effect from the date of the notification, and her appointment is approved for continuation."
   },
   {
-    "query": "fees?",
-    "expected_tags": ["Lazy Query", "Clarification"],
-    "expected_answer": "Could you clarify what you mean by 'fees'? The uploaded documents discuss admission and fee regulation for unaided professional educational institutions, fee concessions under the Girls Free Education Government Resolution, scholarship approvals, and fee-related provisions in other contexts."
+    "query": "What are the transfer details for Mr. Vivek Thigale?",
+    "expected_tags": [
+      "Vivek Thigale",
+      "S. T. N. Jintur",
+      "Sha. T. N. Beed",
+      "Change request",
+      "52"
+    ],
+    "expected_terms": [
+      "Vivek Thigale",
+      "S. T. N. Jintur",
+      "Sha. T. N. Beed",
+      "Change request",
+      "52"
+    ],
+    "expected_answer": "Mr. Vivek Thigale, identified with A.A. number 52, is being transferred from his current institution, S. T. N. Jintur, to Sha. T. N. Beed. The reason for this transfer is listed as a 'Change request'."
+  },
+  {
+    "query": "What is the process and committee structure for the reappointment of a College Principal, including their term limits?",
+    "expected_tags": [
+      "College Principal",
+      "reappointment",
+      "external peer review",
+      "five years",
+      "Vice-Chancellor"
+    ],
+    "expected_terms": [
+      "College Principal",
+      "reappointment",
+      "external peer review",
+      "five years",
+      "Vice-Chancellor"
+    ],
+    "expected_answer": "The term of appointment for a College Principal is five years, with eligibility for reappointment for one more term. If the Management intends to re-appoint the existing Principal, they must initiate the process of an external peer review at least six months before the current term concludes. The report from this external peer review committee serves as the main basis for the Principal's re-appointment. Should the committee recommend reappointment, the Management is obligated to re-appoint the existing Principal for an additional term.\n\nThe external peer review committee responsible for this process consists of:\ni. A Nominee of the Vice-Chancellor, who acts as the Chairperson.\nii. A Nominee of the Chairperson of the Management of the College/Institution.\n\nThese nominees must be Principals of Colleges with Excellence, Colleges with Potential for Excellence, Autonomous Colleges, NAAC A or A+ accredited Colleges, or a Director or Head of a University Department."
+  },
+  {
+    "query": "What are the specific requirements or conditions for the University concerning the final accreditation of Rajmata Jijau Mahila Vidyalaya's programs?",
+    "expected_tags": [
+      "Rajmata Jijau Mahila Vidyalaya",
+      "University",
+      "prior accreditation",
+      "compliance report",
+      "final accreditation"
+    ],
+    "expected_terms": [
+      "Rajmata Jijau Mahila Vidyalaya",
+      "University",
+      "prior accreditation",
+      "compliance report",
+      "final accreditation"
+    ],
+    "expected_answer": "For Rajmata Jijau Mahila Vidyalaya, the University is obligated to ensure that prior accreditation from the apex institution or concerned authority, if required, is secured before the submission of the compliance report for final accreditation. Furthermore, the University must also ensure that all other necessary technical criteria and facilities are met when submitting the compliance report for final accreditation."
+  },
+  {
+    "query": "What are the probation period and salary details for the newly appointed Associate Professors (Biology) as per this resolution?",
+    "expected_tags": [
+      "Associate Professor (Biology)",
+      "probation period",
+      "two years",
+      "Rs. 37,400-67,000",
+      "Appointment-2018/ PR No. 176/ Masi-1"
+    ],
+    "expected_terms": [
+      "Associate Professor (Biology)",
+      "probation period",
+      "two years",
+      "Rs. 37,400-67,000",
+      "Appointment-2018/ PR No. 176/ Masi-1"
+    ],
+    "expected_answer": "The newly appointed Associate Professors (Biology) will serve a probation period of two years from the date they assume charge of their post. Their pay scale is Rs. 37,400- 67,000, within the pay band of 9,000. In addition to this pay scale, they are entitled to dearness allowance, house rent allowance, and local supplementary allowance at rates determined by the Government. The first increment will be given after completing one year of probation, and subsequent increments after satisfactory completion of the full probation period. It is important to note that services may be terminated without prior notice if work or conduct during probation is deemed improper, substandard, or unsatisfactory."
+  },
+  {
+    "query": "What are the specific details regarding the appointment of Mrs. Rathod Vaishali Rajendra, including her designated post, place of appointment, and duration of probation, as outlined in the Government Resolution dated November 8, 2017?",
+    "expected_tags": [
+      "Mrs. Rathod Vaishali Rajendra",
+      "probationary period",
+      "Government Residential Women Technological Institute, Yavatmal",
+      "SASENI-3217/ P.No. 61/17/ TANSHI-7",
+      "November 8, 2017"
+    ],
+    "expected_terms": [
+      "Mrs. Rathod Vaishali Rajendra",
+      "probationary period",
+      "Government Residential Women Technological Institute, Yavatmal",
+      "SASENI-3217/ P.No. 61/17/ TANSHI-7",
+      "November 8, 2017"
+    ],
+    "expected_answer": "According to the Government Resolution No: SASENI-3217/ P.No. 61/17/ TANSHI-7, dated November 8, 2017, Mrs. Rathod Vaishali Rajendra has been appointed. She is appointed for a post within the Group-A category in the Department of Admissions, Computer Engineering, Government Technician, Maharashtra Technician Teacher Service. Her place of appointment is the Government Residential Women Technological Institute, Yavatmal. This appointment is for a probationary period of two years from the date she assumes charge of her office."
   }
 ]

@@ -27,6 +27,8 @@ def run_orgpedia_ingestion(
     if not en_files:
         logger.info(f"No OrgPedia .en.txt files found in '{docs_dir}/'.")
         return []
+    
+
 
     logger.info(f"Found {len(en_files)} OrgPedia text files in '{docs_dir}/'.")
     all_processed_records = []

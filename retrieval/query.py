@@ -52,18 +52,18 @@ def generate_query_variations(gemini_client: Any, standalone_query: str) -> List
 
     prompt = f"""You are a query expansion specialist for Indian and Maharashtra state government policy documents.
 
-Task: Given the user question, generate 2 complementary search queries to maximize document retrieval recall:
+Task: Given the user question, generate 2 complementary search queries in English to maximize document retrieval recall:
 
-1. Devanagari & Formal Term Variation:
-   - If the query mentions Maharashtra districts, places, award names, or administrative terms in English (e.g., Akola, Gondia, Nashik, Hingoli, Samajik Nyay, Annabhau Sathe, Dadasaheb Gaikwad, Elevator Mechanic, Electricity Duty), transliterate/translate them into Devanagari Marathi script (e.g., अकोला, गोंदिया, नाशिक, हिंगोली, कर्मवीर दादासाहेब गायकवाड, सामाजिक न्याय, उद्वाहन यांत्रिक, वीज शुल्क).
-   - If the query mentions GST/tax products (e.g., popcorn, fly ash), include official HSN/tariff classifications and ingredient descriptors (e.g., HS 2106, HS 1704, ready to eat, salt, spices, sugar confectionery).
-
-2. Keyword-Dense Search String:
+1. Keyword-Dense Search String:
    - Extract core entities, numbers, dates, HSN codes, and legal section numbers.
+   - If the query mentions GST/tax products, include official HSN/tariff classifications.
+
+2. Broad Concept Variation:
+   - Rephrase the query using broader policy synonyms (e.g., if asking about 'scholarship', include 'financial aid' or 'educational scheme').
 
 User Question: {standalone_query}
 
-Return ONLY a valid JSON array of 2 strings: ["Devanagari/Formal Variation", "Keyword-Dense Search String"]."""
+Return ONLY a valid JSON array of 2 strings: ["Keyword-Dense Search String", "Broad Concept Variation"]."""
 
     try:
         response = generate_content_safe(

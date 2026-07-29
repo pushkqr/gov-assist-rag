@@ -8,7 +8,7 @@ from ingestion.orgpedia_pipeline import run_orgpedia_ingestion
 from core.log_config import get_logger
 from retrieval import run_retrieval
 
-from core.utils import get_genai_client, get_cerebras_client
+from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 
 logger = get_logger(__name__)
 
@@ -18,8 +18,8 @@ def main():
     client = get_genai_client()
     cerebras_client = get_cerebras_client()
     try:
-        weaviate_client = weaviate.connect_to_local()
-        print("Connected to Weaviate local instance.")
+        weaviate_client = get_weaviate_client()
+        print("Connected to Weaviate.")
     except Exception as e:
         print(f"Failed to connect to Weaviate: {e}")
         weaviate_client = None
@@ -39,7 +39,9 @@ def main():
                 weaviate_client.collections.create(
                     name="GovDocs",
                     properties=[
-                        wvc.config.Property(name="page_content", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="translated_text", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="child_text", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="parent_context", data_type=wvc.config.DataType.TEXT),
                         wvc.config.Property(name="document_title", data_type=wvc.config.DataType.TEXT),
                         wvc.config.Property(name="doc_number", data_type=wvc.config.DataType.TEXT),
                         wvc.config.Property(name="year", data_type=wvc.config.DataType.INT),
