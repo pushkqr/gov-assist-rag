@@ -70,9 +70,9 @@ graph TD
         Ret[Retrieval Pipeline]
     end
 
-    subgraph Data Layer
-        Weaviate[(Weaviate Vector DB)]
-        State[Ingestion State Cache]
+    subgraph Data & Services
+        Weaviate[(Weaviate DB)]
+        Translation[Translation Service]
     end
 
     subgraph External APIs
@@ -90,6 +90,8 @@ graph TD
     Ingest -->|Chunk & Embed| Weaviate
     Ret <-->|Hybrid Search| Weaviate
     Ingest <--> State
+    Ret <--> Translation
+    Ingest <--> Translation
 ```
 
 ### Directory Tree
@@ -133,7 +135,9 @@ rag/
 
 - Python 3.10+
 - Google Gemini API Key
-- [Weaviate](https://weaviate.io/) (Runs locally via `docker-compose`)
+- Cerebras API Key (for LLM Generation)
+- [Weaviate](https://weaviate.io/) (Can run locally or remotely)
+- Translation Service (Can run locally or remotely)
 
 ### 2. Installation
 
@@ -154,8 +158,8 @@ rag/
    source .venv/bin/activate
    ```
 
-3. **Start Weaviate container**:
-
+3. **Deploy Weaviate (Local or Remote)**:
+   You can run Weaviate locally using the provided `docker-compose.yml` or deploy it to a remote server using `data/docker-compose.yml`. For local deployment:
    ```bash
    docker-compose up -d
    ```
@@ -170,8 +174,16 @@ rag/
    Create a `.env` file in the root directory. You can copy the provided `.env.example`:
 
    ```env
-   # Required: Your Google AI API key
-   GOOGLE_API_KEY=your_api_key_here
+   # Required: API keys
+   GOOGLE_API_KEY=your_gemini_api_key
+   CEREBRAS_API_KEY=your_cerebras_api_key
+   
+   # Remote / External Services (Optional depending on architecture)
+   # Point these to your hosted microservices if deploying in a distributed environment
+   TRANSLATION_SERVICE_URL=http://<YOUR_TRANSLATION_IP>:8000/translate
+   WEAVIATE_URL=http://<YOUR_WEAVIATE_IP>
+   WEAVIATE_GRPC_PORT=50051
+   WEAVIATE_API_KEY=your-secure-weaviate-api-key
 
    # Model Configuration
    GEN_MODEL_NAME=gemini-2.5-flash
