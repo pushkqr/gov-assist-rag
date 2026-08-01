@@ -140,7 +140,7 @@ def generate_content_safe(client, *args, **kwargs):
 @with_retry_and_throttle(constant_delay_env="EMBED_API_DELAY", default_delay=0)
 def embed_content_safe(client, *args, **kwargs):
     """Wrapper for client.models.embed_content routed to AI Studio if GEMINI_API_KEY is available."""
-    use_aistudio_embed = os.getenv("USE_AISTUDIO_FOR_EMBEDDINGS", "True").strip().lower() in ("true", "1", "yes")
+    use_aistudio_embed = os.getenv("USE_AISTUDIO_FOR_EMBEDDINGS", "False").strip().lower() in ("true", "1", "yes")
     if use_aistudio_embed and os.getenv("GEMINI_API_KEY"):
         embed_client = get_aistudio_client()
         return embed_client.models.embed_content(*args, **kwargs)

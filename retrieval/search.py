@@ -218,7 +218,7 @@ def execute_search_tool(
         logger.info(f"[PROFILING] Query expansion took: {t_variations - t_translate:.3f}s")
 
     config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
-    model_name = os.getenv("EMBED_MODEL_NAME", "gemini-embedding-001")
+    model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
     
     query_vectors = []
     

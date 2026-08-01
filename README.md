@@ -20,7 +20,7 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
   - Streamed Server-Sent Events (SSE) for real-time answer generation.
 
 - **Agentic RAG Pipeline**:
-  - Uses Google Gemini for query understanding, dense embeddings (`gemini-embedding-001`), and generative answering.
+  - Uses Google Gemini for query understanding, dense embeddings (`text-embedding-004`), and generative answering.
   - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged natively in **Weaviate** using Alpha Fusion for unparalleled retrieval accuracy.
 
 - **Enterprise-Grade Security & Authentication**:
@@ -197,7 +197,7 @@ rag/
 
    # Model Configuration
    GEN_MODEL_NAME=gemini-2.5-flash
-   EMBED_MODEL_NAME=gemini-embedding-001
+   EMBED_MODEL_NAME=text-embedding-004
 
    # Security
    # Set this to protect your app. Leave empty for public access.
