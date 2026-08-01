@@ -37,7 +37,7 @@ if DOCS_DIR.exists():
 
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login", "/api/history"}
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
 def _is_authenticated(request: Request) -> bool:
@@ -105,17 +105,21 @@ async def api_login(req: LoginRequest):
     return {"token": req.token}
 
 class HistorySaveRequest(BaseModel):
-    user_id: str
+    user_id: str = None
     history: List[Dict[str, Any]]
 
 @app.post("/api/history")
-async def api_save_history(req: HistorySaveRequest):
-    save_history(req.user_id, req.history)
+async def api_save_history(req: HistorySaveRequest, request: Request):
+    h = request.headers.get("authorization", "")
+    token = h[len("Bearer "):].strip()
+    save_history(token, req.history)
     return {"status": "ok"}
 
 @app.get("/api/history")
-async def api_get_history(user_id: str):
-    history = get_history(user_id)
+async def api_get_history(request: Request, user_id: str = None):
+    h = request.headers.get("authorization", "")
+    token = h[len("Bearer "):].strip()
+    history = get_history(token)
     return {"history": history}
 
 @app.get("/health")
