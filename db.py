@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import hashlib
+import secrets
 
 DB_PATH = "mimir_portal.db"
 
@@ -71,3 +72,14 @@ def get_history(user_id: str) -> list:
     return []
 
 
+def generate_officer_token(label: str) -> str:
+    """Generates a new token, hashes it, stores it, and returns the raw token."""
+    raw_token = f"OFFICER-{secrets.token_hex(8).upper()}"
+    t_hash = hash_token(raw_token)
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO tokens (token_hash, label) VALUES (?, ?)", (t_hash, label))
+    conn.commit()
+    conn.close()
+    return raw_token

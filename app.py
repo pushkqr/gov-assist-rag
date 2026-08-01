@@ -37,7 +37,8 @@ if DOCS_DIR.exists():
 
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
+_ADMIN_TOKEN = os.environ.get("MIMIR_ADMIN_TOKEN", "SUPER-SECRET-ADMIN-TOKEN").strip()
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login", "/api/admin/token"}
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
 def _is_authenticated(request: Request) -> bool:
@@ -121,6 +122,19 @@ async def api_get_history(request: Request, user_id: str = None):
     token = h[len("Bearer "):].strip()
     history = get_history(token)
     return {"history": history}
+
+class TokenCreateRequest(BaseModel):
+    label: str
+
+@app.post("/api/admin/token")
+async def api_admin_token(req: TokenCreateRequest, request: Request):
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer ") or h[len("Bearer "):].strip() != _ADMIN_TOKEN:
+        return JSONResponse({"error": "Admin access required."}, status_code=403)
+        
+    from db import generate_officer_token
+    new_token = generate_officer_token(req.label)
+    return {"token": new_token, "label": req.label}
 
 @app.get("/health")
 async def health():
