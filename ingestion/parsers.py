@@ -39,9 +39,9 @@ Raw Text:
 """
         response = generate_content_safe(
             client,
-            model=os.getenv("SPEC_MODEL_NAME", "gemini-3.5-flash"),
+            model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.0, thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL)),
+            config=types.GenerateContentConfig(temperature=0.0),
         )
         formatted = getattr(response, "text", "") or ""
         if formatted and len(formatted.strip()) >= 50:
