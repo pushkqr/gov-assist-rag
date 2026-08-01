@@ -20,6 +20,7 @@ import weaviate
 import weaviate.classes as wvc
 from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
+from db import init_db, validate_token, save_history, get_history
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +37,18 @@ if DOCS_DIR.exists():
 
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg"}
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login", "/api/history"}
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
 def _is_authenticated(request: Request) -> bool:
-    if not _AUTH_TOKEN: return False
     h = request.headers.get("authorization", "")
     if not h.startswith("Bearer "): return False
-    return hmac.compare_digest(h[len("Bearer "):], _AUTH_TOKEN)
+    token = h[len("Bearer "):].strip()
+    
+    if _AUTH_TOKEN and hmac.compare_digest(token, _AUTH_TOKEN):
+        return True
+        
+    return validate_token(token)
 
 def _is_loopback_client(request: Request) -> bool:
     return bool(request.client) and request.client.host in _LOOPBACK_HOSTS
@@ -66,6 +71,7 @@ weaviate_client = None
 async def startup_event():
     global gemini_client, cerebras_client, weaviate_client
     try:
+        init_db()
         gemini_client = get_genai_client()
         cerebras_client = get_cerebras_client()
         weaviate_client = get_weaviate_client()
@@ -80,6 +86,37 @@ async def serve_landing(request: Request):
 @app.get("/app", response_class=HTMLResponse)
 async def serve_app(request: Request):
     return templates.TemplateResponse(request=request, name="app.html")
+
+@app.get("/login", response_class=HTMLResponse)
+async def serve_login(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html")
+
+@app.get("/portal", response_class=HTMLResponse)
+async def serve_portal(request: Request):
+    return templates.TemplateResponse(request=request, name="portal.html")
+
+class LoginRequest(BaseModel):
+    token: str
+
+@app.post("/api/login")
+async def api_login(req: LoginRequest):
+    if not validate_token(req.token):
+        return JSONResponse({"error": "Invalid Officer Token."}, status_code=401)
+    return {"token": req.token}
+
+class HistorySaveRequest(BaseModel):
+    user_id: str
+    history: List[Dict[str, Any]]
+
+@app.post("/api/history")
+async def api_save_history(req: HistorySaveRequest):
+    save_history(req.user_id, req.history)
+    return {"status": "ok"}
+
+@app.get("/api/history")
+async def api_get_history(user_id: str):
+    history = get_history(user_id)
+    return {"history": history}
 
 @app.get("/health")
 async def health():
