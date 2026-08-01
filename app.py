@@ -21,6 +21,7 @@ import weaviate.classes as wvc
 from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
 from db import init_db, validate_token, save_history, get_history
+import ipaddress
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,22 @@ if DOCS_DIR.exists():
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
 _ADMIN_TOKEN = os.environ.get("MIMIR_ADMIN_TOKEN", "SUPER-SECRET-ADMIN-TOKEN").strip()
 _AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
-_LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
+
+# Security: Intranet Geofencing Subnets
+_AUTHORIZED_SUBNETS = [
+    ipaddress.ip_network("127.0.0.0/8"),      # Localhost loopback
+    ipaddress.ip_network("::1/128"),          # IPv6 loopback
+    ipaddress.ip_network("10.0.0.0/8"),       # Government / Enterprise Intranet
+    ipaddress.ip_network("192.168.0.0/16"),   # Standard Local Network
+    ipaddress.ip_network("172.16.0.0/12"),    # Private Network
+]
+
+def _is_in_authorized_subnet(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host)
+        return any(ip in subnet for subnet in _AUTHORIZED_SUBNETS)
+    except ValueError:
+        return False
 
 def _is_authenticated(request: Request) -> bool:
     h = request.headers.get("authorization", "")
@@ -51,17 +67,23 @@ def _is_authenticated(request: Request) -> bool:
         
     return validate_token(token)
 
-def _is_loopback_client(request: Request) -> bool:
-    return bool(request.client) and request.client.host in _LOOPBACK_HOSTS
-
 @app.middleware("http")
 async def _auth_gate(request: Request, call_next):
+    # Preventative Security: Intranet Geofencing (Applies to all protected endpoints)
     if request.url.path not in _AUTH_OPEN and not request.url.path.startswith("/api/admin/"):
+        
+        # 1. Subnet Verification
+        client_host = request.client.host if request.client else ""
+        if not _is_in_authorized_subnet(client_host):
+            return JSONResponse({
+                "detail": "Network Access Denied. Device is outside authorized government intranet."
+            }, status_code=403)
+            
+        # 2. Token Verification
         if _AUTH_TOKEN:
             if not _is_authenticated(request):
                 return JSONResponse({"detail": "Unauthorized — provide the access token."}, status_code=401)
-        elif not _is_loopback_client(request):
-            return JSONResponse({"detail": "This instance is not configured for remote access."}, status_code=403)
+                
     return await call_next(request)
 
 gemini_client = None
