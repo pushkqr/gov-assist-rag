@@ -1,47 +1,49 @@
-# 02 — Security, Auth & Sandboxes
+# 02 — Security, Auth & Extensibility
 
-**In one line:** Policy documents are strictly confidential; Mimir uses a lightweight FastAPI middleware and frontend sandboxing to ensure no one accesses your data without the key.
+**In one line:** Policy documents are highly confidential; Mimir uses a combination of Zero-Trust Intranet Geofencing, isolated Token Identities, and strict API access controls to ensure your data never leaves the network.
 
 ---
 
-## The Auth Gate (`_auth_gate`)
+## 1. Zero-Trust Intranet Geofencing
 
-You cannot leave a corporate policy RAG endpoint exposed to the public internet. Mimir implements a rigorous, lightweight security layer right at the perimeter of the FastAPI application.
-
-We define a tiny list of public routes (the landing page, the health check, and static assets). Everything else is guarded.
+You cannot leave a government RAG endpoint exposed to the public internet, even with passwords. Mimir implements a rigorous, preventative security layer right at the perimeter of the FastAPI application.
 
 ```python
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg"}
-
-async def _auth_gate(request: Request, call_next):
-    # If the path isn't explicitly open...
-    if request.url.path not in _AUTH_OPEN:
-        # Check if the server requires a token
-        if _AUTH_TOKEN:
-            if not _is_authenticated(request):
-                return JSONResponse({"detail": "Unauthorized"}, status_code=401)
-        # If no token is required, ensure it's a local request
-        elif not _is_loopback_client(request):
-            return JSONResponse({"detail": "Remote access forbidden without token."}, status_code=403)
-
-    return await call_next(request)
+_AUTHORIZED_SUBNETS = [
+    ipaddress.ip_network("10.0.0.0/8"),       # Government / Enterprise Intranet
+    ipaddress.ip_network("127.0.0.0/8"),      # Localhost loopback
+]
 ```
 
-**How it works:**
-
-1. If you set `MIMIR_AUTH_TOKEN` in your `.env` file, the server goes into lockdown mode.
-2. The frontend JavaScript checks `localStorage` for a saved token.
-3. Every time the frontend makes an API request to `/ask` or `/workspaces`, it intercepts the `fetch` call and injects the `Authorization: Bearer <token>` header.
-4. The middleware securely compares the incoming header against the server's environment variable using `hmac.compare_digest` to prevent timing attacks.
+Every incoming request to the API is mathematically verified against the authorized government subnets. If a hacker steals a valid access token and tries to use it from their home Wi-Fi or a coffee shop, the middleware intercepts the connection at the TCP/socket level and drops it with a `403 Network Access Denied` before the LLM is ever invoked.
 
 ---
 
-## Client-Side Workspace Sandboxing
+## 2. Token-Based Multi-Tenancy
 
-While the backend is secured by the token, the frontend organizes data into clean, isolated **Workspaces**.
+Mimir discards vulnerable email/password architectures in favor of a secure, hashed Token Registry stored in an isolated SQLite database (`db.py`).
 
-Different departments have different policies. You don't want your IT runbook conversation bleeding into your HR benefits conversation.
+- **Secure Storage**: Only the SHA-256 hashes of the tokens are stored in the database.
+- **Cross-Device Sync**: The frontend passes the token in the `Authorization: Bearer` header. The backend extracts the token, hashes it, and queries the database for that specific officer's chat history.
+- **Data Isolation**: This guarantees multi-tenant data isolation. The IDOR vulnerabilities common in client-side architectures are impossible because the server dictates identity purely by the cryptographic token, not client-provided IDs.
 
-Mimir's Vanilla JS frontend handles this by namespaceing `localStorage`.
+---
 
-When a user switches from the "Default" workspace to the "HR" workspace, the frontend dynamically loads a completely different array of chat threads. The conversation history is effectively sandboxed to that specific domain, keeping the LLM's context window clean and focused strictly on the task at hand.
+## 3. The Admin Token CRUD API
+
+Mimir features a fully baked API for IT departments to programmatically provision and manage officer access. Protected by the `MIMIR_ADMIN_TOKEN` environment variable, the backend exposes:
+
+- `POST /api/admin/tokens`: Generates a random secure token, hashes it, and stores it.
+- `GET /api/admin/tokens`: Returns a list of all active tokens (hashes only).
+- `DELETE /api/admin/tokens/{token_hash}`: Instantly revokes an officer's access globally.
+
+---
+
+## 4. An Extensible Engine
+
+Because Mimir is built as an agnostic engine, extending it to a new department (e.g., Department of Finance) requires zero backend security changes. You simply:
+1. Spin up a new Weaviate collection with Finance documents.
+2. Deploy the Mimir Engine.
+3. Provision Finance Officer tokens via the Admin API.
+
+The underlying security, auth, and geofencing work out of the box for any department.

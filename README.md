@@ -2,11 +2,13 @@
   <img src="assets/mimir-hero.svg" alt="Mimir Logo" width="100%"/>
 </div>
 
-# Mimir
+# Mimir Engine
 
-Mimir is an AI-powered Retrieval-Augmented Generation (RAG) system and interactive chat surface designed specifically for querying, comparing, and analyzing government policy documents, circulars, and notifications.
+Mimir is an **Extensible AI-powered Retrieval-Augmented Generation (RAG) Engine** designed as the foundational backend for deploying secure, citation-backed conversational interfaces across government intranets.
 
-Built for citation-backed grounding and high-precision retrieval, responses are synthesized strictly from indexed local documents, eliminating hallucinated policy text. Named after the Norse figure who guarded the Well of Wisdom, Mimir represents memory and institutional knowledge you can rely on.
+Built for flexibility, Mimir separates the core AI retrieval logic from the frontend presentation layer. While the repository includes a reference implementation (e.g., an Officer Portal), the engine itself is completely department-agnostic. By simply swapping the frontend stylesheet and connecting a different Weaviate collection, Mimir can instantly power dedicated portals for the Department of Finance, Health, Police, or Revenue—requiring zero backend code changes.
+
+Named after the Norse figure who guarded the Well of Wisdom, Mimir represents the institutional memory and secure intelligence infrastructure of the modern digital government.
 
 ---
 
@@ -21,14 +23,13 @@ Built for citation-backed grounding and high-precision retrieval, responses are 
   - Uses Google Gemini for query understanding, dense embeddings (`gemini-embedding-001`), and generative answering.
   - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged natively in **Weaviate** using Alpha Fusion for unparalleled retrieval accuracy.
 
-- **Robust Authentication & Security**:
-  - Built-in token-based authentication middleware. Set `MIMIR_AUTH_TOKEN` in your environment to protect the backend endpoints.
-  - The public landing page remains accessible, while the `/app` surface and `/ask` endpoints are locked securely behind the gate.
+- **Enterprise-Grade Security & Authentication**:
+  - **Zero-Trust Intranet Geofencing**: The middleware mathematically validates incoming network requests against authorized government subnets (e.g., `10.0.0.0/8`). Requests from public networks are dropped at the perimeter.
+  - **Token-Based Identity**: A built-in SQLite token registry completely replaces vulnerable passwords. Chat histories are securely mapped to hashed officer tokens.
+  - **Admin token CRUD API**: Fully baked API for IT departments to provision, audit, and revoke officer tokens programmatically.
 
-
-- **Contextual Conversation Memory**:
-  - Persistent threads saved locally on the client using `localStorage`.
-  - Workspace segregation allows you to sandbox different policy domains (e.g., HR policies vs. IT policies).
+- **Cross-Device Persistent Sessions**:
+  - Chat histories are saved securely to the local SQLite database instead of browser storage. Officers can seamlessly transition between desktop and mobile on the government intranet without losing conversation context.
 
 ---
 
