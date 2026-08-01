@@ -590,7 +590,11 @@
    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),60000);
    try{
      const r=await fetch('/ask-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,history:hist,workspace:activeWs}),signal:ctrl.signal});
-     if(!r.ok||!r.body)throw new Error('http '+r.status);
+     if(!r.ok||!r.body){
+       let errStr = 'http '+r.status;
+       try { const errJson = await r.json(); if (errJson.detail) errStr = errJson.detail; } catch(e){}
+       throw new Error(errStr);
+     }
      const reader=r.body.getReader();const dec=new TextDecoder();
      let buf='',answer='',cites=[],recs=[],first=true,errored=null;
      while(true){
@@ -610,7 +614,8 @@
      t.msgs.push({role:'assistant',content:answer,sources:cites,recs:recs});saveThreads();
    }catch(e){
      const slow=e&&e.name==='AbortError';
-     c.innerHTML='<span class="text-red-500">'+(slow?'That took too long — the model may be busy or rate-limited.':'Could not reach the model right now.')+'</span> <button class="ml-1.5 rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">Retry</button>';
+     const msg = slow ? 'That took too long — the model may be busy or rate-limited.' : (e.message || 'Could not reach the model right now.');
+     c.innerHTML='<span class="text-red-500">'+msg+'</span> <button class="ml-1.5 rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">Retry</button>';
      const rb=c.querySelector('button');if(rb)rb.onclick=()=>answerInto(q,hist,c,t);
    }finally{clearTimeout(to);$('bAsk').disabled=false;$('log').scrollTop=$('log').scrollHeight;}
  }
