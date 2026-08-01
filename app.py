@@ -41,13 +41,18 @@ _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
 _ADMIN_TOKEN = os.environ.get("MIMIR_ADMIN_TOKEN", "SUPER-SECRET-ADMIN-TOKEN").strip()
 _AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
 
-_AUTHORIZED_SUBNETS = [
-    ipaddress.ip_network("127.0.0.0/8"),
-    ipaddress.ip_network("::1/128"),
-    ipaddress.ip_network("10.0.0.0/8"),
-    ipaddress.ip_network("192.168.0.0/16"),
-    ipaddress.ip_network("172.16.0.0/12"),
-]
+_AUTHORIZED_SUBNETS = []
+_env_subnets = os.environ.get("MIMIR_ALLOWED_SUBNETS")
+if _env_subnets:
+    _AUTHORIZED_SUBNETS = [ipaddress.ip_network(s.strip()) for s in _env_subnets.split(",") if s.strip()]
+else:
+    _AUTHORIZED_SUBNETS = [
+        ipaddress.ip_network("127.0.0.0/8"),
+        ipaddress.ip_network("::1/128"),
+        ipaddress.ip_network("10.0.0.0/8"),
+        ipaddress.ip_network("192.168.0.0/16"),
+        ipaddress.ip_network("172.16.0.0/12"),
+    ]
 
 def _is_in_authorized_subnet(host: str) -> bool:
     try:
@@ -69,7 +74,12 @@ def _is_authenticated(request: Request) -> bool:
 @app.middleware("http")
 async def _auth_gate(request: Request, call_next):
     if request.url.path not in _AUTH_OPEN and not request.url.path.startswith("/api/admin/"):
-        client_host = request.client.host if request.client else ""
+        x_forwarded_for = request.headers.get("x-forwarded-for")
+        if x_forwarded_for:
+            client_host = x_forwarded_for.split(",")[0].strip()
+        else:
+            client_host = request.client.host if request.client else ""
+            
         if not _is_in_authorized_subnet(client_host):
             return JSONResponse({
                 "detail": "Network Access Denied. Device is outside authorized government intranet."

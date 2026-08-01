@@ -5,11 +5,11 @@ services:
     build: .
     container_name: mimir-rag
     volumes:
-      # Map the data directories to persist state across container restarts
+      # Map the data directories and SQLite database to persist state across container restarts
       - ./docs:/app/docs
       - ./scratch:/app/scratch
-      - ./local_qdrant_db:/app/local_qdrant_db
       - ./temp:/app/temp
+      - ./mimir_portal.db:/app/mimir_portal.db
       - ./gcp-key.json:/app/gcp-key.json:ro
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json

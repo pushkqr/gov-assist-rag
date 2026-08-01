@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
-# Ensure scratch, temp, and local_qdrant_db directories exist
-RUN mkdir -p scratch temp local_qdrant_db docs
+# Ensure persistent directories and files exist
+RUN mkdir -p scratch temp docs && touch mimir_portal.db
 
 # Expose FastAPI port
 EXPOSE 8000
