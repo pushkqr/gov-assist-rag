@@ -87,7 +87,7 @@ def run_orgpedia_ingestion(
 
 
         if weaviate_client and processed_records:
-            weaviate_collection = weaviate_client.collections.get("GovDocs")
+            weaviate_collection = weaviate_client.collections.get(collection_name)
             with weaviate_collection.batch.dynamic() as batch:
                 for record in processed_records:
                     batch.add_object(

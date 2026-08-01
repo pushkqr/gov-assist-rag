@@ -122,14 +122,19 @@ def run_hybrid_search(
     fast_mode: bool,
 ) -> Tuple[List[Any], List[Any], List[Dict[str, Any]]]:
     """Execute hybrid dense+BM25 search with RRF fusion, optional reranking, and evidence extraction."""
-    limit = 15 if fast_mode else 25
-    rerank_limit = 15 if fast_mode else 12
+    limit = 35 if fast_mode else 150
+    rerank_limit = 35 if fast_mode else 12
 
     query_vector = query_vectors[0] if query_vectors else []
 
-    # Determine weight for alpha fusion
-    has_keywords = bool(re.search(r"[A-Z][a-z]+ [A-Z][a-z]+|\b\d+[-/]?\d*\b|\b(section|circular|notification|act|rule|form|gst|hsn)\b", standalone_query))
-    alpha = 0.25 if has_keywords else 0.50
+    # Weight alpha: 
+    # - 0.25 (BM25-heavy) for explicit GR code patterns
+    # - 0.50 (Balanced) for all other general queries
+    gr_code_pattern = r"[A-Z]{2,}[-/]\d+|P\.?No\.?\s*\d+|No\.\s+\d+/"
+    if re.search(gr_code_pattern, standalone_query):
+        alpha = 0.25
+    else:
+        alpha = 0.50
     
     bm25_query = " ".join(query_variations) if query_variations else standalone_query
     
@@ -146,7 +151,7 @@ def run_hybrid_search(
     
     search_res = weaviate_collection.query.hybrid(
         query=bm25_query,
-        query_properties=["translated_text", "parent_context", "section_title"],
+        query_properties=["translated_text", "parent_context", "section_title", "child_text", "doc_number"],
         vector=query_vector,
         alpha=alpha,
         limit=limit,

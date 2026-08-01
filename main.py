@@ -24,9 +24,11 @@ def main():
         print(f"Failed to connect to Weaviate: {e}")
         weaviate_client = None
 
-    RUN_INGESTION = False
+    COLLECTION_NAME = "GovDocs"
+
+    RUN_INGESTION = True
     RUN_RETRIEVAL = False
-    RUN_BENCHMARK = True
+    RUN_BENCHMARK = False
 
     if RUN_INGESTION:
         print("\n" + "=" * 50)
@@ -55,17 +57,17 @@ def main():
             else:
                 print("Using existing Weaviate collection: 'GovDocs'")
 
-        records = run_ingestion(client, weaviate_client=weaviate_client, docs_dir="docs")
-        orgpedia_records = run_orgpedia_ingestion(client, weaviate_client=weaviate_client)
+        records = run_ingestion(client, weaviate_client=weaviate_client, collection_name=COLLECTION_NAME, docs_dir="docs")
+        orgpedia_records = run_orgpedia_ingestion(client, weaviate_client=weaviate_client, collection_name=COLLECTION_NAME)
         print("Upsert and indexing complete! All vector records are stored in Weaviate.")
 
     if RUN_BENCHMARK:
         print("\n" + "=" * 50)
         print("MODULE: CORPUS BENCHMARK & EVALUATION HARNESS")
         print("=" * 50)
-        cases = load_benchmark_cases()
+        cases = load_benchmark_cases(sample_size=30)
         if cases:
-            benchmark_report = run_benchmark(client, cerebras_client, weaviate_client, cases)
+            benchmark_report = run_benchmark(client, cerebras_client, weaviate_client, cases, collection_name=COLLECTION_NAME)
             print_benchmark_report(benchmark_report)
         else:
             print("No benchmark cases found. Create a benchmark.json file.")
@@ -91,7 +93,7 @@ def main():
                 if not query.strip():
                     continue
 
-                retrieval_result = run_retrieval(client, cerebras_client, weaviate_client, query, collection_name, chat_history)
+                retrieval_result = run_retrieval(client, cerebras_client, weaviate_client, query, COLLECTION_NAME, chat_history)
 
                 print(f"\n{'-' * 50}\nAssistant Response:\n")
                 full_answer = ""

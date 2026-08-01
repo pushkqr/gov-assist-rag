@@ -15,14 +15,23 @@ logger = get_logger(__name__)
 BENCHMARK_FILE = Path("benchmark/benchmark.json")
 
 
-def load_benchmark_cases() -> List[Dict[str, Any]]:
-    """Load benchmark cases from benchmark.json."""
-    if not BENCHMARK_FILE.exists():
-        logger.warning(f"{BENCHMARK_FILE} not found.")
+import random
+
+def load_benchmark_cases(filepath: str = "benchmark/benchmark.json", sample_size: int = None) -> List[Dict[str, Any]]:
+    """Load benchmark cases and optionally sample a random subset."""
+    path = Path(filepath)
+    if not path.exists():
+        logger.warning(f"{path} not found.")
         return []
-    with open(BENCHMARK_FILE, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         cases = json.load(f)
-    logger.info(f"Loaded {len(cases)} cases from {BENCHMARK_FILE}")
+    
+    if sample_size and sample_size < len(cases):
+        cases = random.sample(cases, sample_size)
+        logger.info(f"Randomly sampled {sample_size} cases from {path}")
+    else:
+        logger.info(f"Loaded {len(cases)} cases from {path}")
+        
     return cases
 
 
@@ -75,10 +84,10 @@ Return ONLY valid JSON with fields: "score" (integer 0-5) and "justification" (o
         return {"score": 0.0, "justification": f"judge failed: {exc}"}
 
 
-def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[Dict[str, Any]] | None = None, collection_name: str = "gov_docs") -> Dict[str, Any]:
+def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[Dict[str, Any]] | None = None, collection_name: str = "GovDocs", sample_size: int = None) -> Dict[str, Any]:
     """Run the benchmark suite and return structured results."""
     if cases is None:
-        cases = load_benchmark_cases()
+        cases = load_benchmark_cases(sample_size=sample_size)
 
     if not cases:
         return {"case_count": 0, "error": "No benchmark cases found."}

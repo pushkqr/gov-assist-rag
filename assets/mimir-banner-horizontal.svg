@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" width="100%">
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#353d50" opacity="0.4"/>
+    </pattern>
+    <linearGradient id="gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <style>
+      .pyramid {
+        animation: float 6s ease-in-out infinite;
+      }
+      .pulse {
+        animation: pulse 4s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 0.45; }
+      }
+    </style>
+  </defs>
+  
+  <rect width="100%" height="100%" fill="#0d1119" rx="8" />
+  <rect width="100%" height="100%" fill="url(#grid)" rx="8" />
+
+  <g transform="translate(500, 120)">
+    <!-- Logo Group (Left side) -->
+    <g transform="translate(-200, 0)">
+      <circle cx="0" cy="0" r="55" fill="#f59e0b" filter="url(#glow)" class="pulse" />
+      
+      <svg x="-36" y="-36" width="72" height="72" viewBox="0 0 24 24" class="pyramid">
+        <path d="M2.5 16.88a1 1 0 0 1-.32-1.43l9-13.02a1 1 0 0 1 1.64 0l9 13.01a1 1 0 0 1-.32 1.44l-8.51 4.86a2 2 0 0 1-1.98 0Z" fill="none" stroke="url(#gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 2 L12 22" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </g>
+
+    <!-- Text Group (Right side) -->
+    <g transform="translate(-80, 0)">
+      <text x="0" y="10" font-family="'Instrument Serif', Georgia, serif" font-size="64" font-weight="500" fill="#eef1f6" text-anchor="start" letter-spacing="12">M I M I R</text>
+      <text x="4" y="44" font-family="system-ui, sans-serif" font-size="16" font-weight="500" fill="#93a0b5" text-anchor="start" letter-spacing="6">INSTITUTIONAL MEMORY</text>
+    </g>
+  </g>
+</svg>

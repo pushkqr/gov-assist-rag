@@ -8,6 +8,7 @@ from google.genai import types
 from cerebras.cloud.sdk import Cerebras
 
 from core.log_config import get_logger
+from core.utils import cerebras_chat_completions_create_safe
 from retrieval.search import search_policy_docs_tool, execute_search_tool
 
 logger = get_logger(__name__)
@@ -127,12 +128,13 @@ def run_retrieval(
         "You will receive a user question along with pre-retrieved context, injected as `Context: [Retrieved Evidence...]`. This context has already been pulled from the indexed corpus (Maharashtra State GRs, Education Policies, CCS Rules, Acts) by an upstream retrieval system. You do not have a search tool and cannot request additional retrieval — you must work entirely from what is given to you in this single pass.\n\n"
         "## Core Directive: Strict Fact-Grounding\n"
         "- Answer using ONLY the information present in the provided context. Never supplement with outside knowledge, training data, or general assumptions about government policy, even if you believe you know the answer.\n"
-        "- If the user's query is highly ambiguous (e.g., a single word like 'fees?' or 'leave?'), DO NOT attempt to summarize all context. Instead, explicitly ask the user to clarify what specific information they are looking for.\n"
+        "- If the user's query is highly ambiguous (e.g., a single word like 'fees?' or 'leave?'), provide a brief summary of the various contexts found in the retrieved documents, and then explicitly ask the user to clarify.\n"
         "- If the context fully answers the question, provide a complete, definitive answer.\n"
         "- If the context partially answers the question, answer only the part that is supported, and explicitly flag what remains unaddressed.\n"
         "- If the user asks which document they should refer to, synthesize a list of ALL highly relevant documents present in the context and briefly summarize what each provides, rather than just picking one.\n"
         "- If the context does not contain the answer, state plainly that the information is not available in the retrieved documents. Do not guess, infer beyond what's written, or pad the response with plausible-sounding filler. A clear \"not found\" is more valuable to a government official than a confident hallucination.\n"
-        "- Never fabricate a document name, section number, or citation. Cite only what actually appears in the provided context.\n\n"
+        "- Never fabricate a document name, section number, or citation. Cite only what actually appears in the provided context.\n"
+        "- Be exceptionally thorough. Do not omit mentions of specific regulations (such as UGC Regulations), criteria, or governing bodies if they are present in the context.\n\n"
         "## Citation Requirements\n"
         "- The document names provided in the context (e.g., 'MAHENG/2009/35528', 'Manyata-2023...', or Roman numerals) may be internal administrative codes rather than full descriptive titles. Do not refuse to answer simply because these codes don't perfectly match the human-readable name of an Act or Resolution in the user's query. If the text of the context contains the answer, provide the answer and cite the administrative code.\n"
         "- Every factual claim must be tied to its source using the document name and section/clause as given in the context (e.g., \"According to GR-Unaided-30-June-2023, Section 2...\").\n"
@@ -169,7 +171,8 @@ def run_retrieval(
         user_prompt = f"Context:\n{context_text}\n\nQuestion: {query}"
 
     try:
-        stream = cerebras_client.chat.completions.create(
+        stream = cerebras_chat_completions_create_safe(
+            cerebras_client,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

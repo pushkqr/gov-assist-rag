@@ -67,6 +67,7 @@ def run_ingestion(
             "doc_number": extracted_metadata.get("doc_number", os.path.basename(target_file)),
             "document_title": extracted_metadata.get("document_title", os.path.splitext(os.path.basename(target_file))[0]),
             "document_category": extracted_metadata.get("document_category", "Document"),
+            "source_filename": os.path.basename(target_file),
         }
 
         try:
@@ -74,19 +75,14 @@ def run_ingestion(
             all_processed_records.extend(processed_records)
 
             if weaviate_client and processed_records:
-                weaviate_collection = weaviate_client.collections.get("GovDocs")
+                weaviate_collection = weaviate_client.collections.get(collection_name)
                 with weaviate_collection.batch.dynamic() as batch:
                     for record in processed_records:
                         batch.add_object(
                             properties=record["metadata"],
                             vector=record["vector"]["dense"]
                         )
-                
-                # Check for batch errors silently accumulating
-                if hasattr(weaviate_collection.batch, "failed_objects") and weaviate_collection.batch.failed_objects:
-                    logger.error(f"  -> Weaviate batch insertion had {len(weaviate_collection.batch.failed_objects)} failures for {filename}.")
-                else:
-                    logger.info(f"  -> Immediately upserted {len(processed_records)} chunks for {filename} into Weaviate.")
+                logger.info(f"  -> Upserted {len(processed_records)} chunks for {filename} into Weaviate.")
 
             save_ingestion_state(target_file, file_hash, state_path, global_metadata)
         except Exception as e:

@@ -6,7 +6,6 @@ from typing import Any, Dict, List
 from google import genai
 from google.genai import types
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
-from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from core.log_config import get_logger
 from core.utils import embed_content_safe, generate_content_safe
 

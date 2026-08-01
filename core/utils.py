@@ -147,6 +147,12 @@ def embed_content_safe(client, *args, **kwargs):
     return client.models.embed_content(*args, **kwargs)
 
 
+@with_retry_and_throttle(constant_delay_env="CEREBRAS_API_DELAY", default_delay=0, initial_backoff=10)
+def cerebras_chat_completions_create_safe(client, *args, **kwargs):
+    """Wrapper for cerebras_client.chat.completions.create with rate limiting for TPM limits."""
+    return client.chat.completions.create(*args, **kwargs)
+
+
 @with_retry_and_throttle(constant_delay_env="GEN_API_DELAY", default_delay=0)
 def generate_content_stream_safe(client, *args, **kwargs):
     """Wrapper for client.models.generate_content_stream with rate limiting."""
