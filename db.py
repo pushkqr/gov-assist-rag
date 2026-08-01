@@ -83,3 +83,29 @@ def generate_officer_token(label: str) -> str:
     conn.commit()
     conn.close()
     return raw_token
+
+def list_tokens() -> list:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT token_hash, label FROM tokens")
+    rows = c.fetchall()
+    conn.close()
+    return [{"token_hash": r[0], "label": r[1]} for r in rows]
+
+def update_token_label(token_hash: str, new_label: str) -> bool:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("UPDATE tokens SET label=? WHERE token_hash=?", (new_label, token_hash))
+    rows_affected = c.rowcount
+    conn.commit()
+    conn.close()
+    return rows_affected > 0
+
+def delete_token(token_hash: str) -> bool:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM tokens WHERE token_hash=?", (token_hash,))
+    rows_affected = c.rowcount
+    conn.commit()
+    conn.close()
+    return rows_affected > 0

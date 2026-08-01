@@ -38,7 +38,7 @@ if DOCS_DIR.exists():
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
 _ADMIN_TOKEN = os.environ.get("MIMIR_ADMIN_TOKEN", "SUPER-SECRET-ADMIN-TOKEN").strip()
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login", "/api/admin/token"}
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1"}
 
 def _is_authenticated(request: Request) -> bool:
@@ -56,7 +56,7 @@ def _is_loopback_client(request: Request) -> bool:
 
 @app.middleware("http")
 async def _auth_gate(request: Request, call_next):
-    if request.url.path not in _AUTH_OPEN:
+    if request.url.path not in _AUTH_OPEN and not request.url.path.startswith("/api/admin/"):
         if _AUTH_TOKEN:
             if not _is_authenticated(request):
                 return JSONResponse({"detail": "Unauthorized — provide the access token."}, status_code=401)
@@ -126,8 +126,16 @@ async def api_get_history(request: Request, user_id: str = None):
 class TokenCreateRequest(BaseModel):
     label: str
 
-@app.post("/api/admin/token")
-async def api_admin_token(req: TokenCreateRequest, request: Request):
+@app.get("/api/admin/tokens")
+async def api_admin_list_tokens(request: Request):
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer ") or h[len("Bearer "):].strip() != _ADMIN_TOKEN:
+        return JSONResponse({"error": "Admin access required."}, status_code=403)
+    from db import list_tokens
+    return {"tokens": list_tokens()}
+
+@app.post("/api/admin/tokens")
+async def api_admin_create_token(req: TokenCreateRequest, request: Request):
     h = request.headers.get("authorization", "")
     if not h.startswith("Bearer ") or h[len("Bearer "):].strip() != _ADMIN_TOKEN:
         return JSONResponse({"error": "Admin access required."}, status_code=403)
@@ -135,6 +143,29 @@ async def api_admin_token(req: TokenCreateRequest, request: Request):
     from db import generate_officer_token
     new_token = generate_officer_token(req.label)
     return {"token": new_token, "label": req.label}
+
+class TokenUpdateRequest(BaseModel):
+    label: str
+
+@app.put("/api/admin/tokens/{token_hash}")
+async def api_admin_update_token(token_hash: str, req: TokenUpdateRequest, request: Request):
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer ") or h[len("Bearer "):].strip() != _ADMIN_TOKEN:
+        return JSONResponse({"error": "Admin access required."}, status_code=403)
+    from db import update_token_label
+    if update_token_label(token_hash, req.label):
+        return {"status": "ok"}
+    return JSONResponse({"error": "Token not found."}, status_code=404)
+
+@app.delete("/api/admin/tokens/{token_hash}")
+async def api_admin_delete_token(token_hash: str, request: Request):
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer ") or h[len("Bearer "):].strip() != _ADMIN_TOKEN:
+        return JSONResponse({"error": "Admin access required."}, status_code=403)
+    from db import delete_token
+    if delete_token(token_hash):
+        return {"status": "ok"}
+    return JSONResponse({"error": "Token not found."}, status_code=404)
 
 @app.get("/health")
 async def health():
