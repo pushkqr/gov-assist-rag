@@ -160,9 +160,11 @@ rag/
    ```
 
 3. **Deploy Weaviate (Local or Remote)**:
-   You can run Weaviate locally using the provided `docker-compose.yml` or deploy it to a remote server using `data/docker-compose.yml`. For local deployment:
+   Weaviate is deployed as a standalone microservice. You can run it locally or deploy it to a remote server using its dedicated compose file:
    ```bash
+   cd data
    docker-compose up -d
+   cd ..
    ```
 
 4. **Install dependencies**:
@@ -193,6 +195,13 @@ rag/
    # Security
    # Set this to protect your app. Leave empty for public access.
    MIMIR_AUTH_TOKEN=your_secure_password
+   
+   # Admin token used for CRUD operations on officer tokens.
+   MIMIR_ADMIN_TOKEN=SUPER-SECRET-ADMIN-TOKEN
+   
+   # Intranet Geofencing (Comma-separated CIDRs).
+   # Use 0.0.0.0/0 to allow all public traffic for live demos.
+   MIMIR_ALLOWED_SUBNETS=
    ```
 
 ---
