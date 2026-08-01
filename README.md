@@ -73,6 +73,7 @@ graph TD
 
     subgraph Data & Services
         Weaviate[(Weaviate DB)]
+        SQLite[(SQLite Token & History DB)]
         Translation[Translation Service]
     end
 
@@ -84,6 +85,7 @@ graph TD
     UI <-->|HTTP / SSE| API
     API --> Ret
     API --> Ingest
+    API <--> SQLite
     Ret --> Router
     Ingest --> Router
     Router <--> LLM
@@ -100,12 +102,17 @@ graph TD
 ```text
 rag/
 ├── main.py                             # CLI entry point (Ingestion, Retrieval, Benchmark)
-├── app.py                              # FastAPI server and core endpoints (/ask, /workspaces)
+├── app.py                              # FastAPI server, Auth Gateway, and core endpoints
+├── db.py                               # SQLite Token Registry & Chat History manager
 ├── requirements.txt                    # Python dependencies
 │
 ├── templates/                          # Frontend UI (Vanilla HTML/JS/CSS)
 │   ├── landing.html                    # Public-facing landing page
-│   └── app.html                        # Authenticated chat interface
+│   ├── login.html                      # Officer login gateway
+│   ├── portal.html                     # Authenticated Officer Chat Interface
+│   └── app.html                        # Base chat interface
+│
+├── mimir_portal.db                     # SQLite Database (Auto-generated on run)
 │
 ├── scratch/                            # Temporary & Persisted State
 │   ├── ingestion_state.json            # File hashing & incremental ingestion state tracker
