@@ -61,6 +61,7 @@ def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
         doc_number = payload.get("doc_number", "Unknown document")
         title = payload.get("document_title", "")
         doc_label = f"{title} ({doc_number})" if title else doc_number
+        score = getattr(result.metadata, "score", 0.0) if hasattr(result, "metadata") and result.metadata else 0.0
         
         evidence.append(
             {
@@ -68,6 +69,9 @@ def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
                 "year": payload.get("year"),
                 "section": clean_sec,
                 "quote": quote,
+                "score": score,
+                "filename": payload.get("source_filename"),
+                "supersedes": payload.get("supersedes")
             }
         )
     return evidence
@@ -123,30 +127,33 @@ def run_hybrid_search(
 
     query_vector = query_vectors[0] if query_vectors else []
 
-    has_keywords = bool(re.search(r"\b\d+[-/]?\d*\b|\b(section|circular|notification|act|rule|form|gst|hsn)\b", standalone_query, re.IGNORECASE))
+    # Determine weight for alpha fusion
+    has_keywords = bool(re.search(r"[A-Z][a-z]+ [A-Z][a-z]+|\b\d+[-/]?\d*\b|\b(section|circular|notification|act|rule|form|gst|hsn)\b", standalone_query))
+    alpha = 0.25 if has_keywords else 0.50
+    
+    bm25_query = " ".join(query_variations) if query_variations else standalone_query
     
     class DummyResult:
-        def __init__(self, props):
+        def __init__(self, props, metadata=None):
             self.payload = props
-    
-    weaviate_collection = weaviate_client.collections.get("GovDocs")
-    
-    # Determine weight for alpha fusion (0.40 = 40% semantic dense vector, 60% BM25 keyword)
-    alpha = 0.40
+            self.metadata = metadata
+            
+    weaviate_collection = weaviate_client.collections.get(collection_name)
     
     weaviate_filters = None
     if year_filter:
         weaviate_filters = wvc.query.Filter.by_property("year").equal(year_filter)
     
     search_res = weaviate_collection.query.hybrid(
-        query=standalone_query,
-        query_properties=["translated_text"],
+        query=bm25_query,
+        query_properties=["translated_text", "parent_context", "section_title"],
         vector=query_vector,
         alpha=alpha,
         limit=limit,
-        filters=weaviate_filters
+        filters=weaviate_filters,
+        return_metadata=wvc.query.MetadataQuery(score=True)
     )
-    current_results = [DummyResult(obj.properties) for obj in search_res.objects]
+    current_results = [DummyResult(obj.properties, obj.metadata) for obj in search_res.objects]
 
     if not current_results:
         return [], [], []
@@ -165,8 +172,8 @@ def execute_search_tool(
     collection_name: str,
     query: str,
     year: Optional[int] = None,
-    fast_mode: bool = False,
-) -> Tuple[str, List[Dict[str, Any]]]:
+    fast_mode: bool = True,
+) -> Tuple[str, List[Dict[str, Any]], Dict[str, float], List[Dict[str, Any]]]:
     """Execute the search tool and format results for the LLM."""
     import time
     import requests
@@ -247,10 +254,42 @@ def execute_search_tool(
     t_weaviate = time.time()
     logger.info(f"[PROFILING] Hybrid Search took: {t_weaviate - t_weaviate_start:.3f}s")
 
+    t_translate_time = t_translate - t_start
+    t_expansion_time = t_variations - t_translate if not fast_mode else 0.0
+    t_embed_time = t_embed - t_variations
+    t_weaviate_time = t_weaviate - t_weaviate_start
+
+    profiling = {
+        "translation_s": round(t_translate_time, 3),
+        "expansion_s": round(t_expansion_time, 3),
+        "embedding_s": round(t_embed_time, 3),
+        "weaviate_s": round(t_weaviate_time, 3),
+    }
+
     if not evidence:
-        return json.dumps({"results": "No relevant documents found. Try modifying the keywords or changing fast_mode to false."}), []
+        return json.dumps({"results": "No relevant documents found. Try modifying the keywords or changing fast_mode to false."}), [], profiling, []
 
     context_text = build_context_text(top_results)
+    
+    used_titles = {e.get("document") for e in evidence if e.get("document")}
+    recommendations = []
+    seen_recs = set(used_titles)
+    for res in search_results:
+        payload = res.payload or {}
+        doc_num = payload.get("doc_number", "Unknown document")
+        title = payload.get("document_title", "")
+        doc_label = f"{title} ({doc_num})" if title and title != doc_num else doc_num
+        
+        if doc_label and doc_label not in seen_recs:
+            seen_recs.add(doc_label)
+            recommendations.append({
+                "document": doc_label,
+                "year": payload.get("year"),
+                "category": payload.get("document_category", "Document"),
+                "source_filename": payload.get("source_filename")
+            })
+            if len(recommendations) >= 5:
+                break
     
     result_dict = {
         "status": "success",
@@ -258,4 +297,4 @@ def execute_search_tool(
         "results_count": len(evidence),
         "context": context_text
     }
-    return json.dumps(result_dict), evidence
+    return json.dumps(result_dict), evidence, profiling, recommendations

@@ -394,7 +394,24 @@
          return r;});}
        return r;});};
  })();
- const root=document.documentElement;
+  window.downloadSecurePdf = async function(filename) {
+    try {
+      const response = await window.fetch('/download/' + encodeURIComponent(filename));
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch(e) {
+      alert("Failed to securely download document.");
+    }
+  };
+  const root=document.documentElement;
  if(localStorage.theme==='light')root.classList.remove('dark');
  $('theme').onclick=()=>{root.classList.toggle('dark');localStorage.theme=root.classList.contains('dark')?'dark':'light';};
 
@@ -455,16 +472,28 @@
    const c=document.createElement('div');c.className='whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-100';c.innerHTML=html;
    box.appendChild(c);w.appendChild(av);w.appendChild(box);$('log').appendChild(w);$('log').scrollTop=$('log').scrollHeight;return c;
  }
- function addCopy(c,text){const box=c.parentElement;const bar=document.createElement('div');
-   bar.className='mt-1 flex opacity-60 transition group-hover:opacity-100';
-   const b=document.createElement('button');b.className='rounded-md px-1.5 py-0.5 text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200';b.textContent='Copy';
-   b.onclick=()=>{try{navigator.clipboard.writeText(text);}catch(e){}b.textContent='Copied';setTimeout(()=>{b.textContent='Copy';},1200);};
-   bar.appendChild(b);box.appendChild(bar);}
+ function addActions(c,q,answer){const box=c.parentElement;const bar=document.createElement('div');
+   bar.className='mt-1.5 flex items-center justify-start gap-1';
+   const up=document.createElement('button');up.className='rounded p-1 text-zinc-400 hover:text-green-500 hover:bg-zinc-100 dark:hover:bg-zinc-800';up.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
+   const dn=document.createElement('button');dn.className='rounded p-1 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800';dn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>';
+   function sendFeedback(type,btn){fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,response:answer,feedback:type})});up.disabled=true;dn.disabled=true;btn.classList.add(type==='up'?'text-green-500':'text-red-500');btn.classList.remove('text-zinc-400');}
+   up.onclick=()=>sendFeedback('up',up);dn.onclick=()=>sendFeedback('down',dn);
+   const copy=document.createElement('button');copy.className='ml-1 rounded-md px-1.5 py-0.5 text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200';copy.textContent='Copy';
+   copy.onclick=()=>{try{navigator.clipboard.writeText(answer);}catch(e){}copy.textContent='Copied';setTimeout(()=>{copy.textContent='Copy';},1200);};
+   bar.appendChild(up);bar.appendChild(dn);bar.appendChild(copy);box.appendChild(bar);}
  function addSources(c,sources){const box=c.parentElement;const bar=document.createElement('div');
    bar.className='mt-1.5 flex flex-wrap items-center gap-1.5';
    bar.innerHTML='<span class="mono text-[10px] uppercase tracking-wide text-zinc-400">sources</span>';
-   sources.forEach(s=>{const b=document.createElement('button');b.className='mono rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-1 text-[11px] text-zinc-500 transition hover:-translate-y-px hover:border-amber-500/50 hover:text-amber-600 dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-400 dark:hover:text-amber-400';const title=s.document||'Source';b.textContent=title;b.title='View the source for '+title;b.onclick=()=>openSource(s);bar.appendChild(b);});
+   sources.forEach(s=>{const b=document.createElement('button');b.className='mono rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-1 text-[11px] text-zinc-500 transition hover:-translate-y-px hover:border-amber-500/50 hover:text-amber-600 dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-400 dark:hover:text-amber-400';const title=s.document||'Source';let conf='';if(s.score!==undefined&&s.score!==null){if(s.score>=0.75)conf=' [CONF: HIGH]';else if(s.score>=0.45)conf=' [CONF: MEDIUM]';else conf=' [CONF: LOW]';}b.textContent=title+conf;b.title='View the source for '+title;b.onclick=()=>openSource(s);bar.appendChild(b);});
    box.appendChild(bar);maybeAddConnMap(box,bar,sources);}
+ function addRecommendations(c,recs){const box=c.parentElement;const bar=document.createElement('div');
+   bar.className='mt-3 flex flex-col gap-1.5';
+   bar.innerHTML='<span class="mono text-[10px] uppercase tracking-wide text-zinc-400">recommended reading</span>';
+   const list=document.createElement('div');list.className='flex flex-wrap gap-2';
+   recs.forEach(r=>{const b=document.createElement('button');b.className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-600 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 dark:border-zinc-800 dark:bg-[#141b2b] dark:text-zinc-300 dark:hover:border-amber-700/50 dark:hover:bg-amber-950/30 dark:hover:text-amber-400';
+   b.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> <span class="truncate max-w-[220px] font-medium">'+esc(r.document||'Document')+'</span>';
+   b.onclick=()=>askAbout(r.document);list.appendChild(b);});
+   bar.appendChild(list);box.appendChild(bar);}
  // X1: "Show connections" — an on-demand, STATIC mini-map of an answer's cited entities + their 1-hop
  // neighbours, built from the REAL /graph (Entity/EntityType-filtered, same keep-filter as the Graph view).
  // No hand-curated adjacency: if fewer than 2 nodes resolve, the button never renders. One open at a time.
@@ -511,11 +540,17 @@
  // evidence (it must never contradict Proof-of-Forgetting). askAbout stays, as a secondary action.
  function srcPeekHead(n){return '<div class="flex items-start justify-between gap-2"><div><div class="mono text-[10px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">source</div><h3 class="serif mt-0.5 text-xl tracking-tight">'+esc(n)+'</h3></div><button id="srcPeekX" aria-label="Close source" class="-mr-1 -mt-1 shrink-0 rounded p-1 text-zinc-400 transition hover:text-zinc-600 dark:hover:text-zinc-200"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';}
  async function openSource(srcObj){const p=$('srcPeek'),panel=$('srcPeekPanel');if(!p||!panel)return;
-   const title = srcObj.document || 'Unknown Document';
+   let conf='';if(srcObj.score!==undefined&&srcObj.score!==null){if(srcObj.score>=0.75)conf=' [CONF: HIGH]';else if(srcObj.score>=0.45)conf=' [CONF: MEDIUM]';else conf=' [CONF: LOW]';}
+   const title = (srcObj.document || 'Unknown Document') + conf;
    p.classList.remove('hidden');
-   let body='<p class="mono mt-2 text-[10px] uppercase tracking-wide text-zinc-400">'+esc(srcObj.year||'')+' &middot; '+esc(srcObj.section||'')+'</p>'+
-     '<div class="mt-3 space-y-3"><div class="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-[#141b2b]"><p class="mt-1.5 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">'+esc(srcObj.quote||'')+'</p></div></div>';
-   body+='<button id="srcPeekAsk" class="mt-5 w-full shrink-0 rounded-lg border border-amber-500/40 px-3 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-500/10 dark:text-amber-400">Ask about this &rarr;</button>';
+   let scoreDisplay = srcObj.score !== undefined && srcObj.score !== null ? ' &middot; SCORE: ' + srcObj.score.toFixed(3) : '';
+   let body='<p class="mono mt-2 text-[10px] uppercase tracking-wide text-zinc-400">'+esc(srcObj.year||'')+' &middot; '+esc(srcObj.section||'')+scoreDisplay+'</p>';
+   if(srcObj.supersedes) {
+     body+='<div class="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400"><svg class="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div class="text-xs leading-relaxed"><strong class="font-semibold">Notice:</strong> This document supersedes <span class="font-mono">'+esc(srcObj.supersedes)+'</span>.</div></div>';
+   }
+   body+='<div class="mt-3 space-y-3"><div class="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-[#141b2b]"><p class="mt-1.5 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">'+esc(srcObj.quote||'')+'</p></div></div>';
+   if(srcObj.filename){body+='<button onclick="downloadSecurePdf(\''+srcObj.filename.replace(/'/g,"\\'")+'\')" class="mt-4 block w-full text-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-[#141b2b] dark:text-zinc-200 dark:hover:bg-zinc-800">Download PDF</button>';}
+   body+='<button id="srcPeekAsk" class="mt-3 w-full shrink-0 rounded-lg border border-amber-500/40 px-3 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-500/10 dark:text-amber-400">Ask about this &rarr;</button>';
    panel.innerHTML=srcPeekHead(title)+body;
    $('srcPeekX').onclick=closeSource;
    $('srcPeekAsk').onclick=()=>{closeSource();askAbout(title);};}
@@ -557,7 +592,7 @@
      const r=await fetch('/ask-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,history:hist,workspace:activeWs}),signal:ctrl.signal});
      if(!r.ok||!r.body)throw new Error('http '+r.status);
      const reader=r.body.getReader();const dec=new TextDecoder();
-     let buf='',answer='',cites=[],first=true,errored=null;
+     let buf='',answer='',cites=[],recs=[],first=true,errored=null;
      while(true){
        const {value,done}=await reader.read();if(done)break;
        buf+=dec.decode(value,{stream:true});let nl;
@@ -566,13 +601,13 @@
          let d;try{d=JSON.parse(line);}catch(_){continue;}
          if(d.t!=null){if(first){c.innerHTML='';first=false;clearTimeout(to);}answer+=d.t;c.innerHTML=fmt(answer);$('log').scrollTop=$('log').scrollHeight;}
          if(d.error)errored=d.error;
-         if(d.done)cites=d.citations||[];
+         if(d.done){cites=d.citations||[];recs=d.recommendations||[];}
        }
      }
      clearTimeout(to);
      if(errored)throw new Error(errored);
-     answer=answer.trim();c.innerHTML=fmt(answer);addCopy(c,answer);if(cites&&cites.length)addSources(c,cites);
-     t.msgs.push({role:'assistant',content:answer,sources:cites});saveThreads();
+     answer=answer.trim();c.innerHTML=fmt(answer);addActions(c,q,answer);if(cites&&cites.length)addSources(c,cites);if(recs&&recs.length)addRecommendations(c,recs);
+     t.msgs.push({role:'assistant',content:answer,sources:cites,recs:recs});saveThreads();
    }catch(e){
      const slow=e&&e.name==='AbortError';
      c.innerHTML='<span class="text-red-500">'+(slow?'That took too long — the model may be busy or rate-limited.':'Could not reach the model right now.')+'</span> <button class="ml-1.5 rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900">Retry</button>';
@@ -594,7 +629,7 @@
  function saveThreads(){try{localStorage.setItem('mimir.threads.'+activeWs,JSON.stringify(threads.slice(0,50)));localStorage.setItem('mimir.active.'+activeWs,active||'');}catch(e){}}
  function curThread(){return threads.find(t=>t.id===active)||null;}
  function ensureThread(firstQ){let t=curThread();if(!t){t={id:'c'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),title:firstQ.slice(0,64),msgs:[]};threads.unshift(t);active=t.id;}return t;}
- function renderLog(){const log=$('log');log.innerHTML='';const t=curThread();if(!t||!t.msgs.length){log.insertAdjacentHTML('beforeend',EMPTY_HTML);return;}t.msgs.forEach(m=>{if(m.role==='user')bubble('user',esc(m.content));else{const c=bubble('a',fmt(m.content));addCopy(c,m.content);if(m.sources&&m.sources.length)addSources(c,m.sources);}});log.scrollTop=log.scrollHeight;}
+ function renderLog(){const log=$('log');log.innerHTML='';const t=curThread();if(!t||!t.msgs.length){log.insertAdjacentHTML('beforeend',EMPTY_HTML);return;}t.msgs.forEach((m,i)=>{if(m.role==='user')bubble('user',esc(m.content));else{const c=bubble('a',fmt(m.content));let pq=t.msgs[i-1]?t.msgs[i-1].content:'';addActions(c,pq,m.content);if(m.sources&&m.sources.length)addSources(c,m.sources);if(m.recs&&m.recs.length)addRecommendations(c,m.recs);}});log.scrollTop=log.scrollHeight;}
  function renderChatList(){const el=$('chatList');if(!el)return;
    if(!threads.length){el.innerHTML='<div class="px-2.5 py-3 text-xs text-zinc-400 dark:text-zinc-600">No chats yet.</div>';return;}
    el.innerHTML='';

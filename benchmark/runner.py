@@ -75,7 +75,7 @@ Return ONLY valid JSON with fields: "score" (integer 0-5) and "justification" (o
         return {"score": 0.0, "justification": f"judge failed: {exc}"}
 
 
-def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
+def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[Dict[str, Any]] | None = None, collection_name: str = "gov_docs") -> Dict[str, Any]:
     """Run the benchmark suite and return structured results."""
     if cases is None:
         cases = load_benchmark_cases()
@@ -92,18 +92,36 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
             cerebras_client=cerebras_client,
             weaviate_client=weaviate_client,
             query=case["query"],
-            collection_name="gov_docs",
+            collection_name=collection_name,
             chat_history=[],
         )
 
         # Extract the response text
+        import time
+        t_start_process = time.time()
+        ttft = 0.0
+        gen_time = 0.0
+        
         response_text = retrieval_result.get("response_text") or ""
         if retrieval_result.get("status") == "success" and retrieval_result.get("answer_stream"):
             # Consume the stream to get full text
             stream = retrieval_result["answer_stream"]
-            for _ in stream:
-                pass
+            start_gen = time.time()
+            ttft_captured = False
+            for chunk in stream:
+                if not ttft_captured:
+                    ttft = time.time() - start_gen
+                    ttft_captured = True
+            
             response_text = stream.full_text
+            gen_time = time.time() - start_gen
+
+        t_process_total = time.time() - t_start_process
+        
+        metrics = retrieval_result.get("metrics", {}).copy()
+        metrics["ttft_s"] = round(ttft, 3)
+        metrics["generation_s"] = round(gen_time, 3)
+        metrics["total_process_s"] = round(t_process_total, 3)
 
         # Term-match evaluation
         term_score = evaluate_response(
@@ -128,6 +146,7 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
                 "judge_score": judge_result,
                 "response_text": response_text,
                 "evidence": retrieval_result.get("evidence", [])[:3],
+                "metrics": metrics,
             }
         )
 
@@ -152,6 +171,13 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     n = report["case_count"]
     avg_term = report["average_term_score"]
     avg_judge = report["average_judge_score"]
+    results = report.get("results", [])
+    
+    avg_ttft = sum(item["metrics"].get("ttft_s", 0) for item in results) / n if n else 0.0
+    avg_gen = sum(item["metrics"].get("generation_s", 0) for item in results) / n if n else 0.0
+    avg_process = sum(item["metrics"].get("total_process_s", 0) for item in results) / n if n else 0.0
+    avg_trans = sum(item["metrics"].get("translation_s", 0) for item in results) / n if n else 0.0
+    avg_weaviate = sum(item["metrics"].get("weaviate_s", 0) for item in results) / n if n else 0.0
 
     print("\n")
     print("=" * 72)
@@ -159,6 +185,11 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     print("=" * 72)
     print(f"  Total Cases : {n}")
     print(f"  Avg Judge   : {avg_judge:.1f} / 5.0")
+    print(f"  Avg TTFT    : {avg_ttft:.2f}s")
+    print(f"  Avg Gen     : {avg_gen:.2f}s")
+    print(f"  Avg Trans   : {avg_trans:.2f}s")
+    print(f"  Avg Search  : {avg_weaviate:.2f}s")
+    print(f"  Avg Process : {avg_process:.2f}s")
     print("=" * 72)
 
     # Per-case breakdown

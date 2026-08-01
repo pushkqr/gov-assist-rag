@@ -11,6 +11,8 @@ temp/
 docs/
 gcp-key.json
 weaviate_data/
+data/
+docling_ingestion/
 
 # Qdrant Database
 local_qdrant_db/

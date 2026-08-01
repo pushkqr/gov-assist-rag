@@ -60,10 +60,10 @@ def run_retrieval(
     cerebras_client: Cerebras,
     weaviate_client: Optional[Any] = None,
     query: str = "",
-    collection_name: str = "gov_docs",
+    collection_name: str = "GovDocs",
     chat_history: Optional[List[Dict[str, str]]] = None,
     status_callback: Optional[Callable[[str], None]] = None,
-    fast_mode: bool = False,
+    fast_mode: bool = True,
 ) -> Dict[str, Any]:
     """Execute direct Weaviate search followed by 1-shot Cerebras synthesis (Round-Robin load balanced)."""
     global _MODEL_COUNTER
@@ -78,10 +78,14 @@ def run_retrieval(
         status_callback("Searching knowledge base...")
         
     try:
+        profiling_metrics = {}
+        recommendations = []
         def search_tool_wrapper(query: str, year: Optional[int] = None, fast_mode: bool = False) -> str:
             logger.info(f"LLM called search_tool(query='{query}', year={year}, fast_mode={fast_mode})")
-            results, ev = execute_search_tool(gemini_client, weaviate_client, collection_name, query, year, fast_mode)
+            results, ev, prof, recs = execute_search_tool(gemini_client, weaviate_client, collection_name, query, year, fast_mode)
             evidence.extend(ev)
+            profiling_metrics.update(prof)
+            recommendations.extend(recs)
             return results
 
         evidence = []
@@ -95,9 +99,20 @@ def run_retrieval(
             "evidence": [],
         }
 
-    context_text = "Retrieved Evidence:\n"
-    for idx, doc in enumerate(evidence):
-        context_text += f"Document: {doc.get('document')} Section: {doc.get('section')}\nQuote: {doc.get('quote')}\n\n"
+    search_context = ""
+    try:
+        parsed_search = json.loads(search_json) if isinstance(search_json, str) else search_json
+        if isinstance(parsed_search, dict):
+            search_context = (parsed_search.get("context") or "").strip()
+    except Exception as exc:
+        logger.warning(f"Could not parse search context: {exc}")
+
+    if search_context:
+        context_text = f"Retrieved Evidence:\n{search_context}\n"
+    else:
+        context_text = "Retrieved Evidence:\n"
+        for idx, doc in enumerate(evidence):
+            context_text += f"Document: {doc.get('document')} Section: {doc.get('section')}\nQuote: {doc.get('quote')}\n\n"
 
     _MODEL_COUNTER += 1
     target_model = "gpt-oss-120b" if _MODEL_COUNTER % 2 != 0 else "gemma-4-31b"
@@ -122,7 +137,7 @@ def run_retrieval(
         "- The document names provided in the context (e.g., 'MAHENG/2009/35528', 'Manyata-2023...', or Roman numerals) may be internal administrative codes rather than full descriptive titles. Do not refuse to answer simply because these codes don't perfectly match the human-readable name of an Act or Resolution in the user's query. If the text of the context contains the answer, provide the answer and cite the administrative code.\n"
         "- Every factual claim must be tied to its source using the document name and section/clause as given in the context (e.g., \"According to GR-Unaided-30-June-2023, Section 2...\").\n"
         "- If multiple documents are relevant, cite each distinctly rather than blending them into an unattributed summary.\n"
-        "- If the context includes conflicting information across documents, do not silently pick one. Surface the conflict, cite both sources, and note the discrepancy so the official can resolve it with appropriate authority.\n"
+        "- If the context includes conflicting information across documents, or if you see a `[Supersedes: X]` tag indicating one document overrides another, do not silently pick one. Explicitly surface the conflict or amendment using a prominent `> [!WARNING]` markdown block at the very top of your answer, cite both sources, and note the discrepancy.\n"
         "- If a section or document name isn't clearly identifiable in the context, cite what identifying information is available (e.g., document title alone) rather than omitting citation entirely.\n\n"
         "## Formatting\n"
         "- Lead with the direct answer, not a preamble.\n"
@@ -136,7 +151,7 @@ def run_retrieval(
         "- Skip empty filler (\"Great question!\", \"I'd be happy to help\") — get to the substance quickly — but a brief, natural framing sentence before the answer is fine if it helps orient the reader, especially for complex multi-part questions.\n"
         "- When information is unavailable, state this in one direct sentence and stop — do not apologize at length or speculate about where the answer might be found elsewhere.\n\n"
         "## Boundaries\n"
-        "- When translating to Marathi or Hindi, strictly preserve official legal terminology (e.g., 'Competent Authority', 'Unaided') as used in the source documents or translate them to their exact official equivalents.\n"
+        "- You MUST respond in the exact language the user used in their Latest Question (e.g., if asked in Marathi, reply entirely in Marathi). Strictly preserve official legal terminology (e.g., 'Competent Authority', 'Unaided') as used in the source documents or translate them to their exact official equivalents.\n"
         "- If the user asks for a summary of a specific document, synthesize the key points from all retrieved chunks belonging to that document.\n"
         "- Do not offer legal advice or personal recommendations on how an official should act; present the facts and provisions as documented, and let the reader apply them.\n"
         "- Do not summarize or paraphrase away specific numbers, dates, eligibility thresholds, or procedural steps — these are often the exact details a government decision depends on. Preserve precision over brevity.\n"
@@ -194,10 +209,21 @@ def run_retrieval(
             seen.add(k)
             unique_evidence.append(e)
 
+    # Dedup recommendations
+    unique_recommendations = []
+    seen_recs = set()
+    for r in recommendations:
+        k = r.get("document", "")
+        if k not in seen_recs:
+            seen_recs.add(k)
+            unique_recommendations.append(r)
+
     return {
         "status": "success",
         "response_text": "", # Wil be populated dynamically by app.py if needed
         "answer_stream": StreamingResponse(stream),
         "evidence": unique_evidence,
+        "recommendations": unique_recommendations,
+        "metrics": profiling_metrics,
     }
 

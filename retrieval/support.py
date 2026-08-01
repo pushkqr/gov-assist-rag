@@ -31,6 +31,8 @@ def build_context_text(top_results: List[Any]) -> str:
                     "section_title": payload.get("section_title", "Section"),
                     "context": parent_ctx if parent_ctx else child_txt,
                     "children": [child_txt] if child_txt else [],
+                    "supersedes": payload.get("supersedes"),
+                    "references": payload.get("references"),
                 }
             elif child_txt and child_txt not in parent_blocks[parent_id]["children"]:
                 parent_blocks[parent_id]["children"].append(child_txt)
@@ -41,7 +43,12 @@ def build_context_text(top_results: List[Any]) -> str:
     for pid, block in parent_blocks.items():
         ctx = block["context"]
         if ctx:
-            formatted_sections.append(ctx)
+            meta_header = ""
+            if block.get("supersedes"):
+                meta_header += f"[Supersedes: {block['supersedes']}]\n"
+            if block.get("references"):
+                meta_header += f"[References: {block['references']}]\n"
+            formatted_sections.append(meta_header + ctx)
 
     for chunk in standalone_chunks:
         if chunk not in formatted_sections:

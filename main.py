@@ -24,9 +24,9 @@ def main():
         print(f"Failed to connect to Weaviate: {e}")
         weaviate_client = None
 
-    RUN_INGESTION = True
+    RUN_INGESTION = False
     RUN_RETRIEVAL = False
-    RUN_BENCHMARK = False
+    RUN_BENCHMARK = True
 
     if RUN_INGESTION:
         print("\n" + "=" * 50)
@@ -48,6 +48,8 @@ def main():
                         wvc.config.Property(name="issuing_authority", data_type=wvc.config.DataType.TEXT),
                         wvc.config.Property(name="document_category", data_type=wvc.config.DataType.TEXT),
                         wvc.config.Property(name="source_filename", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="supersedes", data_type=wvc.config.DataType.TEXT),
+                        wvc.config.Property(name="references", data_type=wvc.config.DataType.TEXT),
                     ],
                 )
             else:

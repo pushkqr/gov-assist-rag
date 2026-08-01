@@ -94,23 +94,60 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
         section_title = hierarchy_context if hierarchy_context else os.path.basename(global_metadata.get("doc_number", "document"))
         parent_context_with_section = f"Section: {section_title}\n\n{parent_context}"
 
-        # Extract table header lines if parent context contains a table
-        table_headers = [line.strip() for line in parent_context.splitlines() if line.strip().startswith("|")][:2]
-        table_header_str = "\n".join(table_headers) if len(table_headers) >= 1 else ""
-
         child_texts = child_splitter.split_text(parent_context_with_section)
         if not child_texts:
             continue
 
-        # Prepend table header to table chunks missing the header row
-        if table_header_str:
-            processed_child_texts = []
-            for ct in child_texts:
-                if ct.strip().startswith("|") and not ct.startswith(table_headers[0]):
-                    processed_child_texts.append(f"{table_header_str}\n{ct}")
+        processed_child_texts = []
+        for ct in child_texts:
+            ct_stripped = ct.strip()
+            if ct_stripped.startswith("|"):
+                idx = parent_context_with_section.find(ct)
+                if idx != -1:
+                    text_before = parent_context_with_section[:idx]
+                    lines_before = text_before.splitlines()
+                    
+                    table_lines_above = []
+                    preamble_str = ""
+                    
+                    for line in reversed(lines_before):
+                        line_stripped = line.strip()
+                        if not line_stripped:
+                            continue
+                            
+                        if line_stripped.startswith("|"):
+                            table_lines_above.insert(0, line_stripped)
+                        else:
+                            text_chars = re.sub(r'[^a-zA-Z0-9\u0900-\u097F]', '', line_stripped)
+                            if len(text_chars) > 3 and not line_stripped.startswith("#"):
+                                preamble_str = line_stripped
+                            break
+                            
+                    actual_headers = []
+                    for line in table_lines_above:
+                        content_chars = re.sub(r'[-|: ]', '', line)
+                        if len(content_chars) == 0:
+                            break
+                        actual_headers.append(line)
+                        if len(actual_headers) >= 2:
+                            break
+                            
+                    prefix = ""
+                    if preamble_str and preamble_str not in ct:
+                        prefix += f"Context: {preamble_str}\n"
+                        
+                    if actual_headers:
+                        table_header_str = "\n".join(actual_headers)
+                        if not ct_stripped.startswith(actual_headers[0].strip()):
+                            prefix += f"{table_header_str}\n"
+                            
+                    processed_child_texts.append(f"{prefix}{ct}" if prefix else ct)
                 else:
                     processed_child_texts.append(ct)
-            child_texts = processed_child_texts
+            else:
+                processed_child_texts.append(ct)
+                
+        child_texts = processed_child_texts
 
         logger.info(f"  -> Chunked into {len(child_texts)} passages. Translating & generating vector embeddings...")
 

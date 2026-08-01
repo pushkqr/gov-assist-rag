@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -27,8 +27,12 @@ app = FastAPI(title="Mimir")
 
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
+DOCS_DIR = BASE_DIR / "docs"
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+if DOCS_DIR.exists():
+    app.mount("/docs", StaticFiles(directory=str(DOCS_DIR)), name="docs")
 
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
@@ -113,6 +117,13 @@ async def llm_config():
 async def ingest_status():
     return {"running": False}
 
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    for root_dir, _, files in os.walk(DOCS_DIR):
+        if filename in files:
+            return FileResponse(os.path.join(root_dir, filename))
+    return JSONResponse({"error": "File not found"}, status_code=404)
+
 class AskRequest(BaseModel):
     query: str
     history: List[Dict[str, Any]] = []
@@ -145,7 +156,7 @@ async def ask_stream(request: Request):
                     cerebras_client=cerebras_client,
                     weaviate_client=weaviate_client,
                     query=query,
-                    collection_name="gov_docs",
+                    collection_name="GovDocs",
                     chat_history=formatted_history,
                     status_callback=sync_status
                 )
@@ -158,13 +169,14 @@ async def ask_stream(request: Request):
                 
             answer_stream = retrieval_result.get("answer_stream")
             evidence = retrieval_result.get("evidence", [])
+            recommendations = retrieval_result.get("recommendations", [])
             
             if answer_stream:
                 for chunk in answer_stream:
                     yield json.dumps({"t": chunk}) + "\n"
                     await asyncio.sleep(0.01)
             
-            yield json.dumps({"done": True, "citations": evidence}) + "\n"
+            yield json.dumps({"done": True, "citations": evidence, "recommendations": recommendations}) + "\n"
             
         except Exception as e:
             logger.error(f"Error in ask-stream: {e}")
@@ -172,6 +184,41 @@ async def ask_stream(request: Request):
             
     return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
+class FeedbackRequest(BaseModel):
+    query: str
+    response: str
+    feedback: str
+
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    try:
+        feedback_file = BASE_DIR / "scratch" / "feedback.json"
+        os.makedirs(feedback_file.parent, exist_ok=True)
+        
+        feedback_entry = {
+            "query": req.query,
+            "response": req.response,
+            "feedback": req.feedback,
+            "timestamp": __import__("datetime").datetime.now().isoformat()
+        }
+        
+        feedbacks = []
+        if feedback_file.exists():
+            with open(feedback_file, "r", encoding="utf-8") as f:
+                try:
+                    feedbacks = json.load(f)
+                except:
+                    pass
+                    
+        feedbacks.append(feedback_entry)
+        
+        with open(feedback_file, "w", encoding="utf-8") as f:
+            json.dump(feedbacks, f, indent=2)
+            
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error saving feedback: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 class SummarizeRequest(BaseModel):
     doc_id: str
