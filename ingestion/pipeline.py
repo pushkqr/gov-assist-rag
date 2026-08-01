@@ -69,20 +69,28 @@ def run_ingestion(
             "document_category": extracted_metadata.get("document_category", "Document"),
         }
 
-        processed_records = chunk_and_embed_circular(client, target_md, global_metadata)
-        all_processed_records.extend(processed_records)
+        try:
+            processed_records = chunk_and_embed_circular(client, target_md, global_metadata)
+            all_processed_records.extend(processed_records)
 
+            if weaviate_client and processed_records:
+                weaviate_collection = weaviate_client.collections.get("GovDocs")
+                with weaviate_collection.batch.dynamic() as batch:
+                    for record in processed_records:
+                        batch.add_object(
+                            properties=record["metadata"],
+                            vector=record["vector"]["dense"]
+                        )
+                
+                # Check for batch errors silently accumulating
+                if hasattr(weaviate_collection.batch, "failed_objects") and weaviate_collection.batch.failed_objects:
+                    logger.error(f"  -> Weaviate batch insertion had {len(weaviate_collection.batch.failed_objects)} failures for {filename}.")
+                else:
+                    logger.info(f"  -> Immediately upserted {len(processed_records)} chunks for {filename} into Weaviate.")
 
-        if weaviate_client and processed_records:
-            weaviate_collection = weaviate_client.collections.get("GovDocs")
-            with weaviate_collection.batch.dynamic() as batch:
-                for record in processed_records:
-                    batch.add_object(
-                        properties=record["metadata"],
-                        vector=record["vector"]["dense"]
-                    )
-            logger.info(f"  -> Immediately upserted {len(processed_records)} chunks for {filename} into Weaviate.")
-
-        save_ingestion_state(target_file, file_hash, state_path, global_metadata)
+            save_ingestion_state(target_file, file_hash, state_path, global_metadata)
+        except Exception as e:
+            logger.error(f"Failed to process and embed {filename}: {e}")
+            continue
 
     return all_processed_records
