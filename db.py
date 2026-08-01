@@ -24,7 +24,6 @@ def init_db():
         )
     ''')
     
-    # Pre-seed test tokens for the demo
     seed_tokens = [
         ("OFFICER-TOKEN-1", "Officer 1"),
         ("OFFICER-TOKEN-2", "Officer 2")
