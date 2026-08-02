@@ -52,7 +52,19 @@ Term-matching is rigid — the system can state the correct fact with slightly d
 - Absence of hallucination
 - Completeness
 
-The final score is an average of the deterministic and semantic grades, normalized to a letter grade (A–D).
+### Pass/Fail Rule
+
+A case counts as a **pass** if `judge_score >= 3.0`, OR if `judge_score >= 2.0` AND `term_score >= 0.5`. This lets a well-reasoned, mostly-correct answer pass on judge score alone, while catching cases where the judge is lenient on phrasing but the answer is actually missing the hard facts (GR numbers, dates, counts) the term scorer checks for.
+
+The overall run is graded A–D from `average_judge_score` and `average_term_score` (see `print_benchmark_report` in `benchmark/runner.py`), separate from the per-case pass/fail rate.
+
+### Current Results (100-case benchmark)
+
+As of the latest run: **88/100 cases passing** (`average_judge_score = 4.13`, `average_term_score = 0.653`), up from an 83/100 baseline. The improvement came from two fixes, not from touching the benchmark or ground-truth data:
+- Root-caused and fixed a deadlocked translation microservice (undersized RAM on the droplet caused silent hangs on Marathi/Hindi queries).
+- Wired in previously-dead retrieval helpers in `retrieval/search.py` — deterministic BM25 alias/keyword expansion (`build_fast_search_query`), compact document-anchored reranker input (`build_rerank_text`), and per-document result diversification (`diversify_results`) — none of which were actually being called before.
+
+The remaining ~12% of failures share one dominant pattern: the correct document is retrieved, but the model states a wrong specific fact (a date or GR number) belonging to a near-duplicate document about a different person or case. This is a generation-side entity-attribution problem, not a retrieval failure — worth targeted prompt work in a future pass, but out of scope for the current fix cycle.
 
 ---
 

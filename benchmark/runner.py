@@ -3,6 +3,9 @@ import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from google.genai import types
 from core.utils import generate_content_safe
@@ -94,6 +97,8 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
         return {"case_count": 0, "error": "No benchmark cases found."}
 
     results = []
+    pass_count = 0
+    fail_count = 0
     delay_s = int(os.getenv("BENCHMARK_DELAY_S", "12"))  # inter-question throttle
     for i, case in enumerate(cases, 1):
         logger.info(f"({i}/{len(cases)}) {case['query'][:80]}...")
@@ -161,6 +166,30 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
                 "metrics": metrics,
             }
         )
+
+        judge_score_val = judge_result.get("score", 0.0)
+        term_score_val = term_score.get("score", 0.0)
+        is_pass = judge_score_val >= 3.0 or (judge_score_val >= 2.0 and term_score_val >= 0.5)
+        if is_pass:
+            pass_count += 1
+        else:
+            fail_count += 1
+        logger.info(f" -> Current Progress: {pass_count} SUCCESS, {fail_count} FAILED")
+        
+        # Incrementally save results
+        output_path = Path("benchmark/benchmark_results.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        avg_j = sum(item["judge_score"]["score"] for item in results) / len(results)
+        avg_t = sum(item["term_score"]["score"] for item in results) / len(results)
+        
+        incremental_report = {
+            "case_count": len(results),
+            "average_term_score": round(avg_t, 3),
+            "average_judge_score": round(avg_j, 3),
+            "results": results,
+        }
+        output_path.write_text(json.dumps(incremental_report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     average_judge_score = sum(item["judge_score"]["score"] for item in results) / len(results) if results else 0.0
     average_term_score = sum(item["term_score"]["score"] for item in results) / len(results) if results else 0.0
@@ -252,3 +281,15 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n  Full results saved to: {output_path}")
+
+if __name__ == "__main__":
+    from core.utils import get_genai_client, get_weaviate_client
+    import cerebras.cloud.sdk as cerebras_sdk
+    gemini = get_genai_client()
+    weaviate = get_weaviate_client()
+    try:
+        cerebras = cerebras_sdk.Cerebras(api_key=os.getenv("CEREBRAS_API_KEY"))
+    except:
+        cerebras = None
+    report = run_benchmark(gemini, cerebras, weaviate)
+    print_benchmark_report(report)

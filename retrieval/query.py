@@ -50,7 +50,7 @@ def generate_query_variations(gemini_client: Any, standalone_query: str) -> List
     if not standalone_query or len(standalone_query.strip().split()) <= 3:
         return [standalone_query]
 
-    prompt = f"""You are a query expansion specialist for Indian and Maharashtra state government policy documents.
+    prompt = f"""You are a query expansion specialist for Indian government policy documents.
 
 Task: Given the user question, generate 2 complementary search queries in English to maximize document retrieval recall:
 

@@ -21,8 +21,9 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
 - **Semi-Agentic RAG Pipeline**:
   - **Hybrid Search**: Combines dense vector search with BM25 keyword search, merged natively in **Weaviate** using Alpha Fusion. Alpha weight is dynamically tuned — GR-number pattern queries go BM25-heavy; general queries use balanced fusion.
   - **Self-Hosted Embeddings**: Uses **BGE-M3** (BAAI) served via **Infinity** on a dedicated droplet — eliminating cloud embedding quota constraints and reducing per-query embedding cost to zero.
+  - **Self-Hosted Cross-Encoder Reranking**: Fast mode (the default query path) reranks hybrid search candidates with a **BGE reranker** cross-encoder, also served via **Infinity** on the embedding droplet — no LLM call, no added token cost, sub-second-to-low-single-digit-second rerank latency.
   - **Ultra-Low Latency Inference**: Routes agentic reasoning and tool-use through **Cerebras** for sub-2s response times, reserving **Google Gemini 2.5 Flash** (via Vertex AI) for complex generation and fallback translation.
-  - **LLM Reranking**: In deep-search mode, retrieval results are reranked by an LLM judge before answer generation.
+  - **Deep-Search LLM Reranking**: In deep-search mode (`fast_mode=False`, opt-in for complex multi-document synthesis), retrieval results are instead reranked by an LLM judge before answer generation — higher accuracy, higher latency.
 
 - **Multilingual Support**:
   - Queries in **Marathi** and **Hindi** (Devanagari script) are automatically detected and translated to English via a self-hosted **IndicTrans2** microservice before retrieval.
@@ -30,7 +31,7 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
 
 - **Idempotent Document Ingestion Pipeline**:
   - File-hash-based state tracking (`scratch/ingestion_state.json`) ensures re-ingestion runs are safe and never duplicate data.
-  - Handles standard PDFs (via **PyMuPDF4LLM**) and pre-translated `.en.txt` plaintext GRs from the Orgpedia corpus.
+  - Handles standard PDFs and pre-translated `.en.txt` plaintext GRs from the Orgpedia corpus. PDF text extraction uses a 3-tier fallback chain — **PyMuPDF4LLM** (fast, local) → **Google Document AI OCR** → **Gemini Vision** — so scanned/image-only circulars that defeat the primary parser still get ingested.
   - Semantic, boundary-aware chunking preserves tabular context — table rows isolated without their column headers are enriched with the nearest preceding header rows before embedding.
   - Parent-child chunk hierarchy: parent sections provide retrieval context; child chunks are the actual embedded units.
 
@@ -53,7 +54,7 @@ sequenceDiagram
     participant User as Officer / Frontend
     participant API as FastAPI Backend
     participant Trans as IndicTrans2 Microservice
-    participant Embed as BGE-M3 / Infinity
+    participant Embed as BGE-M3 + Reranker / Infinity
     participant DB as Weaviate (Hybrid Search)
     participant LLM as Cerebras + Gemini
 
@@ -64,7 +65,9 @@ sequenceDiagram
     Embed-->>API: 1024-d dense vector
     API->>DB: Hybrid search (dense vector + BM25, Alpha Fusion)
     DB-->>API: Top-K relevant chunks with scores
-    API->>LLM: Rerank + generate answer with retrieved context
+    API->>Embed: Rerank top-K candidates (cross-encoder)
+    Embed-->>API: Reranked chunks
+    API->>LLM: Generate answer with retrieved context
     LLM-->>API: Stream answer tokens (SSE)
     API-->>User: Streamed response + confidence-scored citations
 ```
@@ -85,7 +88,7 @@ graph TD
     end
 
     subgraph Self-Hosted Microservices
-        BGE[BGE-M3 via Infinity\nEmbedding Droplet]
+        BGE[BGE-M3 + Reranker via Infinity\nEmbedding Droplet]
         IT2[IndicTrans2\nTranslation Microservice]
     end
 
@@ -226,6 +229,15 @@ LOCAL_EMBED_URL=http://<YOUR_EMBED_DROPLET_IP>:7997/embeddings
 LOCAL_EMBED_API_KEY=your_embed_api_key          # if secured
 USE_AISTUDIO_FOR_EMBEDDINGS=False
 
+# Self-hosted Cross-Encoder Reranking (BGE reranker, same Infinity server)
+LOCAL_RERANK_URL=http://<YOUR_EMBED_DROPLET_IP>:7997/rerank
+LOCAL_RERANK_API_KEY=your_rerank_api_key        # if secured
+LOCAL_RERANK_MODEL_NAME=BAAI/bge-reranker-base  # must match whatever model Infinity actually loaded
+
+# Fast-mode retrieval tuning (candidate pool size vs. rerank pool size)
+FAST_MODE_CANDIDATE_LIMIT=20
+FAST_MODE_RERANK_LIMIT=12
+
 # Translation Microservice (IndicTrans2)
 TRANSLATION_SERVICE_URL=http://<YOUR_TRANS_DROPLET_IP>:8000/translate
 
@@ -310,6 +322,16 @@ infinity_emb v2 --model-id BAAI/bge-m3 --port 7997
 ```
 
 Set `LOCAL_EMBED_URL=http://<host>:7997/embeddings` in `.env`. The system automatically routes all embedding calls (ingestion + retrieval) through this endpoint.
+
+### BGE Reranker (Cross-Encoder)
+
+The same Infinity server can also serve a reranking model — no separate deployment needed:
+
+```bash
+infinity_emb v2 --model-id BAAI/bge-reranker-base --port 7997
+```
+
+Set `LOCAL_RERANK_URL=http://<host>:7997/rerank` in `.env`. Fast-mode retrieval sends the hybrid search candidates here for cross-encoder reranking before generation. `LOCAL_RERANK_MODEL_NAME` must match whatever model the server actually has loaded — Infinity returns an HTTP 400 if it doesn't, so verify against the server's `/models` endpoint after deploying.
 
 ### IndicTrans2 Translation
 

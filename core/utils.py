@@ -159,11 +159,15 @@ def embed_content_safe(client, *args, **kwargs):
             headers["Authorization"] = f"Bearer {api_key}"
         
         text = kwargs.get("contents")
+        model_name = os.getenv("LOCAL_EMBED_MODEL_NAME") or kwargs.get("model") or "BAAI/bge-m3"
+        if model_name.startswith(("gemini-", "text-embedding")):
+            model_name = "BAAI/bge-m3"
         payload = {
             "input": text,
-            "model": kwargs.get("model", "BAAI/bge-m3")
+            "model": model_name,
         }
-        resp = requests.post(local_url, json=payload, headers=headers)
+        timeout = float(os.getenv("LOCAL_EMBED_TIMEOUT_S", "10"))
+        resp = requests.post(local_url, json=payload, headers=headers, timeout=timeout)
         resp.raise_for_status()
         data = resp.json()
         vector = data["data"][0]["embedding"]
@@ -174,6 +178,40 @@ def embed_content_safe(client, *args, **kwargs):
         embed_client = get_aistudio_client()
         return embed_client.models.embed_content(*args, **kwargs)
     return client.models.embed_content(*args, **kwargs)
+
+
+def local_rerank_safe(query: str, texts: list[str], top_n: int = 35) -> list[int]:
+    """Hits the local Infinity reranker on the Droplet and returns sorted indices."""
+    local_url = os.getenv("LOCAL_RERANK_URL")
+    if not local_url:
+        # Fallback to returning original indices if not configured
+        return list(range(min(top_n, len(texts))))
+        
+    api_key = os.getenv("LOCAL_RERANK_API_KEY", "")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+        
+    payload = {
+        "query": query,
+        "documents": texts,
+        "model": os.getenv("LOCAL_RERANK_MODEL_NAME", "BAAI/bge-reranker-v2-m3"),
+        "top_n": top_n,
+        "return_documents": False
+    }
+    
+    try:
+        timeout = float(os.getenv("LOCAL_RERANK_TIMEOUT_S", "3"))
+        resp = requests.post(local_url, json=payload, headers=headers, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        # Infinity /rerank returns {"results": [{"index": 5, "relevance_score": 0.9}, ...]}
+        results = data.get("results", [])
+        return [item["index"] for item in results]
+    except Exception as e:
+        logger.error(f"Local Reranking failed: {e}")
+        return list(range(min(top_n, len(texts))))
 
 
 @with_retry_and_throttle(constant_delay_env="CEREBRAS_API_DELAY", default_delay=0, initial_backoff=10)

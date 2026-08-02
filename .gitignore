@@ -14,12 +14,16 @@ weaviate_data/
 data/*
 !data/docker-compose.yml
 docling_ingestion/
+CLAUDE.md
+skills-lock.json
 
 # Qdrant Database
 local_qdrant_db/
 
 # Local Output & Processing Dirs
 marker_output/
+.claude/
+.vscode/
 __pycache__/
 *.pyc
 *.pyo
