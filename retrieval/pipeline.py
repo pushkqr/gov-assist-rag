@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import concurrent.futures
 from typing import Any, Dict, List, Optional, Callable
@@ -55,6 +56,7 @@ class StreamingResponse:
 
 
 _MODEL_COUNTER = 0
+_CEREBRAS_MODELS = ["gpt-oss-120b", "gemma-4-31b"]
 
 def run_retrieval(
     gemini_client: genai.Client,
@@ -81,6 +83,11 @@ def run_retrieval(
     try:
         profiling_metrics = {}
         recommendations = []
+
+        # Extract year filter from query for fast_mode (e.g. "GRs from 2018...")
+        _year_match = re.search(r'\b(19|20)\d{2}\b', query)
+        _extracted_year = int(_year_match.group(0)) if _year_match else None
+
         def search_tool_wrapper(query: str, year: Optional[int] = None, fast_mode: bool = False) -> str:
             logger.info(f"LLM called search_tool(query='{query}', year={year}, fast_mode={fast_mode})")
             results, ev, prof, recs = execute_search_tool(gemini_client, weaviate_client, collection_name, query, year, fast_mode)
@@ -90,7 +97,7 @@ def run_retrieval(
             return results
 
         evidence = []
-        search_json = search_tool_wrapper(query, year=None, fast_mode=fast_mode)
+        search_json = search_tool_wrapper(query, year=_extracted_year, fast_mode=fast_mode)
     except Exception as exc:
         logger.error(f"Search tool failed: {exc}")
         return {
@@ -116,7 +123,7 @@ def run_retrieval(
             context_text += f"Document: {doc.get('document')} Section: {doc.get('section')}\nQuote: {doc.get('quote')}\n\n"
 
     _MODEL_COUNTER += 1
-    target_model = "gpt-oss-120b" if _MODEL_COUNTER % 2 != 0 else "gemma-4-31b"
+    target_model = _CEREBRAS_MODELS[(_MODEL_COUNTER - 1) % len(_CEREBRAS_MODELS)]
     logger.info(f"Selected model {target_model} for request #{_MODEL_COUNTER}")
 
     if status_callback:
@@ -129,6 +136,7 @@ def run_retrieval(
         "## Core Directive: Strict Fact-Grounding\n"
         "- Answer using ONLY the information present in the provided context. Never supplement with outside knowledge, training data, or general assumptions about government policy, even if you believe you know the answer.\n"
         "- If the user's query is highly ambiguous (e.g., a single word like 'fees?' or 'leave?'), provide a brief summary of the various contexts found in the retrieved documents, and then explicitly ask the user to clarify.\n"
+        "- If the user uses a demonstrative reference such as 'this GR', 'this circular', 'this document', 'हा शासन निर्णय', or 'हे परिपत्रक' without naming a specific document, treat it as a reference to the single most relevant document in the retrieved context (i.e., the top result). Answer definitively about that document and state its name or number clearly at the start of your answer.\n"
         "- If the context fully answers the question, provide a complete, definitive answer.\n"
         "- If the context partially answers the question, answer only the part that is supported, and explicitly flag what remains unaddressed.\n"
         "- If the user asks which document they should refer to, synthesize a list of ALL highly relevant documents present in the context and briefly summarize what each provides, rather than just picking one.\n"

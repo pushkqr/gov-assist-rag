@@ -2,12 +2,24 @@
 fastapi
 uvicorn
 jinja2
-google-genai
 python-dotenv
+
+# Google AI & Cloud
+google-genai
+google-cloud-aiplatform
+google-cloud-translate
 
 # Document Parsing
 pymupdf4llm
 
-# Search
-cerebras-cloud-sdk
+# Chunking & Text Processing
+langchain-text-splitters
+
+# Search & Vector DB
 weaviate-client>=4.5.0
+
+# Inference
+cerebras-cloud-sdk
+
+# HTTP (local microservice calls — embed + translation)
+requests

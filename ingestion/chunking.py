@@ -77,7 +77,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
     database_payload = []
     child_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
 
-    config = types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT", output_dimensionality=1536)
+    config = types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
     model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
 
     for parent_doc in parent_docs:

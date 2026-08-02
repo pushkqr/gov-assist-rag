@@ -11,7 +11,8 @@ temp/
 docs/
 gcp-key.json
 weaviate_data/
-data/
+data/*
+!data/docker-compose.yml
 docling_ingestion/
 
 # Qdrant Database
@@ -45,7 +46,9 @@ MANIFEST
 # Gemini/IDE Artifacts
 .gemini/
 brain/
-scratch/
+scratch/*
+!scratch/generate_benchmark_full.py
+!scratch/status_check.py
 
 # Testing and Logs
 *.log

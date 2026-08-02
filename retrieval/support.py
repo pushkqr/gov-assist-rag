@@ -13,8 +13,21 @@ def extract_response_text(response: Any) -> str:
     return ""
 
 
+def _is_mostly_indic(text: str) -> bool:
+    """Return True if more than 30% of characters are Devanagari (Marathi/Hindi source)."""
+    if not text:
+        return False
+    indic = sum(1 for c in text if '\u0900' <= c <= '\u097F')
+    return indic / max(len(text), 1) > 0.3
+
+
 def build_context_text(top_results: List[Any]) -> str:
-    """Stitch unique parent contexts and child passages cleanly into a unified context block."""
+    """Stitch unique parent contexts and child passages into a unified context block.
+
+    Each block is prefixed with a [Document: ... | Section: ...] header so the LLM
+    can cite sources precisely. For Marathi-source chunks, English translations are
+    preferred over raw Devanagari to reduce LLM reasoning overhead on English queries.
+    """
     parent_blocks = {}
     standalone_chunks = []
 
@@ -23,35 +36,94 @@ def build_context_text(top_results: List[Any]) -> str:
         parent_id = payload.get("parent_id")
         parent_ctx = (payload.get("parent_context") or "").strip()
         child_txt = (payload.get("child_text") or "").strip()
+        translated = (payload.get("translated_text") or "").strip()
 
         if parent_id:
             if parent_id not in parent_blocks:
                 parent_blocks[parent_id] = {
                     "doc_number": payload.get("doc_number", "Document"),
-                    "section_title": payload.get("section_title", "Section"),
+                    "document_title": payload.get("document_title", ""),
+                    "section_title": payload.get("section_title", ""),
                     "context": parent_ctx if parent_ctx else child_txt,
                     "children": [child_txt] if child_txt else [],
+                    "translated_texts": [translated] if translated else [],
                     "supersedes": payload.get("supersedes"),
                     "references": payload.get("references"),
                 }
-            elif child_txt and child_txt not in parent_blocks[parent_id]["children"]:
-                parent_blocks[parent_id]["children"].append(child_txt)
+            else:
+                if child_txt and child_txt not in parent_blocks[parent_id]["children"]:
+                    parent_blocks[parent_id]["children"].append(child_txt)
+                if translated and translated not in parent_blocks[parent_id]["translated_texts"]:
+                    parent_blocks[parent_id]["translated_texts"].append(translated)
         elif child_txt:
-            standalone_chunks.append(child_txt)
+            standalone_chunks.append({
+                "doc_number": payload.get("doc_number", "Document"),
+                "document_title": payload.get("document_title", ""),
+                "section_title": payload.get("section_title", ""),
+                "text": child_txt,
+                "translated": translated,
+                "supersedes": payload.get("supersedes"),
+                "references": payload.get("references"),
+            })
+
+    def _make_header(doc_number: str, document_title: str, section_title: str) -> str:
+        doc_label = (
+            f"{document_title} ({doc_number})"
+            if document_title and document_title != doc_number
+            else doc_number
+        )
+        header = f"[Document: {doc_label}"
+        if section_title:
+            header += f" | Section: {section_title}"
+        return header + "]"
 
     formatted_sections = []
+
     for pid, block in parent_blocks.items():
         ctx = block["context"]
-        if ctx:
-            meta_header = ""
-            if block.get("supersedes"):
-                meta_header += f"[Supersedes: {block['supersedes']}]\n"
-            if block.get("references"):
-                meta_header += f"[References: {block['references']}]\n"
-            formatted_sections.append(meta_header + ctx)
+        if not ctx:
+            continue
 
+        # For Marathi-source blocks, prefer joined English translations to reduce
+        # LLM reasoning overhead when answering English queries.
+        translated_texts = block.get("translated_texts", [])
+        if translated_texts and _is_mostly_indic(ctx):
+            ctx = "\n\n".join(t for t in translated_texts if t)
+
+        if not ctx:
+            continue
+
+        header = _make_header(
+            block["doc_number"],
+            block.get("document_title", ""),
+            block.get("section_title", ""),
+        )
+        meta = header + "\n"
+        if block.get("supersedes"):
+            meta += f"[Supersedes: {block['supersedes']}]\n"
+        if block.get("references"):
+            meta += f"[References: {block['references']}]\n"
+        formatted_sections.append(meta + ctx)
+
+    seen_texts = {block["context"] for block in parent_blocks.values() if block.get("context")}
     for chunk in standalone_chunks:
-        if chunk not in formatted_sections:
-            formatted_sections.append(chunk)
+        txt = chunk["text"]
+        translated = chunk.get("translated", "")
+        # Prefer English translation for Marathi-source standalone chunks
+        display_txt = translated if translated and _is_mostly_indic(txt) else txt
+        if not display_txt or display_txt in seen_texts:
+            continue
+        header = _make_header(
+            chunk["doc_number"],
+            chunk.get("document_title", ""),
+            chunk.get("section_title", ""),
+        )
+        meta = header + "\n"
+        if chunk.get("supersedes"):
+            meta += f"[Supersedes: {chunk['supersedes']}]\n"
+        if chunk.get("references"):
+            meta += f"[References: {chunk['references']}]\n"
+        formatted_sections.append(meta + display_txt)
+        seen_texts.add(display_txt)
 
     return "\n\n---\n\n".join(s for s in formatted_sections if s.strip())

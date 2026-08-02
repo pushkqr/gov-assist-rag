@@ -6,7 +6,7 @@
 
 Mimir is an **Extensible AI-powered Retrieval-Augmented Generation (RAG) Engine** designed as the foundational backend for deploying secure, citation-backed conversational interfaces across government intranets.
 
-Built for flexibility, Mimir separates the core AI retrieval logic from the frontend presentation layer. While the repository includes a reference implementation (e.g., an Officer Portal), the engine itself is completely department-agnostic. By simply swapping the frontend stylesheet and connecting a different Weaviate collection, Mimir can instantly power dedicated portals for the Department of Finance, Health, Police, or Revenue—requiring zero backend code changes.
+Built for flexibility, Mimir separates the core AI retrieval logic from the frontend presentation layer. While the repository includes a reference implementation (an Officer Portal for the Higher & Technical Education Department, Government of Maharashtra), the engine itself is completely department-agnostic. By simply swapping the frontend stylesheet and connecting a different Weaviate collection, Mimir can instantly power dedicated portals for Finance, Health, Police, or Revenue — requiring zero backend code changes.
 
 Named after the Norse figure who guarded the Well of Wisdom, Mimir represents the institutional memory and secure intelligence infrastructure of the modern digital government.
 
@@ -14,49 +14,62 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
 
 ## Key Features & Capabilities
 
-- **Lightweight, High-Performance Architecture**: 
+- **Lightweight, High-Performance Architecture**:
   - Entirely powered by **FastAPI** for lightning-fast backend endpoints.
-  - A beautiful, zero-dependency vanilla JS/CSS frontend with native **Dark Mode** and mobile-responsive layouts.
-  - Streamed Server-Sent Events (SSE) for real-time answer generation.
+  - A zero-dependency Vanilla JS/CSS frontend with native **Dark Mode**, mobile-responsive layouts, and real-time streaming via **Server-Sent Events (SSE)**.
 
-- **Agentic RAG Pipeline**:
-  - Uses Google Gemini for query understanding, dense embeddings (`text-embedding-004`), and generative answering.
-  - **Hybrid Search Engine**: Combines **Dense Vector Search** with **BM25 Sparse Keyword Search**, merged natively in **Weaviate** using Alpha Fusion for unparalleled retrieval accuracy.
+- **Semi-Agentic RAG Pipeline**:
+  - **Hybrid Search**: Combines dense vector search with BM25 keyword search, merged natively in **Weaviate** using Alpha Fusion. Alpha weight is dynamically tuned — GR-number pattern queries go BM25-heavy; general queries use balanced fusion.
+  - **Self-Hosted Embeddings**: Uses **BGE-M3** (BAAI) served via **Infinity** on a dedicated droplet — eliminating cloud embedding quota constraints and reducing per-query embedding cost to zero.
+  - **Ultra-Low Latency Inference**: Routes agentic reasoning and tool-use through **Cerebras** for sub-2s response times, reserving **Google Gemini 2.5 Flash** (via Vertex AI) for complex generation and fallback translation.
+  - **LLM Reranking**: In deep-search mode, retrieval results are reranked by an LLM judge before answer generation.
+
+- **Multilingual Support**:
+  - Queries in **Marathi** and **Hindi** (Devanagari script) are automatically detected and translated to English via a self-hosted **IndicTrans2** microservice before retrieval.
+  - Ingested Marathi/Hindi chunks are batch-translated using **GCP Cloud Translation v3** and stored alongside the original, enabling bilingual retrieval.
+
+- **Idempotent Document Ingestion Pipeline**:
+  - File-hash-based state tracking (`scratch/ingestion_state.json`) ensures re-ingestion runs are safe and never duplicate data.
+  - Handles standard PDFs (via **PyMuPDF4LLM**) and pre-translated `.en.txt` plaintext GRs from the Orgpedia corpus.
+  - Semantic, boundary-aware chunking preserves tabular context — table rows isolated without their column headers are enriched with the nearest preceding header rows before embedding.
+  - Parent-child chunk hierarchy: parent sections provide retrieval context; child chunks are the actual embedded units.
 
 - **Enterprise-Grade Security & Authentication**:
-  - **Zero-Trust Intranet Geofencing**: The middleware mathematically validates incoming network requests against authorized government subnets (e.g., `10.0.0.0/8`). Requests from public networks are dropped at the perimeter.
-  - **Token-Based Identity**: A built-in SQLite token registry completely replaces vulnerable passwords. Chat histories are securely mapped to hashed officer tokens.
-  - **Admin token CRUD API**: Fully baked API for IT departments to provision, audit, and revoke officer tokens programmatically.
+  - **Zero-Trust Intranet Geofencing**: Middleware validates incoming requests against authorized government subnets (e.g., `10.0.0.0/8`). Public traffic is dropped at the perimeter.
+  - **Token-Based Identity**: A built-in SQLite token registry replaces passwords. Chat histories are securely mapped to hashed officer tokens.
+  - **Admin CRUD API**: Fully baked API for IT departments to provision, audit, and revoke officer tokens programmatically.
 
 - **Cross-Device Persistent Sessions**:
-  - Chat histories are saved securely to the local SQLite database instead of browser storage. Officers can seamlessly transition between desktop and mobile on the government intranet without losing conversation context.
+  - Chat histories persist in SQLite rather than browser storage. Officers can switch between desktop and mobile without losing conversation context.
 
 ---
 
 ## Architecture
 
 ### System Flow
-The following sequence demonstrates how a user's query is processed from ingestion through to the streamed response:
 
 ```mermaid
 sequenceDiagram
-    participant User as User / Frontend
+    participant User as Officer / Frontend
     participant API as FastAPI Backend
-    participant Search as Hybrid Search Engine
-    participant LLM as Generative LLM
+    participant Trans as IndicTrans2 Microservice
+    participant Embed as BGE-M3 / Infinity
+    participant DB as Weaviate (Hybrid Search)
+    participant LLM as Cerebras + Gemini
 
-    User->>API: Submits Query
-    API->>LLM: Generate Query Variations
-    LLM-->>API: Returns Variations
-    API->>Search: Embed Queries & Run Hybrid Search (Dense + BM25)
-    Search-->>API: Top K Relevant Documents (Alpha Fusion)
-    API->>LLM: Build Prompt with Context & Query
-    LLM-->>API: Stream Answer (Server-Sent Events)
-    API-->>User: Stream Response & Citations to UI
+    User->>API: Submits query (English / Marathi / Hindi)
+    API->>Trans: Detect & translate Indic script to English
+    Trans-->>API: English query
+    API->>Embed: Embed query (BGE-M3)
+    Embed-->>API: 1024-d dense vector
+    API->>DB: Hybrid search (dense vector + BM25, Alpha Fusion)
+    DB-->>API: Top-K relevant chunks with scores
+    API->>LLM: Rerank + generate answer with retrieved context
+    LLM-->>API: Stream answer tokens (SSE)
+    API-->>User: Streamed response + confidence-scored citations
 ```
 
 ### Component Architecture
-This diagram outlines the core services and their interactions:
 
 ```mermaid
 graph TD
@@ -66,184 +79,251 @@ graph TD
 
     subgraph Backend [FastAPI Server]
         API[Core Endpoints]
-        Router[LLM Router & Rate Limiter]
+        Auth[Zero-Trust Middleware]
         Ingest[Ingestion Pipeline]
         Ret[Retrieval Pipeline]
     end
 
-    subgraph Data & Services
-        Weaviate[(Weaviate DB)]
-        SQLite[(SQLite Token & History DB)]
-        Translation[Translation Service]
+    subgraph Self-Hosted Microservices
+        BGE[BGE-M3 via Infinity\nEmbedding Droplet]
+        IT2[IndicTrans2\nTranslation Microservice]
     end
 
-    subgraph External APIs
-        LLM[GenAI / LLM Providers]
-        DocAI[OCR / Document Parsing]
+    subgraph Data
+        Weaviate[(Weaviate\nVector DB)]
+        SQLite[(SQLite\nTokens & History)]
+        State[ingestion_state.json\nFile Hash Tracker]
     end
 
-    UI <-->|HTTP / SSE| API
+    subgraph Cloud APIs
+        Gemini[Google Vertex AI\nGemini 2.5 Flash]
+        Cerebras[Cerebras\nFast Inference]
+        GCPTrans[GCP Cloud Translation v3\nIngestion-time batch translate]
+    end
+
+    UI <-->|HTTP / SSE| Auth
+    Auth --> API
     API --> Ret
     API --> Ingest
     API <--> SQLite
-    Ret --> Router
-    Ingest --> Router
-    Router <--> LLM
-    Ingest <--> DocAI
-    Ingest -->|Chunk & Embed| Weaviate
+    Ret --> BGE
+    Ingest --> BGE
+    Ret <--> IT2
+    Ingest <--> GCPTrans
     Ret <-->|Hybrid Search| Weaviate
+    Ingest -->|Chunk & Upsert| Weaviate
     Ingest <--> State
-    Ret <--> Translation
-    Ingest <--> Translation
+    Ret --> Cerebras
+    Ret --> Gemini
 ```
 
 ### Directory Tree
 
 ```text
-rag/
+mimir/
 ├── main.py                             # CLI entry point (Ingestion, Retrieval, Benchmark)
-├── app.py                              # FastAPI server, Auth Gateway, and core endpoints
-├── db.py                               # SQLite Token Registry & Chat History manager
+├── app.py                              # FastAPI server, Zero-Trust gateway, SSE endpoints
+├── db.py                               # SQLite token registry & chat history manager
 ├── requirements.txt                    # Python dependencies
 │
 ├── templates/                          # Frontend UI (Vanilla HTML/JS/CSS)
 │   ├── landing.html                    # Public-facing landing page
 │   ├── login.html                      # Officer login gateway
-│   ├── portal.html                     # Authenticated Officer Chat Interface
+│   ├── portal.html                     # Authenticated officer chat interface
 │   └── app.html                        # Base chat interface
 │
-├── mimir_portal.db                     # SQLite Database (Auto-generated on run)
+├── core/                               # Shared core infrastructure
+│   ├── utils.py                        # API clients, retry/throttle decorators, embed routing
+│   └── log_config.py                   # Centralized structured logging
 │
-├── scratch/                            # Temporary & Persisted State
-│   ├── ingestion_state.json            # File hashing & incremental ingestion state tracker
-│   └── mimir_cache.json                # Persistent JSON query cache
+├── ingestion/                          # Ingestion pipeline
+│   ├── pipeline.py                     # PDF ingestion orchestrator (hash-skip, upsert)
+│   ├── orgpedia_pipeline.py            # Orgpedia .en.txt GR ingestion orchestrator
+│   ├── chunking.py                     # Semantic parent-child chunking, translation & embedding
+│   ├── parsers.py                      # PyMuPDF4LLM → Markdown parser
+│   ├── metadata.py                     # LLM-based GR metadata extraction
+│   └── state.py                        # File hash tracking & ingestion state
 │
-├── core/                               # Shared Core Infrastructure
-│   └── utils.py                        # API rate-limit retry, throttle, & LLM routing
+├── retrieval/                          # Retrieval & generation pipeline
+│   ├── pipeline.py                     # Agentic loop orchestrator & SSE streaming
+│   ├── search.py                       # Hybrid search, alpha tuning, reranking, evidence
+│   └── query.py                        # Query contextualization & multi-query expansion
 │
-├── ingestion/                          # Ingestion Pipeline
-│   ├── pipeline.py                     # Ingestion orchestrator & hash skip logic
-│   └── parsers.py                      # PyMuPDF4LLM -> Markdown parser sequence
+├── benchmark/                          # Corpus evaluation & benchmark harness
+│   ├── benchmark.json                  # Ground-truth evaluation dataset (multi-category)
+│   └── runner.py                       # Benchmark execution & LLM-judge scoring
 │
-├── retrieval/                          # Retrieval & Generation Pipeline
-│   ├── pipeline.py                     # Hybrid search & streaming response orchestrator
-│   ├── search.py                       # Alpha fusion, LLM reranking, & evidence extraction
-│   └── query.py                        # Contextualization & multi-query expansion
+├── scratch/                            # Dev scripts & persisted state
+│   ├── ingestion_state.json            # File hash & incremental ingestion state tracker
+│   ├── generate_benchmark_full.py      # Document-level LLM benchmark generator (full corpus)
+│   └── mimir_cache.json                # Persistent query cache
 │
-└── benchmark/                          # Corpus Evaluation & Benchmark Harness
-    ├── benchmark.json                  # Standardized 30-case grounded evaluation dataset
-    └── runner.py                       # Benchmark execution & LLM judge runner
+├── data/                               # Weaviate deployment
+│   └── docker-compose.yml              # Weaviate standalone compose file
+│
+└── docs/                               # Source documents for ingestion
+    ├── *.pdf                           # Standard government PDF circulars & acts
+    └── orgpedia_mahGRs/
+        └── *.pdf.en.txt                # Pre-translated Orgpedia Maharashtra GR plaintext files
 ```
 
 ---
 
 ## Installation & Setup
 
-### 1. Prerequisites
+### Prerequisites
 
-- Python 3.10+
-- Google Gemini API Key
-- Cerebras API Key (for LLM Generation)
-- [Weaviate](https://weaviate.io/) (Can run locally or remotely)
-- Translation Service (Can run locally or remotely)
+| Dependency | Purpose |
+|---|---|
+| Python 3.10+ | Core runtime |
+| Google Cloud Project (Vertex AI) | Gemini 2.5 Flash generation + GCP Translation |
+| Cerebras API Key | Fast agentic inference |
+| Weaviate instance | Vector store (local via Docker or remote droplet) |
+| BGE-M3 / Infinity server | Self-hosted embedding microservice |
+| IndicTrans2 microservice | Marathi/Hindi → English query translation |
 
-### 2. Installation
+### 1. Clone & Install
 
-1. **Clone the repository**:
+```bash
+git clone https://github.com/pushkqr/mimir.git
+cd mimir
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-   ```bash
-   git clone https://github.com/pushkqr/mimir.git
-   cd mimir
-   ```
+### 2. Deploy Weaviate
 
-2. **Create and activate a virtual environment**:
+Weaviate runs as a standalone service. Use the provided compose file:
 
-   ```bash
-   python -m venv .venv
-   # Windows:
-   .venv\Scripts\activate
-   # Linux/macOS:
-   source .venv/bin/activate
-   ```
+```bash
+cd data
+docker-compose up -d
+cd ..
+```
 
-3. **Deploy Weaviate (Local or Remote)**:
-   Weaviate is deployed as a standalone microservice. You can run it locally or deploy it to a remote server using its dedicated compose file:
-   ```bash
-   cd data
-   docker-compose up -d
-   cd ..
-   ```
+Or point `WEAVIATE_URL` to an existing remote instance.
 
-4. **Install dependencies**:
+### 3. Configure Environment
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+Copy `.env.example` to `.env` and fill in your values:
 
-5. **Configure environment variables**:
-   Create a `.env` file in the root directory. You can copy the provided `.env.example`:
+```env
+# Google Cloud (Vertex AI)
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+GOOGLE_CLOUD_LOCATION=asia-south1
+USE_VERTEX_AI=True
 
-   ```env
-   # Required: API keys
-   GOOGLE_API_KEY=your_gemini_api_key
-   CEREBRAS_API_KEY=your_cerebras_api_key
-   
-   # Remote / External Services (Optional depending on architecture)
-   # Point these to your hosted microservices if deploying in a distributed environment
-   TRANSLATION_SERVICE_URL=http://<YOUR_TRANSLATION_IP>:8000/translate
-   WEAVIATE_URL=http://<YOUR_WEAVIATE_IP>
-   WEAVIATE_GRPC_PORT=50051
-   WEAVIATE_API_KEY=your-secure-weaviate-api-key
+# Inference
+CEREBRAS_API_KEY=your_cerebras_api_key
+GEN_MODEL_NAME=gemini-2.5-flash
 
-   # Model Configuration
-   GEN_MODEL_NAME=gemini-2.5-flash
-   EMBED_MODEL_NAME=text-embedding-004
+# Self-hosted Embedding Microservice (BGE-M3 via Infinity)
+LOCAL_EMBED_URL=http://<YOUR_EMBED_DROPLET_IP>:7997/embeddings
+LOCAL_EMBED_API_KEY=your_embed_api_key          # if secured
+USE_AISTUDIO_FOR_EMBEDDINGS=False
 
-   # Security
-   # Set this to protect your app. Leave empty for public access.
-   MIMIR_AUTH_TOKEN=your_secure_password
-   
-   # Admin token used for CRUD operations on officer tokens.
-   MIMIR_ADMIN_TOKEN=SUPER-SECRET-ADMIN-TOKEN
-   
-   # Intranet Geofencing (Comma-separated CIDRs).
-   # Use 0.0.0.0/0 to allow all public traffic for live demos.
-   MIMIR_ALLOWED_SUBNETS=
-   ```
+# Translation Microservice (IndicTrans2)
+TRANSLATION_SERVICE_URL=http://<YOUR_TRANS_DROPLET_IP>:8000/translate
+
+# Weaviate
+WEAVIATE_URL=http://<YOUR_WEAVIATE_IP>
+WEAVIATE_GRPC_PORT=50051
+WEAVIATE_API_KEY=your_weaviate_api_key
+
+# Security
+MIMIR_AUTH_TOKEN=your_secure_officer_password
+MIMIR_ADMIN_TOKEN=your_secure_admin_token
+# Comma-separated CIDRs. Use 0.0.0.0/0 to allow all (demo mode).
+MIMIR_ALLOWED_SUBNETS=10.0.0.0/8
+```
 
 ---
 
 ## Usage
 
-### Launching the Web Application
-
-Start the FastAPI server via Uvicorn:
+### Start the Web Application
 
 ```bash
 python app.py
 # or
 uvicorn app:app --reload
 ```
-Navigate to `http://localhost:8000/` to view the landing page, or `http://localhost:8000/app` to access the chat interface.
 
-### Ingestion & CLI Pipeline (`main.py`)
+Navigate to `http://localhost:8000` for the landing page or `http://localhost:8000/app` for the chat interface.
 
-To ingest documents, test interactive CLI retrieval, or run corpus benchmarks, configure the execution flags in `main.py`:
+### Ingest Documents
+
+Place PDFs in `docs/` and Orgpedia plaintext GRs in `docs/orgpedia_mahGRs/`. Then set flags in `main.py`:
 
 ```python
-RUN_INGESTION = True    # Re-index PDFs in docs/
-RUN_RETRIEVAL = False   # Run interactive CLI chat
-RUN_BENCHMARK = False   # Run corpus benchmark evaluation
+RUN_INGESTION = True     # Ingest/re-index PDFs
+RUN_RETRIEVAL = False    # Interactive CLI chat
+RUN_BENCHMARK = False    # Run benchmark evaluation
 ```
-
-Then execute:
 
 ```bash
 python main.py
 ```
 
+Ingestion is **idempotent** — re-running with unchanged files is a no-op (files are skipped based on SHA-256 hash). To force re-ingestion, pass `force_reingest=True` or delete `scratch/ingestion_state.json`.
+
+### Run Benchmark
+
+```bash
+# Set RUN_BENCHMARK = True in main.py, then:
+python main.py
+
+# Or run standalone:
+python benchmark/runner.py
+```
+
+### Generate a Full Corpus Benchmark Dataset
+
+For generating new benchmark questions from the full corpus (document-level LLM generation, not chunk-level):
+
+```bash
+python scratch/generate_benchmark_full.py \
+  --out benchmark/benchmark_100.json \
+  --max-doc-chars 15000 \
+  --resume
+```
+
+Large documents (> `--max-doc-chars` characters) are skipped automatically. Use `--resume` to continue interrupted runs incrementally.
+
+---
+
+## Self-Hosted Microservices
+
+Mimir decouples compute-heavy tasks into independent microservices to avoid cloud quota constraints and reduce per-query cost.
+
+### BGE-M3 Embedding (Infinity)
+
+Deploy on any GPU or CPU droplet:
+
+```bash
+pip install infinity-emb[all]
+infinity_emb v2 --model-id BAAI/bge-m3 --port 7997
+```
+
+Set `LOCAL_EMBED_URL=http://<host>:7997/embeddings` in `.env`. The system automatically routes all embedding calls (ingestion + retrieval) through this endpoint.
+
+### IndicTrans2 Translation
+
+Deploy the IndicTrans2 FastAPI microservice. On query, the system detects Devanagari script and translates to English before embedding:
+
+```
+POST /translate
+{"text": "...", "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"}
+```
+
+Set `TRANSLATION_SERVICE_URL=http://<host>:8000/translate` in `.env`.
+
 ---
 
 ## Disclaimer
 
-Mimir is designed for administrative decision support. While it prioritizes strict retrieval-based grounding, always verify outputs against official published government circulars and gazette notifications.
+Mimir is designed for administrative decision support. While it prioritizes strict retrieval-based grounding with source citations, always verify outputs against official published government circulars and gazette notifications before taking administrative action.

@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -93,8 +94,12 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
         return {"case_count": 0, "error": "No benchmark cases found."}
 
     results = []
+    delay_s = int(os.getenv("BENCHMARK_DELAY_S", "12"))  # inter-question throttle
     for i, case in enumerate(cases, 1):
         logger.info(f"({i}/{len(cases)}) {case['query'][:80]}...")
+        if i > 1 and delay_s > 0:
+            logger.info(f"[benchmark.runner] Throttle delay: {delay_s}s...")
+            time.sleep(delay_s)
 
         retrieval_result = run_retrieval(
             gemini_client=gemini_client,
@@ -105,8 +110,6 @@ def run_benchmark(gemini_client, cerebras_client, weaviate_client, cases: List[D
             chat_history=[],
         )
 
-        # Extract the response text
-        import time
         t_start_process = time.time()
         ttft = 0.0
         gen_time = 0.0
@@ -245,7 +248,7 @@ def print_benchmark_report(report: Dict[str, Any]) -> None:
     print("=" * 72)
 
     # Save to file
-    output_path = Path("temp/benchmark_results.json")
+    output_path = Path("benchmark/benchmark_results.json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n  Full results saved to: {output_path}")

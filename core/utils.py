@@ -1,5 +1,7 @@
 import os
 import time
+import json
+import requests
 from functools import wraps
 
 from google import genai
@@ -137,9 +139,36 @@ def generate_content_safe(client, *args, **kwargs):
     return client.models.generate_content(*args, **kwargs)
 
 
+class MockEmbedding:
+    def __init__(self, values):
+        self.values = values
+
+class MockEmbedResponse:
+    def __init__(self, values):
+        self.embeddings = [MockEmbedding(values)]
+
+
 @with_retry_and_throttle(constant_delay_env="EMBED_API_DELAY", default_delay=0)
 def embed_content_safe(client, *args, **kwargs):
-    """Wrapper for client.models.embed_content routed to AI Studio if GEMINI_API_KEY is available."""
+    """Wrapper for client.models.embed_content routed to AI Studio, or a local server if LOCAL_EMBED_URL is set."""
+    local_url = os.getenv("LOCAL_EMBED_URL")
+    if local_url:
+        api_key = os.getenv("LOCAL_EMBED_API_KEY", "")
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        
+        text = kwargs.get("contents")
+        payload = {
+            "input": text,
+            "model": kwargs.get("model", "BAAI/bge-m3")
+        }
+        resp = requests.post(local_url, json=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+        vector = data["data"][0]["embedding"]
+        return MockEmbedResponse(vector)
+
     use_aistudio_embed = os.getenv("USE_AISTUDIO_FOR_EMBEDDINGS", "False").strip().lower() in ("true", "1", "yes")
     if use_aistudio_embed and os.getenv("GEMINI_API_KEY"):
         embed_client = get_aistudio_client()

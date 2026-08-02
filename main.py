@@ -26,9 +26,9 @@ def main():
 
     COLLECTION_NAME = "GovDocs"
 
-    RUN_INGESTION = True
+    RUN_INGESTION = False
     RUN_RETRIEVAL = False
-    RUN_BENCHMARK = False
+    RUN_BENCHMARK = True
 
     if RUN_INGESTION:
         print("\n" + "=" * 50)
@@ -65,7 +65,7 @@ def main():
         print("\n" + "=" * 50)
         print("MODULE: CORPUS BENCHMARK & EVALUATION HARNESS")
         print("=" * 50)
-        cases = load_benchmark_cases(sample_size=30)
+        cases = load_benchmark_cases(sample_size=100)
         if cases:
             benchmark_report = run_benchmark(client, cerebras_client, weaviate_client, cases, collection_name=COLLECTION_NAME)
             print_benchmark_report(benchmark_report)

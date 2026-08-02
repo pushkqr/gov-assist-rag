@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 def run_ingestion(
     client: genai.Client,
     weaviate_client: Optional[Any] = None,
-    collection_name: str = "gov_docs",
+    collection_name: str = "GovDocs",
     docs_dir: str = "docs",
     target_files: Optional[List[str]] = None,
     force_reingest: bool = False,

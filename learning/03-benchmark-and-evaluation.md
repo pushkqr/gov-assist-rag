@@ -1,77 +1,106 @@
 # 03 — Benchmark & Evaluation: Proving the Truth
 
-**In one line:** We don't guess if the system is accurate; we run a ruthless automated test harness across 30 complex policy questions and grade the pipeline's homework.
+**In one line:** We don't guess if the system is accurate — we run an automated harness across a curated set of policy questions spanning multiple query types and languages, and grade the pipeline on both hard facts and semantic accuracy.
 
 ---
 
-## The Grounded Dataset
+## The Problem with "Vibes-Based" Testing
 
-Building a RAG system is easy. Knowing if it actually works when you tweak a prompt or change an embedding model is incredibly hard. "Vibes-based" testing (just asking it a few questions and seeing if it feels right) doesn't scale.
+Building a RAG system is straightforward. Knowing if a change to the embedding model, alpha weight, or chunk size actually *improved* things is hard. Asking a few questions and feeling good about the answers doesn't catch regressions.
 
-Mimir includes a built-in benchmark harness (`benchmark/benchmark.json`). This is a carefully curated dataset of 30 test cases based directly on the actual policy documents stored in the system.
+Mimir includes a structured benchmark harness (`benchmark/benchmark.json`) — a curated dataset of test cases built directly from the actual policy documents in the corpus.
 
-Each test case includes:
+---
 
-1. **The Query:** A realistic question an employee might ask.
-2. **The Expected Output:** A human-verified summary of the correct answer.
-3. **Required Terms:** Specific jargon, dates, or IDs that _must_ appear in the generated answer for it to be considered accurate.
+## Benchmark Query Categories
+
+The dataset deliberately covers a full range of query types an officer might actually send:
+
+| Category | Description | Example |
+|---|---|---|
+| `simple_english` | Direct factual questions in English | "How many temporary posts were extended in the Libraries directorate?" |
+| `marathi_query` | Same questions phrased naturally in Marathi | "ग्रंथालय संचालनालयात किती तात्पुरती पदे होती?" |
+| `hindi_query` | Colloquial Hindi queries | "Library directorate mein kitne temporary posts the?" |
+| `complex_english` | Multi-fact synthesis requiring reading across clauses | "What are the phased staffing numbers for the Kolhapur college over 4 years?" |
+| `complex_marathi` | Complex queries in Marathi | "कोविड-19 मुळे 2020-21 च्या नियमावलीत काय बदल झाले?" |
+| `gr_number_lookup` | Explicit GR number cited in query | "Tell me about GR No. MUWAD-2016/(38/16)/MASHI-1" |
+| `not_found` | Topics deliberately absent from the corpus | "What is the pension amount for retired professors?" |
+
+Each case includes:
+- **`query`** — the question as an officer would phrase it
+- **`expected_answer`** — human-verified ground truth
+- **`expected_terms`** — specific terms (GR numbers, counts, dates) that *must* appear in the answer
+- **`category`** — query type for disaggregated scoring
+- **`source_doc`** — the exact document the answer should come from (`null` for not-found cases)
 
 ---
 
 ## The Dual-Evaluator System
 
-When you run `python main.py` with `RUN_BENCHMARK = True`, the system simulates a user asking all 30 questions. It collects the pipeline's answers and runs them through a dual-evaluator system:
+When you run `python main.py` with `RUN_BENCHMARK = True`, the system simulates all queries through the full pipeline and grades each answer with two independent evaluators:
 
-### 1. The Term-Match Scorer (Deterministic)
+### 1. Term-Match Scorer (Deterministic)
 
-The system checks the generated answer against the `Required Terms` array. If the answer misses a critical term (like a specific statute number or a deadline date), it gets penalized. This ensures the LLM didn't just write a fluffy, generic response, but actually retrieved the hard facts.
+Checks whether each `expected_term` appears in the generated answer. If the answer says "142 posts" but `expected_terms` includes `"142"` and `"libraries"`, both must be present. Missing critical terms (statute numbers, dates, counts) is a hard failure.
 
-### 2. The LLM Judge (Semantic)
+This catches the most common RAG failure: the LLM writing a fluent, confident-sounding answer that omits the specific fact the officer needed.
 
-Term-matching is rigid. Sometimes the LLM provides the correct answer using slightly different phrasing. To account for this, Mimir spins up an independent "Judge" LLM.
+### 2. LLM Judge (Semantic)
 
-The Judge is given the human-verified expected output and the pipeline's generated output, and is asked to grade the generation on a scale of 0 to 5 based on semantic accuracy and lack of hallucination.
+Term-matching is rigid — the system can state the correct fact with slightly different phrasing and still fail. The Judge LLM receives the expected answer and the pipeline's answer, then grades from 0–5 on:
+- Factual accuracy vs. ground truth
+- Absence of hallucination
+- Completeness
 
----
-
-## The Final Grade
-
-The harness averages the deterministic scores and the semantic scores to produce a final, undeniable letter grade (A–D).
-
-This means whenever you swap out the BM25 model, adjust the Alpha Fusion weights, or change the Gemini generation parameters, you can run the benchmark script and quantitatively prove whether you made the system better or worse.
-
-Honesty is a feature, not an apology. We prove our accuracy with data.
+The final score is an average of the deterministic and semantic grades, normalized to a letter grade (A–D).
 
 ---
 
-## Real World Examples from the Benchmark
+## Generating a Full-Corpus Benchmark Dataset
 
-When evaluating the system, the LLM Judge looks for completeness and lack of hallucination. Here are actual snippets from our latest benchmark run:
+For the 100-question evaluation against the full corpus (33 PDFs + ~500 orgpedia GRs), a document-level LLM generator is provided:
 
-### Example 1: Perfect Synthesis (Case 11)
+```bash
+python scratch/generate_benchmark_full.py \
+  --out benchmark/benchmark_100.json \
+  --max-doc-chars 15000 \
+  --resume
+```
 
-**Question:** Why was the School Connect 2.0 campaign introduced?
-**Agent's Pipeline Result:** _Successfully retrieved the exact circulars explaining the National Education Policy 2020 initiatives and assembled a grounded answer._
-**Judge Score:** PASS (5/5)
-**Judge Reason:** > "The candidate answer fully covers all key facts from the ideal answer, including the role of NEP 2020, the need for awareness, and continuous guidance, while also providing extensive supporting details."
+**Key design decisions in the generator:**
 
-### Example 2: Cross-Document Routing (Case 26)
-
-**Question:** Which document discusses the regulation of admissions through CAP?
-**Agent's Pipeline Result:** _Autonomously recognized the need to search for multiple entities, ran iterative searches, and pulled data from two distinct acts._
-**Judge Score:** PASS (5/5)
-**Judge Reason:** > "The candidate correctly identifies both documents and accurately describes their respective functions, providing comprehensive and precise details that fully address the query."
-
-### Example 3: The "Negative Test" (Case 30)
-
-**Question:** What is the procedure for obtaining a passport in Maharashtra?
-**Agent's Pipeline Result:** _Recognized that the indexed HR and education policy corpus does not contain passport information. Refused to hallucinate._
-**Judge Score:** PASS (5/5)
-**Judge Reason:** > "The candidate accurately states that the information is not available in the provided documents, avoiding hallucination and aligning with the ideal answer."
+- **Document-level, not chunk-level.** The full document text is fed to Gemini, not random chunks. This avoids the "retrieval-trivial" problem where a question is a paraphrase of a chunk and BM25 always finds it — inflating scores without testing real retrieval.
+- **Explicit diversity prompt.** Gemini is instructed to produce exactly: 1 simple English, 1 Marathi, 1 complex, and 1 GR number lookup question — all from an officer persona, not an academic one.
+- **Size filter.** Documents larger than `--max-doc-chars` characters are skipped rather than truncated mid-annexure. Large acts with boilerplate appendices would generate misleading questions from partial context.
+- **Incremental.** `--resume` continues from a partial run without re-querying already-processed documents.
 
 ---
 
-_For more detailed insights, you can review the raw data:_
+## What "Not Found" Cases Test
 
-- **[The 30-Case Benchmark Dataset](../benchmark/benchmark.json)**
-- **[The Complete Evaluator Results](../benchmark/benchmark_results.json)**
+The `not_found` category is specifically designed to catch hallucination. The expected answer is always a clean refusal:
+
+> *"The retrieved documents do not contain information about pension amounts for retired professors."*
+
+A system that hallucinates a pension figure is worse than one that admits it doesn't know. The LLM Judge grades hallucinated answers as 0/5 regardless of how plausible they sound.
+
+---
+
+## Running the Benchmark
+
+```bash
+# Via main.py flags
+RUN_BENCHMARK = True
+python main.py
+
+# Or standalone
+python benchmark/runner.py
+```
+
+Results are written to `benchmark/benchmark_results.json`. Each result includes the query, pipeline answer, term scores, judge score, and a pass/fail verdict.
+
+---
+
+*For the raw datasets:*
+- **[Benchmark Dataset](../benchmark/benchmark.json)** — current ground-truth cases
+- **[Benchmark Results](../benchmark/benchmark_results.json)** — latest run output

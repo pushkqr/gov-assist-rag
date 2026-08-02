@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 def evaluate_response(query: str, response_text: str, evidence: List[Dict[str, Any]], expected_terms: List[str]) -> Dict[str, Any]:
     response_lower = (response_text or "").lower()
     evidence_lower = " ".join((item.get("quote") or "").lower() for item in evidence or [])
-    combined_text = f"{query.lower()} {response_lower} {evidence_lower}"
+    combined_text = f"{response_lower} {evidence_lower}"
 
     matched_terms = 0
     for term in expected_terms:

@@ -1,7 +1,9 @@
 import json
 import os
 import re
+import time
 import concurrent.futures
+import requests
 from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
@@ -151,7 +153,7 @@ def run_hybrid_search(
     
     search_res = weaviate_collection.query.hybrid(
         query=bm25_query,
-        query_properties=["translated_text", "parent_context", "section_title", "child_text", "doc_number"],
+        query_properties=["translated_text", "parent_context", "section_title", "child_text", "doc_number", "document_title"],
         vector=query_vector,
         alpha=alpha,
         limit=limit,
@@ -180,8 +182,6 @@ def execute_search_tool(
     fast_mode: bool = True,
 ) -> Tuple[str, List[Dict[str, Any]], Dict[str, float], List[Dict[str, Any]]]:
     """Execute the search tool and format results for the LLM."""
-    import time
-    import requests
     t_start = time.time()
     
     def is_indic(text: str) -> bool:
@@ -194,7 +194,7 @@ def execute_search_tool(
             response = requests.post(
                 url,
                 json={"text": text, "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"},
-                timeout=2.0
+                timeout=5.0
             )
             response.raise_for_status()
             return response.json().get("translated_text", text)
@@ -222,7 +222,7 @@ def execute_search_tool(
     if not fast_mode:
         logger.info(f"[PROFILING] Query expansion took: {t_variations - t_translate:.3f}s")
 
-    config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=1536)
+    config = types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
     model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
     
     query_vectors = []
