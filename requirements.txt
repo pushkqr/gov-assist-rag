@@ -8,6 +8,7 @@ python-dotenv
 google-genai
 google-cloud-aiplatform
 google-cloud-translate
+google-cloud-documentai
 
 # Document Parsing
 pymupdf4llm

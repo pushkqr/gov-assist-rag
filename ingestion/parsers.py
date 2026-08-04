@@ -5,7 +5,6 @@ from typing import Optional
 
 import pymupdf4llm
 from google.api_core.client_options import ClientOptions
-from google.cloud import documentai_v1beta3 as documentai
 from google import genai
 from google.genai import types
 
@@ -114,6 +113,15 @@ def parse_pdf_with_document_ai(client: genai.Client, target_file: str) -> Option
     processor_id = os.getenv("DOCAI_PROCESSOR_ID")
 
     if not project_id or not processor_id:
+        return None
+
+    # Imported lazily: Document AI is the tier-2 OCR fallback, only reached when the local
+    # parser fails. A module-level import made an optional dependency fatal to the whole
+    # parser chain, so a missing package took out tier 1 as well.
+    try:
+        from google.cloud import documentai_v1beta3 as documentai
+    except ImportError:
+        logger.warning("google-cloud-documentai not installed; skipping Document AI OCR tier.")
         return None
 
     try:
