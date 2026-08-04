@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import json
 import concurrent.futures
 from typing import Any, Dict, List, Optional, Callable
@@ -11,6 +12,7 @@ from cerebras.cloud.sdk import Cerebras
 from core.log_config import get_logger
 from core.utils import cerebras_chat_completions_create_safe
 from retrieval.search import search_policy_docs_tool, execute_search_tool
+from retrieval.query import contextualize_query
 
 logger = get_logger(__name__)
 
@@ -56,7 +58,12 @@ class StreamingResponse:
 
 
 _MODEL_COUNTER = 0
-_CEREBRAS_MODELS = ["gpt-oss-120b", "gemma-4-31b"]
+# Cerebras enforces 5 requests/minute PER MODEL, so the round-robin is the rate-limit
+# budget: each model added multiplies available throughput. Keep this list as wide as the
+# account allows.
+_CEREBRAS_MODELS = [m.strip() for m in os.getenv(
+    "CEREBRAS_MODELS", "gpt-oss-120b,gemma-4-31b"
+).split(",") if m.strip()]
 
 def run_retrieval(
     gemini_client: genai.Client,
@@ -70,22 +77,43 @@ def run_retrieval(
 ) -> Dict[str, Any]:
     """Execute direct Weaviate search followed by 1-shot Cerebras synthesis (Round-Robin load balanced)."""
     global _MODEL_COUNTER
-    
+
+    _t_request = time.time()
+
     if chat_history is None:
         chat_history = []
         
     if status_callback:
         status_callback("Analyzing query intent...")
 
+    # Follow-ups like "what is the number of this GR" carry no antecedent on their own, so
+    # searching them verbatim retrieves broadly. Rewrite against recent history first; the
+    # helper returns the original query unchanged if rewriting fails or isn't needed.
+    search_query = query
+    contextualize_s = 0.0
+    # Costs one extra Cerebras request against a 5/min per-model budget. Set
+    # CONTEXTUALIZE_FOLLOWUPS=false to trade follow-up accuracy back for rate-limit headroom.
+    _ctx_on = os.getenv("CONTEXTUALIZE_FOLLOWUPS", "true").strip().lower() in ("true", "1", "yes")
+    if chat_history and _ctx_on:
+        _t_ctx = time.time()
+        try:
+            search_query, _ = contextualize_query(gemini_client, query, chat_history, cerebras_client=cerebras_client)
+            if search_query != query:
+                logger.info(f"Contextualized follow-up: '{query}' -> '{search_query}'")
+        except Exception as exc:
+            logger.warning(f"Contextualization failed, searching raw query: {exc}")
+            search_query = query
+        contextualize_s = round(time.time() - _t_ctx, 3)
+
     if status_callback:
         status_callback("Searching knowledge base...")
-        
+
     try:
         profiling_metrics = {}
         recommendations = []
 
-        # Extract year filter from query for fast_mode (e.g. "GRs from 2018...")
-        _year_match = re.search(r'\b(19|20)\d{2}\b', query)
+        # Extract year filter from the contextualized query for fast_mode (e.g. "GRs from 2018...")
+        _year_match = re.search(r'\b(19|20)\d{2}\b', search_query)
         _extracted_year = int(_year_match.group(0)) if _year_match else None
 
         def search_tool_wrapper(query: str, year: Optional[int] = None, fast_mode: bool = False) -> str:
@@ -97,7 +125,7 @@ def run_retrieval(
             return results
 
         evidence = []
-        search_json = search_tool_wrapper(query, year=_extracted_year, fast_mode=fast_mode)
+        search_json = search_tool_wrapper(search_query, year=_extracted_year, fast_mode=fast_mode)
     except Exception as exc:
         logger.error(f"Search tool failed: {exc}")
         return {
@@ -179,8 +207,16 @@ def run_retrieval(
         user_prompt = f"Context:\n{context_text}\n\nQuestion: {query}"
 
     try:
+        # Cerebras limits are per-minute, so retrying a 429 a few seconds later just fails
+        # again while burning the latency budget. Disable SDK retries and let the Gemini
+        # fallback below take over immediately instead.
+        _gen_client = cerebras_client
+        try:
+            _gen_client = cerebras_client.with_options(max_retries=0)
+        except Exception:
+            pass
         stream = cerebras_chat_completions_create_safe(
-            cerebras_client,
+            _gen_client,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -228,6 +264,10 @@ def run_retrieval(
         if k not in seen_recs:
             seen_recs.add(k)
             unique_recommendations.append(r)
+
+    profiling_metrics["contextualize_s"] = contextualize_s
+    profiling_metrics["retrieval_s"] = round(time.time() - _t_request, 3)
+    profiling_metrics["model"] = target_model
 
     return {
         "status": "success",

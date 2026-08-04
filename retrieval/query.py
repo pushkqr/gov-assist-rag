@@ -11,8 +11,17 @@ from core.log_config import get_logger
 logger = get_logger(__name__)
 
 
-def contextualize_query(gemini_client: Any, query: str, chat_history: Optional[List[Dict[str, str]]] = None) -> Tuple[str, str]:
-    """Rewrite follow-up question into standalone query using conversation history."""
+def contextualize_query(
+    gemini_client: Any,
+    query: str,
+    chat_history: Optional[List[Dict[str, str]]] = None,
+    cerebras_client: Any = None,
+) -> Tuple[str, str]:
+    """Rewrite follow-up question into standalone query using conversation history.
+
+    Runs on the critical path before search, so it prefers Cerebras when a client is
+    supplied and only falls back to the Gemini path when one isn't.
+    """
     if chat_history is None:
         chat_history = []
 
@@ -20,24 +29,52 @@ def contextualize_query(gemini_client: Any, query: str, chat_history: Optional[L
     history_text = ""
     if chat_history:
         history_text = "\n".join([f"{msg['role'].capitalize()}: {msg['text']}" for msg in chat_history[-4:]])
+        # The rewrite feeds retrieval only; generation still receives the user's original
+        # wording, so answers stay in the language they asked in. Forcing English output here
+        # makes the rewrite far more reliable and skips a translation hop before search.
         ctx_prompt = (
-            "Given the following conversation history and the user's latest question, rephrase the latest question "
-            "to be a standalone question that can be understood without the context of the conversation. "
-            "CRITICAL INSTRUCTION: If the latest question introduces a completely new topic or is clearly unrelated to the "
-            "conversation history, do NOT merge or carry over constraints (like years, document names, or specific rules) "
-            "from the history. Treat it as a completely new query. If it is already standalone, return it exactly as is.\n\n"
+            "Rewrite the user's latest question as a standalone search query in ENGLISH.\n\n"
+            "Rules:\n"
+            "1. Replace every demonstrative or pronoun (this GR, it, that circular, हा शासन निर्णय, "
+            "या शासन निर्णयाचा, इसका) with the specific document, person, or subject it refers to in the history.\n"
+            "2. Always output English, even when the question is in Marathi or Hindi.\n"
+            "3. If the latest question starts a clearly unrelated new topic, do NOT carry over any "
+            "names, years, or constraints from the history. Translate it to English and stop.\n"
+            "4. Output ONLY the rewritten question. No preamble, no explanation, no quotes.\n\n"
             f"Conversation History:\n{history_text}\n\n"
-            f"Latest Question: {query}\n\nStandalone Question:"
+            f"Latest Question: {query}\n\nStandalone English Question:"
         )
         try:
-            ctx_response = generate_content_safe(
-                gemini_client,
-                model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
-                contents=ctx_prompt,
-                config=types.GenerateContentConfig(temperature=0.0),
-            )
-            ctx_text = extract_response_text(ctx_response)
-            if ctx_text:
+            ctx_text = ""
+            if cerebras_client is not None:
+                # Deliberately NOT the retry-wrapped helper, and retries are disabled on the
+                # SDK too. This rewrite is a best-effort enhancement on the critical path: a
+                # rate-limit must fall straight back to the raw query, never spend 10s+ of
+                # backoff on the metric we compete on.
+                client = cerebras_client
+                try:
+                    client = cerebras_client.with_options(
+                        max_retries=0, timeout=float(os.getenv("CONTEXTUALIZE_TIMEOUT_S", "4"))
+                    )
+                except Exception:
+                    pass
+                resp = client.chat.completions.create(
+                    messages=[{"role": "user", "content": ctx_prompt}],
+                    model=os.getenv("CONTEXTUALIZE_MODEL_NAME", "gemma-4-31b"),
+                    max_completion_tokens=200,
+                    temperature=0.0,
+                )
+                ctx_text = (resp.choices[0].message.content or "").strip()
+            else:
+                ctx_response = generate_content_safe(
+                    gemini_client,
+                    model=os.getenv("GEN_MODEL_NAME", "gemma-4-31b-it"),
+                    contents=ctx_prompt,
+                    config=types.GenerateContentConfig(temperature=0.0),
+                )
+                ctx_text = extract_response_text(ctx_response)
+            # Guard against a chatty rewrite: only accept a plausible single-question result.
+            if ctx_text and len(ctx_text) < 400:
                 standalone_query = ctx_text.strip()
         except Exception as exc:
             logger.warning(f"Could not contextualize query: {exc}")

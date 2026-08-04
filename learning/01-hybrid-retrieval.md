@@ -91,6 +91,8 @@ query_properties=[
 
 ## Deep Search Mode: LLM Reranking
 
+> **Not currently exposed.** `run_retrieval` defaults to `fast_mode=True` and nothing in the API or UI passes `False`, so this path is unreachable in the running product. It is documented here because the code exists, not as a shipped feature. Every live query uses the cross-encoder path above.
+
 In non-fast mode (`fast_mode=False`), after the hybrid search returns 150 candidates, an LLM judge reranks them:
 
 ```python

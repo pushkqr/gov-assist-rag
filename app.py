@@ -1,14 +1,17 @@
 import json
+import time
+import queue
 import logging
 import asyncio
+import threading
 from pathlib import Path
 import os
 import hmac
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse
+from fastapi import FastAPI, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -39,7 +42,7 @@ if DOCS_DIR.exists():
 
 _AUTH_TOKEN = os.environ.get("MIMIR_AUTH_TOKEN", "").strip()
 _ADMIN_TOKEN = os.environ.get("MIMIR_ADMIN_TOKEN", "SUPER-SECRET-ADMIN-TOKEN").strip()
-_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login"}
+_AUTH_OPEN = {"/", "/app", "/health", "/evidence", "/favicon.ico", "/favicon.svg", "/login", "/portal", "/api/login", "/admin"}
 
 _AUTHORIZED_SUBNETS = []
 _env_subnets = os.environ.get("MIMIR_ALLOWED_SUBNETS")
@@ -73,22 +76,28 @@ def _is_authenticated(request: Request) -> bool:
 
 @app.middleware("http")
 async def _auth_gate(request: Request, call_next):
-    if request.url.path not in _AUTH_OPEN and not request.url.path.startswith("/api/admin/"):
+    path = request.url.path
+    is_admin_api = path.startswith("/api/admin/")
+
+    # The network gate applies to admin routes too. Admin endpoints verify the admin token
+    # themselves, so they skip the officer-token check below, but exempting them from the
+    # subnet allowlist would have left a hole in the zero-trust perimeter.
+    if path not in _AUTH_OPEN or is_admin_api:
         x_forwarded_for = request.headers.get("x-forwarded-for")
         if x_forwarded_for:
             client_host = x_forwarded_for.split(",")[0].strip()
         else:
             client_host = request.client.host if request.client else ""
-            
+
         if not _is_in_authorized_subnet(client_host):
             return JSONResponse({
                 "detail": "Network Access Denied. Device is outside authorized government intranet."
             }, status_code=403)
-            
-        if _AUTH_TOKEN:
+
+        if _AUTH_TOKEN and not is_admin_api:
             if not _is_authenticated(request):
                 return JSONResponse({"detail": "Unauthorized — provide the access token."}, status_code=401)
-                
+
     return await call_next(request)
 
 gemini_client = None
@@ -111,9 +120,14 @@ async def startup_event():
 async def serve_landing(request: Request):
     return templates.TemplateResponse(request=request, name="landing.html")
 
-@app.get("/app", response_class=HTMLResponse)
-async def serve_app(request: Request):
-    return templates.TemplateResponse(request=request, name="app.html")
+@app.get("/app")
+async def serve_app():
+    """Retired in favour of /portal, which is the maintained officer interface.
+
+    Kept as a redirect rather than removed so existing links and bookmarks still land
+    somewhere sensible. templates/app.html is now unused.
+    """
+    return RedirectResponse(url="/portal", status_code=307)
 
 @app.get("/login", response_class=HTMLResponse)
 async def serve_login(request: Request):
@@ -194,6 +208,124 @@ async def api_admin_delete_token(token_hash: str, request: Request):
         return {"status": "ok"}
     return JSONResponse({"error": "Token not found."}, status_code=404)
 
+def _is_admin(request: Request) -> bool:
+    h = request.headers.get("authorization", "")
+    if not h.startswith("Bearer "):
+        return False
+    return hmac.compare_digest(h[len("Bearer "):].strip(), _ADMIN_TOKEN)
+
+
+_FORBIDDEN = JSONResponse({"error": "Admin access required."}, status_code=403)
+
+# Single-flight ingestion state. Ingestion is minutes-long and blocking, so it runs on a
+# background thread and the panel polls this for progress.
+_ingest = {"running": False, "file": None, "log": [], "error": None, "finished_at": None}
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def serve_admin(request: Request):
+    return templates.TemplateResponse(request=request, name="admin.html")
+
+
+@app.post("/api/admin/login")
+async def api_admin_login(req: LoginRequest):
+    if not _ADMIN_TOKEN or not hmac.compare_digest(req.token.strip(), _ADMIN_TOKEN):
+        return JSONResponse({"error": "Invalid admin token."}, status_code=401)
+    return {"token": req.token.strip()}
+
+
+@app.get("/api/admin/stats")
+async def api_admin_stats(request: Request):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    from db import list_tokens
+    stats = {"chunks": None, "pdfs": 0, "officers": len(list_tokens())}
+    try:
+        stats["pdfs"] = len([p for p in DOCS_DIR.rglob("*") if p.suffix.lower() == ".pdf"]) if DOCS_DIR.exists() else 0
+    except Exception as e:
+        logger.warning(f"Could not count PDFs: {e}")
+    try:
+        agg = weaviate_client.collections.get("GovDocs").aggregate.over_all(total_count=True)
+        stats["chunks"] = agg.total_count
+    except Exception as e:
+        logger.warning(f"Could not read Weaviate stats: {e}")
+    return stats
+
+
+@app.post("/api/admin/upload")
+async def api_admin_upload(request: Request, file: UploadFile = File(...)):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    name = os.path.basename(file.filename or "").strip()
+    if not name.lower().endswith(".pdf"):
+        return JSONResponse({"error": "Only PDF files are accepted."}, status_code=400)
+    data = await file.read()
+    if not data:
+        return JSONResponse({"error": "Empty file."}, status_code=400)
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    (DOCS_DIR / name).write_bytes(data)
+    return {"filename": name, "bytes": len(data)}
+
+
+def _ingest_job(filename: str):
+    _ingest.update(running=True, file=filename, log=[f"Starting ingestion of {filename}"], error=None, finished_at=None)
+    try:
+        from ingestion import run_ingestion
+        records = run_ingestion(
+            gemini_client,
+            weaviate_client=weaviate_client,
+            collection_name="GovDocs",
+            docs_dir=str(DOCS_DIR),
+            target_files=[filename],
+        )
+        _ingest["log"].append(f"Indexed {len(records)} chunks from {filename}")
+    except Exception as e:
+        logger.error(f"Ingestion failed for {filename}: {e}")
+        _ingest["error"] = str(e)
+        _ingest["log"].append(f"Failed: {e}")
+    finally:
+        _ingest["running"] = False
+        _ingest["finished_at"] = __import__("datetime").datetime.now().isoformat()
+
+
+class IngestRequest(BaseModel):
+    filename: str
+
+
+@app.post("/api/admin/ingest")
+async def api_admin_ingest(req: IngestRequest, request: Request):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    if _ingest["running"]:
+        return JSONResponse({"error": f"Ingestion already running for {_ingest['file']}."}, status_code=409)
+    name = os.path.basename(req.filename or "").strip()
+    if not (DOCS_DIR / name).is_file():
+        return JSONResponse({"error": f"{name} not found in docs."}, status_code=404)
+    threading.Thread(target=_ingest_job, args=(name,), daemon=True).start()
+    return {"status": "started", "filename": name}
+
+
+@app.get("/api/admin/ingest/status")
+async def api_admin_ingest_status(request: Request):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    return _ingest
+
+
+@app.get("/api/admin/documents")
+async def api_admin_documents(request: Request):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    if not DOCS_DIR.exists():
+        return {"documents": []}
+    docs = [
+        {"filename": p.name, "bytes": p.stat().st_size}
+        for p in sorted(DOCS_DIR.rglob("*"), key=lambda x: x.name)
+        if p.suffix.lower() == ".pdf"
+    ]
+    return {"documents": docs}
+
+
 @app.get("/health")
 async def health():
     return {"auth": bool(_AUTH_TOKEN), "demo": False, "ready": True}
@@ -258,11 +390,20 @@ async def ask_stream(request: Request):
 
     async def event_generator():
         try:
+            # run_retrieval is blocking and runs on a worker thread, so its progress callbacks
+            # are handed back through a queue and drained here while we wait. Without this the
+            # user stares at a static spinner for the whole retrieval.
+            status_q: "queue.Queue[str]" = queue.Queue()
+
             def sync_status(msg: str):
-                pass 
-                
+                try:
+                    status_q.put_nowait(msg)
+                except Exception:
+                    pass
+
+            _t_start = time.perf_counter()
             loop = asyncio.get_running_loop()
-            retrieval_result = await loop.run_in_executor(
+            task = loop.run_in_executor(
                 None,
                 lambda: run_retrieval(
                     gemini_client=gemini_client,
@@ -274,7 +415,21 @@ async def ask_stream(request: Request):
                     status_callback=sync_status
                 )
             )
-            
+
+            while not task.done():
+                try:
+                    yield json.dumps({"status": status_q.get_nowait()}) + "\n"
+                except queue.Empty:
+                    await asyncio.sleep(0.05)
+
+            retrieval_result = await task
+            while True:
+                try:
+                    yield json.dumps({"status": status_q.get_nowait()}) + "\n"
+                except queue.Empty:
+                    break
+
+
             status = retrieval_result.get("status")
             if status == "error":
                 yield json.dumps({"error": retrieval_result.get("response_text")}) + "\n"
@@ -283,13 +438,26 @@ async def ask_stream(request: Request):
             answer_stream = retrieval_result.get("answer_stream")
             evidence = retrieval_result.get("evidence", [])
             recommendations = retrieval_result.get("recommendations", [])
-            
+            metrics = dict(retrieval_result.get("metrics") or {})
+
+            first_token_at = None
             if answer_stream:
                 for chunk in answer_stream:
+                    if first_token_at is None:
+                        first_token_at = time.perf_counter()
                     yield json.dumps({"t": chunk}) + "\n"
                     await asyncio.sleep(0.01)
-            
-            yield json.dumps({"done": True, "citations": evidence, "recommendations": recommendations}) + "\n"
+
+            if first_token_at is not None:
+                metrics["first_token_s"] = round(first_token_at - _t_start, 3)
+            metrics["total_s"] = round(time.perf_counter() - _t_start, 3)
+
+            yield json.dumps({
+                "done": True,
+                "citations": evidence,
+                "recommendations": recommendations,
+                "metrics": metrics,
+            }) + "\n"
             
         except Exception as e:
             logger.error(f"Error in ask-stream: {e}")

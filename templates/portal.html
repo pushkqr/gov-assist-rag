@@ -458,11 +458,60 @@
  const esc=s=>String(s).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
  function clearEmpty(){const e=$('log').querySelector('.js-empty');if(e)e.remove();}
  // markdown-lite, XSS-safe: escape FIRST, then toggle **bold** and `code` via split — input can never inject HTML
+ // Block-level markdown: tables, lists, headings, rules. Runs on already-escaped text, so
+ // nothing here can introduce raw HTML. Blocks are emitted without a trailing newline while
+ // plain lines keep theirs, because the container is whitespace-pre-wrap and would otherwise
+ // double-space around every block. Partial markdown mid-stream stays as text until complete.
+ const TROW=/^\s*\|.*\|\s*$/, TSEP=/^\s*\|[\s:|-]+\|\s*$/,
+       H_RE=/^\s{0,3}(#{1,4})\s+(.+?)\s*#*\s*$/,
+       UL_RE=/^\s*[-*•]\s+(.+)$/,
+       OL_RE=/^\s*\d+[.)]\s+(.+)$/,
+       HR_RE=/^\s*(-{3,}|\*{3,}|_{3,})\s*$/;
+ const tcells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+ const LI='<li class="ml-4 list-outside pl-1 marker:text-zinc-400">';
+ function fmtBlocks(h){
+   const lines=h.split('\n'),out=[];
+   for(let i=0;i<lines.length;){
+     const ln=lines[i];
+     // table: header row immediately followed by a |---|---| separator
+     if(TROW.test(ln)&&i+1<lines.length&&TSEP.test(lines[i+1])){
+       const head=tcells(ln);i+=2;const rows=[];
+       while(i<lines.length&&TROW.test(lines[i])&&!TSEP.test(lines[i]))rows.push(tcells(lines[i++]));
+       const th='<th class="whitespace-normal border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-left align-top font-semibold dark:border-zinc-700 dark:bg-zinc-800/60">',
+             td='<td class="whitespace-normal border border-zinc-200 px-2.5 py-1.5 align-top dark:border-zinc-700">';
+       out.push('<div class="my-2 overflow-x-auto"><table class="w-full border-collapse text-[13px]"><thead><tr>'
+         +head.map(c=>th+c+'</th>').join('')+'</tr></thead><tbody>'
+         +rows.map(r=>'<tr>'+r.map(c=>td+c+'</td>').join('')+'</tr>').join('')
+         +'</tbody></table></div>');
+       continue;
+     }
+     if(HR_RE.test(ln)){out.push('<hr class="my-2 border-zinc-200 dark:border-zinc-800">');i++;continue;}
+     const hm=ln.match(H_RE);
+     if(hm){out.push('<div class="mb-0.5 mt-2 font-semibold text-zinc-900 dark:text-zinc-100">'+hm[2]+'</div>');i++;continue;}
+     if(UL_RE.test(ln)&&!HR_RE.test(ln)){
+       const items=[];
+       while(i<lines.length&&UL_RE.test(lines[i])&&!HR_RE.test(lines[i]))items.push(lines[i++].match(UL_RE)[1]);
+       out.push('<ul class="my-1 list-disc space-y-0.5">'+items.map(t=>LI+t+'</li>').join('')+'</ul>');
+       continue;
+     }
+     if(OL_RE.test(ln)){
+       const items=[];
+       while(i<lines.length&&OL_RE.test(lines[i]))items.push(lines[i++].match(OL_RE)[1]);
+       out.push('<ol class="my-1 list-decimal space-y-0.5">'+items.map(t=>LI+t+'</li>').join('')+'</ol>');
+       continue;
+     }
+     out.push(ln+'\n');i++;
+   }
+   return out.join('').replace(/\n$/,'');
+ }
  function fmt(s){let h=esc(String(s));
    // esc() leaves ** intact but now escapes backticks to &#96; — split on the entity so `code` still toggles.
    if(h.indexOf('**')>=0){const p=h.split('**');h=p.map((x,i)=>i%2?'<strong>'+x+'</strong>':x).join('');}
    if(h.indexOf('&#96;')>=0){const p=h.split('&#96;');h=p.map((x,i)=>i%2?'<code class="rounded bg-zinc-100 px-1 text-[.85em] dark:bg-zinc-800">'+x+'</code>':x).join('');}
-   return h;}
+   // Italics run after bold, so any surviving single * is genuinely emphasis. Underscores are
+   // deliberately not treated as italics: they appear inside GR numbers and filenames.
+   h=h.replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s.,;:)])/g,'$1<em>$2</em>');
+   return fmtBlocks(h);}
  function bubble(role,html){
    clearEmpty();const w=document.createElement('div');
    if(role==='user'){w.className='flex justify-end fadein';w.innerHTML='<div class="max-w-[82%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zinc-950 px-4 py-2.5 text-sm text-white dark:bg-white dark:text-black">'+html+'</div>';$('log').appendChild(w);$('log').scrollTop=$('log').scrollHeight;return w.firstChild;}
@@ -484,8 +533,36 @@
  function addSources(c,sources){const box=c.parentElement;const bar=document.createElement('div');
    bar.className='mt-1.5 flex flex-wrap items-center gap-1.5';
    bar.innerHTML='<span class="mono text-[10px] uppercase tracking-wide text-zinc-400">sources</span>';
-   sources.forEach(s=>{const b=document.createElement('button');b.className='mono rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-1 text-[11px] text-zinc-500 transition hover:-translate-y-px hover:border-amber-500/50 hover:text-amber-600 dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-400 dark:hover:text-amber-400';const title=s.document||'Source';let conf='';if(s.score!==undefined&&s.score!==null){if(s.score>=0.75)conf=' [CONF: HIGH]';else if(s.score>=0.45)conf=' [CONF: MEDIUM]';else conf=' [CONF: LOW]';}b.textContent=title+conf;b.title='View the source for '+title;b.onclick=()=>openSource(s);bar.appendChild(b);});
-   box.appendChild(bar);maybeAddConnMap(box,bar,sources);}
+   // One chip per document, best-scoring hit first. Retrieval returns several chunks per file,
+   // which previously rendered as a wall of near-identical chips that buried the answer itself.
+   const best=new Map();
+   sources.forEach(s=>{const k=s.document||'Source';const prev=best.get(k);if(!prev||(s.score||0)>(prev.score||0))best.set(k,s);});
+   const uniq=[...best.values()].sort((a,b)=>(b.score||0)-(a.score||0)),CAP=6;
+   const chip=s=>{const b=document.createElement('button');b.className='mono rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-1 text-[11px] text-zinc-500 transition hover:-translate-y-px hover:border-amber-500/50 hover:text-amber-600 dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-400 dark:hover:text-amber-400';const title=s.document||'Source';let conf='';if(s.score!==undefined&&s.score!==null){if(s.score>=0.75)conf=' [CONF: HIGH]';else if(s.score>=0.45)conf=' [CONF: MEDIUM]';else conf=' [CONF: LOW]';}b.textContent=title+conf;b.title='View the source for '+title;b.onclick=()=>openSource(s);return b;};
+   uniq.slice(0,CAP).forEach(s=>bar.appendChild(chip(s)));
+   if(uniq.length>CAP){const more=document.createElement('button');
+     more.className='mono rounded-full border border-dashed border-zinc-300 px-3 py-1 text-[11px] text-zinc-400 transition hover:border-amber-500/50 hover:text-amber-600 dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-amber-400';
+     more.textContent='+'+(uniq.length-CAP)+' more';
+     more.onclick=()=>{more.remove();uniq.slice(CAP).forEach(s=>bar.appendChild(chip(s)));};
+     bar.appendChild(more);}
+   box.appendChild(bar);maybeAddConnMap(box,bar,uniq);}
+ // Per-stage latency strip. The pipeline already measures each hop; this surfaces it so the
+ // speed of the retrieval path is visible rather than asserted.
+ const STAGES=[['contextualize_s','context'],['translation_s','translate'],['expansion_s','expand'],
+               ['embedding_s','embed'],['hybrid_db_s','search'],['rerank_s','rerank']];
+ function addTiming(c,m){
+   const box=c.parentElement,total=m.total_s;
+   if(total==null)return;
+   const parts=STAGES.filter(([k])=>(m[k]||0)>0.001);
+   const bar=document.createElement('div');
+   bar.className='mt-2 flex flex-wrap items-center gap-x-2 gap-y-1';
+   const pill=(label,val,strong)=>'<span class="mono text-[10px] '+(strong?'text-amber-600 dark:text-amber-400':'text-zinc-400')+'">'+label+' <span class="'+(strong?'font-semibold':'')+'">'+val+'</span></span>';
+   let h=pill('total',total.toFixed(2)+'s',true);
+   if(m.first_token_s!=null)h+='<span class="text-zinc-300 dark:text-zinc-700">·</span>'+pill('first token',m.first_token_s.toFixed(2)+'s',false);
+   parts.forEach(([k,label])=>{h+='<span class="text-zinc-300 dark:text-zinc-700">·</span>'+pill(label,(m[k]).toFixed(2)+'s',false);});
+   if(m.model)h+='<span class="text-zinc-300 dark:text-zinc-700">·</span>'+pill('model',esc(m.model),false);
+   bar.innerHTML=h;box.appendChild(bar);
+ }
  function addRecommendations(c,recs){const box=c.parentElement;const bar=document.createElement('div');
    bar.className='mt-3 flex flex-col gap-1.5';
    bar.innerHTML='<span class="mono text-[10px] uppercase tracking-wide text-zinc-400">recommended reading</span>';
@@ -596,22 +673,23 @@
        throw new Error(errStr);
      }
      const reader=r.body.getReader();const dec=new TextDecoder();
-     let buf='',answer='',cites=[],recs=[],first=true,errored=null;
+     let buf='',answer='',cites=[],recs=[],mets=null,first=true,errored=null;
      while(true){
        const {value,done}=await reader.read();if(done)break;
        buf+=dec.decode(value,{stream:true});let nl;
        while((nl=buf.indexOf('\n'))>=0){
          const line=buf.slice(0,nl).trim();buf=buf.slice(nl+1);if(!line)continue;
          let d;try{d=JSON.parse(line);}catch(_){continue;}
+         if(d.status&&first){c.innerHTML='<span class="thsh">'+esc(d.status)+'</span>';$('log').scrollTop=$('log').scrollHeight;}
          if(d.t!=null){if(first){c.innerHTML='';first=false;clearTimeout(to);}answer+=d.t;c.innerHTML=fmt(answer);$('log').scrollTop=$('log').scrollHeight;}
          if(d.error)errored=d.error;
-         if(d.done){cites=d.citations||[];recs=d.recommendations||[];}
+         if(d.done){cites=d.citations||[];recs=d.recommendations||[];mets=d.metrics||null;}
        }
      }
      clearTimeout(to);
      if(errored)throw new Error(errored);
-     answer=answer.trim();c.innerHTML=fmt(answer);addActions(c,q,answer);if(cites&&cites.length)addSources(c,cites);if(recs&&recs.length)addRecommendations(c,recs);
-     t.msgs.push({role:'assistant',content:answer,sources:cites,recs:recs});saveThreads();
+     answer=answer.trim();c.innerHTML=fmt(answer);addActions(c,q,answer);if(mets)addTiming(c,mets);if(cites&&cites.length)addSources(c,cites);if(recs&&recs.length)addRecommendations(c,recs);
+     t.msgs.push({role:'assistant',content:answer,sources:cites,recs:recs,metrics:mets});saveThreads();
    }catch(e){
      const slow=e&&e.name==='AbortError';
      const msg = slow ? 'That took too long — the model may be busy or rate-limited.' : (e.message || 'Could not reach the model right now.');
@@ -657,7 +735,7 @@
   }
  function curThread(){return threads.find(t=>t.id===active)||null;}
  function ensureThread(firstQ){let t=curThread();if(!t){t={id:'c'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),title:firstQ.slice(0,64),msgs:[]};threads.unshift(t);active=t.id;}return t;}
- function renderLog(){const log=$('log');log.innerHTML='';const t=curThread();if(!t||!t.msgs.length){log.insertAdjacentHTML('beforeend',EMPTY_HTML);return;}t.msgs.forEach((m,i)=>{if(m.role==='user')bubble('user',esc(m.content));else{const c=bubble('a',fmt(m.content));let pq=t.msgs[i-1]?t.msgs[i-1].content:'';addActions(c,pq,m.content);if(m.sources&&m.sources.length)addSources(c,m.sources);if(m.recs&&m.recs.length)addRecommendations(c,m.recs);}});log.scrollTop=log.scrollHeight;}
+ function renderLog(){const log=$('log');log.innerHTML='';const t=curThread();if(!t||!t.msgs.length){log.insertAdjacentHTML('beforeend',EMPTY_HTML);return;}t.msgs.forEach((m,i)=>{if(m.role==='user')bubble('user',esc(m.content));else{const c=bubble('a',fmt(m.content));let pq=t.msgs[i-1]?t.msgs[i-1].content:'';addActions(c,pq,m.content);if(m.metrics)addTiming(c,m.metrics);if(m.sources&&m.sources.length)addSources(c,m.sources);if(m.recs&&m.recs.length)addRecommendations(c,m.recs);}});log.scrollTop=log.scrollHeight;}
  function renderChatList(){const el=$('chatList');if(!el)return;
    if(!threads.length){el.innerHTML='<div class="px-2.5 py-3 text-xs text-zinc-400 dark:text-zinc-600">No chats yet.</div>';return;}
    el.innerHTML='';

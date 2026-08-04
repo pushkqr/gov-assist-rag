@@ -259,7 +259,12 @@ def run_hybrid_search(
         return [], [], [], {"hybrid_db_s": round(hybrid_db_s, 3), "rerank_s": 0.0}
 
     t_rerank_start = time.time()
-    if fast_mode:
+    rerank_on = os.getenv("RERANK_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+    if fast_mode and not rerank_on:
+        # Cross-encoder reranking is the dominant latency cost. Disabling it falls back to
+        # hybrid-fusion order, still diversified per document, for a materially faster response.
+        top_results = diversify_results(current_results, rerank_limit)
+    elif fast_mode:
         texts_to_rerank = [build_rerank_text(obj.payload or {}) for obj in current_results]
 
         rerank_pool_n = min(rerank_limit * 3, len(current_results))

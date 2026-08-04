@@ -23,7 +23,6 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
   - **Self-Hosted Embeddings**: Uses **BGE-M3** (BAAI) served via **Infinity** on a dedicated droplet — eliminating cloud embedding quota constraints and reducing per-query embedding cost to zero.
   - **Self-Hosted Cross-Encoder Reranking**: Fast mode (the default query path) reranks hybrid search candidates with a **BGE reranker** cross-encoder, also served via **Infinity** on the embedding droplet — no LLM call, no added token cost, sub-second-to-low-single-digit-second rerank latency.
   - **Ultra-Low Latency Inference**: Routes agentic reasoning and tool-use through **Cerebras** for sub-2s response times, reserving **Google Gemini 2.5 Flash** (via Vertex AI) for complex generation and fallback translation.
-  - **Deep-Search LLM Reranking**: In deep-search mode (`fast_mode=False`, opt-in for complex multi-document synthesis), retrieval results are instead reranked by an LLM judge before answer generation — higher accuracy, higher latency.
 
 - **Multilingual Support**:
   - Queries in **Marathi** and **Hindi** (Devanagari script) are automatically detected and translated to English via a self-hosted **IndicTrans2** microservice before retrieval.
@@ -265,7 +264,7 @@ python app.py
 uvicorn app:app --reload
 ```
 
-Navigate to `http://localhost:8000` for the landing page or `http://localhost:8000/app` for the chat interface.
+Navigate to `http://localhost:8000` for the landing page, `http://localhost:8000/portal` for the officer chat interface, or `http://localhost:8000/admin` for the admin console.
 
 ### Ingest Documents
 
