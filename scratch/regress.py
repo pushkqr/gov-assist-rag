@@ -17,6 +17,7 @@ make failures harder to interpret, not easier.
 """
 
 import argparse
+import os
 import re
 import sys
 import time
@@ -27,8 +28,12 @@ load_dotenv()
 
 from core.utils import get_genai_client, get_weaviate_client, get_cerebras_client  # noqa: E402
 from retrieval.pipeline import run_retrieval  # noqa: E402
+from core.schema import CORPUS_COLLECTION  # noqa: E402
 
-COLLECTION = "GovDocs"
+# Match app.py's ACTIVE_COLLECTION resolution exactly - otherwise this suite silently
+# queries the wrong collection whenever CORPUS_COLLECTION overrides the default (e.g.
+# after a bulk ingest into GovDocsV2), and every result looks like an empty corpus.
+COLLECTION = os.environ.get("CORPUS_COLLECTION", CORPUS_COLLECTION).strip() or CORPUS_COLLECTION
 QUERY_SPACING_S = 12
 
 # The model (temperature 0.0, but this varies across runs/models regardless) sometimes
