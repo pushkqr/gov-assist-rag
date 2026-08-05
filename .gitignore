@@ -64,6 +64,8 @@ scratch/*
 !scratch/loadtest.py
 # Regression suite for the four demo queries; every build-plan phase runs this to gate itself.
 !scratch/regress.py
+# Phase 3 ingestion script; documents how GovDocsV2 was populated.
+!scratch/ingest_department.py
 
 # Testing and Logs
 *.log

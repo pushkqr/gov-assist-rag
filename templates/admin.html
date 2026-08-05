@@ -305,6 +305,54 @@
     </div>
   </section>
 
+  <!-- Unanswered questions -->
+  <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Unanswered Questions</h2>
+      <span class="text-xs text-zinc-400">Refused queries, grouped — what the corpus is missing, from real usage</span>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Queries</span>
+        <span id="gpTotal" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-red-500/80">Refused</span>
+        <span id="gpRefused" class="mono ml-2 text-sm font-semibold text-red-600 dark:text-red-400">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-amber-600/80 dark:text-amber-400/80">Refusal rate</span>
+        <span id="gpRate" class="mono ml-2 text-sm font-semibold text-amber-600 dark:text-amber-400">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Distinct gaps</span>
+        <span id="gpDistinct" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <select id="gpDays" class="ml-auto rounded-xl border border-zinc-300 bg-white/50 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900/50">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <button id="gpExport" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Export CSV</button>
+      <button id="gpRefresh" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Refresh</button>
+    </div>
+
+    <div class="max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <table class="w-full text-left text-[12px]">
+        <thead class="sticky top-0 bg-zinc-50 dark:bg-zinc-900">
+          <tr class="text-[10px] uppercase tracking-wide text-zinc-500">
+            <th class="px-3 py-2 font-semibold">Count</th>
+            <th class="px-3 py-2 font-semibold">Question</th>
+            <th class="px-3 py-2 font-semibold">Last asked</th>
+            <th class="px-3 py-2 font-semibold"></th>
+          </tr>
+        </thead>
+        <tbody id="gpBody"></tbody>
+      </table>
+    </div>
+  </section>
+
 </main>
 </div>
 
@@ -534,6 +582,49 @@ async function loadFeedback(){
 $('fbFilter').onchange=loadFeedback;
 $('fbRefresh').onclick=loadFeedback;
 
+/* ── corpus gaps ──────────────────────────────────────── */
+let _gapGroups=[];
+async function loadGaps(){
+  const body=$('gpBody');
+  try{
+    const days=$('gpDays').value;
+    const d=await(await api('/api/admin/gaps?limit=100&days='+encodeURIComponent(days))).json();
+    const s=d.summary||{};
+    _gapGroups=d.groups||[];
+    $('gpTotal').textContent=(s.total||0).toLocaleString();
+    $('gpRefused').textContent=(s.refused||0).toLocaleString();
+    $('gpRate').textContent=s.refusal_rate_pct==null?'—':s.refusal_rate_pct+'%';
+    $('gpDistinct').textContent=(s.distinct_gaps||0).toLocaleString();
+    if(!_gapGroups.length){body.innerHTML='<tr><td colspan="4" class="px-3 py-6 text-center text-zinc-400">No refused queries in this window. Either the corpus is covering everything asked, or nothing has been asked yet.</td></tr>';return;}
+    body.innerHTML=_gapGroups.map((g,i)=>`
+      <tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="mono px-3 py-2 font-semibold text-red-600 dark:text-red-400">${g.count}</td>
+        <td class="px-3 py-2"><div class="max-w-lg truncate" title="${esc(g.query_norm)}">${esc(g.query_norm)}</div></td>
+        <td class="whitespace-nowrap px-3 py-2 text-zinc-500">${esc(rel(g.last_seen))}</td>
+        <td class="whitespace-nowrap px-3 py-2"><button data-gp="${i}" class="gpToggle rounded-md border border-zinc-300 px-2 py-0.5 text-[11px] transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Examples</button></td>
+      </tr>
+      <tr id="gpEx${i}" class="hidden border-t border-zinc-100 bg-zinc-50/60 dark:border-zinc-800/70 dark:bg-zinc-900/30">
+        <td colspan="4" class="px-3 py-2">
+          ${g.examples.map(e=>`<div class="mb-1 last:mb-0"><span class="text-zinc-400">${esc(rel(e.ts))}</span> &middot; <span class="text-zinc-500">${esc(e.actor||'unknown officer')}</span> &middot; ${esc(e.query)}</div>`).join('')}
+        </td>
+      </tr>`).join('');
+  }catch(_){body.innerHTML='<tr><td colspan="4" class="px-3 py-6 text-center text-red-500">Could not load corpus gaps.</td></tr>';}
+}
+$('gpBody').onclick=e=>{
+  const b=e.target.closest('button.gpToggle');if(!b)return;
+  $('gpEx'+b.dataset.gp).classList.toggle('hidden');
+};
+$('gpDays').onchange=loadGaps;
+$('gpRefresh').onclick=loadGaps;
+$('gpExport').onclick=()=>{
+  if(!_gapGroups.length)return;
+  const rows=[['count','question','last_asked']].concat(_gapGroups.map(g=>[g.count,g.query_norm,g.last_seen]));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mimir-corpus-gaps.csv';a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 /* ── stats + tokens ───────────────────────────────────── */
 async function refresh(){
   try{
@@ -546,6 +637,7 @@ async function refresh(){
   loadTokens();
   loadAudit();
   loadFeedback();
+  loadGaps();
   loadTopology();
   loadGraph();
   loadQuarantine();

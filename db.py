@@ -80,6 +80,26 @@ def init_db():
     ''')
     c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_ts ON feedback(ts DESC)")
 
+    # One row per query, classified answered/refused. Purpose is corpus gap analysis: grouped
+    # by query_norm, refused queries become a ranked list of what the corpus is missing,
+    # generated from real usage rather than guesswork.
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS query_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,
+            actor TEXT,
+            actor_ref TEXT,
+            query TEXT NOT NULL,
+            query_norm TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            model TEXT,
+            latency_ms INTEGER,
+            evidence_count INTEGER
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_query_log_norm ON query_log(query_norm)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_query_log_outcome ON query_log(outcome)")
+
     seed_tokens = [
         ("OFFICER-TOKEN-1", "Officer 1"),
         ("OFFICER-TOKEN-2", "Officer 2")
@@ -285,6 +305,74 @@ def import_legacy_feedback(json_path: str) -> int:
     conn.commit()
     conn.close()
     return imported
+
+
+def record_query_outcome(
+    query: str, query_norm: str, outcome: str, actor: Optional[str] = None,
+    token: Optional[str] = None, model: Optional[str] = None,
+    latency_ms: Optional[int] = None, evidence_count: Optional[int] = None,
+) -> None:
+    """Log one query's classification. Best-effort like record_audit: a query having already
+    streamed its answer to the officer by the time this runs, a logging failure here must not
+    turn a successful answer into a 500."""
+    try:
+        actor_ref = hash_token(token)[:12] if token else None
+        conn = _connect()
+        conn.execute(
+            """INSERT INTO query_log (ts, actor, actor_ref, query, query_norm, outcome, model,
+                                       latency_ms, evidence_count)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (_now(), actor, actor_ref, query, query_norm, outcome, model, latency_ms, evidence_count),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+def list_gaps(limit: int = 100, days: int = 30) -> list:
+    """Refused queries grouped by normalized text, most frequent first. Each group carries a
+    sample of the original (unnormalized) phrasings and who asked, so an admin can see both
+    the pattern and the actual questions behind it."""
+    conn = _connect()
+    c = conn.cursor()
+    since = f"strftime('%Y-%m-%dT%H:%M:%S', 'now', '-{int(days)} day')"
+    c.execute(f'''
+        SELECT query_norm, COUNT(*) as n, MAX(ts) as last_seen
+        FROM query_log
+        WHERE outcome='refused' AND ts >= {since}
+        GROUP BY query_norm
+        ORDER BY n DESC, last_seen DESC
+        LIMIT ?
+    ''', (limit,))
+    groups = c.fetchall()
+
+    results = []
+    for query_norm, count, last_seen in groups:
+        c.execute('''
+            SELECT query, actor, ts FROM query_log
+            WHERE query_norm=? AND outcome='refused'
+            ORDER BY id DESC LIMIT 5
+        ''', (query_norm,))
+        examples = [{"query": r[0], "actor": r[1], "ts": r[2]} for r in c.fetchall()]
+        results.append({"query_norm": query_norm, "count": count, "last_seen": last_seen, "examples": examples})
+    conn.close()
+    return results
+
+
+def gaps_summary(days: int = 30) -> dict:
+    conn = _connect()
+    c = conn.cursor()
+    since = f"strftime('%Y-%m-%dT%H:%M:%S', 'now', '-{int(days)} day')"
+    c.execute(f"SELECT COUNT(*) FROM query_log WHERE ts >= {since}")
+    total = c.fetchone()[0]
+    c.execute(f"SELECT COUNT(*) FROM query_log WHERE outcome='refused' AND ts >= {since}")
+    refused = c.fetchone()[0]
+    c.execute(f"SELECT COUNT(DISTINCT query_norm) FROM query_log WHERE outcome='refused' AND ts >= {since}")
+    distinct_gaps = c.fetchone()[0]
+    conn.close()
+    refusal_rate = round(100.0 * refused / total, 1) if total else None
+    return {"total": total, "refused": refused, "distinct_gaps": distinct_gaps, "refusal_rate_pct": refusal_rate}
 
 
 def save_history(user_id: str, history_list: list):

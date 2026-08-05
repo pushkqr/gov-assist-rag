@@ -25,11 +25,19 @@ from core.utils import get_genai_client, get_cerebras_client, get_weaviate_clien
 from retrieval import run_retrieval
 from retrieval.graph import build_citation_graph, load_citation_graph
 from core.schema import ensure_collection, CORPUS_COLLECTION, QUARANTINE_COLLECTION
+
+# Single source of truth for which collection is "the corpus" right now. Previously "GovDocs"
+# was hardcoded at five separate call sites in this file; flipping to a differently-named
+# collection (e.g. after a bulk ingest into GovDocsV2) meant editing all five and hoping none
+# were missed. One env var, one rollback step.
+ACTIVE_COLLECTION = os.environ.get("CORPUS_COLLECTION", CORPUS_COLLECTION).strip() or CORPUS_COLLECTION
 from db import (
     init_db, validate_token, save_history, get_history,
     record_audit, touch_token, get_token_label, list_audit, audit_summary,
     record_feedback, list_feedback, feedback_summary, import_legacy_feedback,
+    record_query_outcome, list_gaps, gaps_summary,
 )
+from core.outcome import classify_outcome, normalize_query
 import ipaddress
 
 logger = logging.getLogger(__name__)
@@ -295,7 +303,7 @@ async def api_admin_stats(request: Request):
     except Exception as e:
         logger.warning(f"Could not count source documents: {e}")
     try:
-        agg = weaviate_client.collections.get("GovDocs").aggregate.over_all(total_count=True)
+        agg = weaviate_client.collections.get(ACTIVE_COLLECTION).aggregate.over_all(total_count=True)
         stats["chunks"] = agg.total_count
     except Exception as e:
         logger.warning(f"Could not read Weaviate stats: {e}")
@@ -493,8 +501,8 @@ async def api_admin_quarantine_promote(req: QuarantineAction, request: Request):
         if not chunks:
             return JSONResponse({"error": f"No indexed chunks found for {name}."}, status_code=404)
 
-        ensure_collection(weaviate_client, CORPUS_COLLECTION)
-        corpus = weaviate_client.collections.get(CORPUS_COLLECTION)
+        ensure_collection(weaviate_client, ACTIVE_COLLECTION)
+        corpus = weaviate_client.collections.get(ACTIVE_COLLECTION)
         with corpus.batch.dynamic() as batch:
             for obj in chunks:
                 vector = obj.vector.get("default") if isinstance(obj.vector, dict) else obj.vector
@@ -702,7 +710,7 @@ async def api_admin_graph_rebuild(request: Request):
         return JSONResponse({"error": "Vector store unavailable."}, status_code=503)
     try:
         built = await asyncio.get_running_loop().run_in_executor(
-            None, lambda: build_citation_graph(weaviate_client, "GovDocs")
+            None, lambda: build_citation_graph(weaviate_client, ACTIVE_COLLECTION)
         )
     except Exception as exc:
         logger.error(f"Citation graph rebuild failed: {exc}")
@@ -772,7 +780,7 @@ async def ask_stream(request: Request):
                     cerebras_client=cerebras_client,
                     weaviate_client=weaviate_client,
                     query=query,
-                    collection_name="GovDocs",
+                    collection_name=ACTIVE_COLLECTION,
                     chat_history=formatted_history,
                     status_callback=sync_status
                 )
@@ -803,16 +811,26 @@ async def ask_stream(request: Request):
             metrics = dict(retrieval_result.get("metrics") or {})
 
             first_token_at = None
+            full_answer = []
             if answer_stream:
                 for chunk in answer_stream:
                     if first_token_at is None:
                         first_token_at = time.perf_counter()
+                    full_answer.append(chunk)
                     yield json.dumps({"t": chunk}) + "\n"
                     await asyncio.sleep(0.01)
 
             if first_token_at is not None:
                 metrics["first_token_s"] = round(first_token_at - _t_start, 3)
             metrics["total_s"] = round(time.perf_counter() - _t_start, 3)
+
+            outcome = classify_outcome("".join(full_answer), len(evidence))
+            record_query_outcome(
+                query=query, query_norm=normalize_query(query), outcome=outcome,
+                actor=(get_token_label(_token) if _token else None), token=(_token or None),
+                model=metrics.get("model"), latency_ms=round(metrics.get("total_s", 0) * 1000),
+                evidence_count=len(evidence),
+            )
 
             yield json.dumps({
                 "done": True,
@@ -865,13 +883,27 @@ async def api_admin_feedback(request: Request, limit: int = 200, verdict: str = 
         "summary": feedback_summary(),
     }
 
+
+@app.get("/api/admin/gaps")
+async def api_admin_gaps(request: Request, limit: int = 100, days: int = 30):
+    """Refused queries grouped by normalized text, most frequent first — a ranked list of
+    what the corpus is missing, built from what officers actually asked rather than guessed
+    at. See core/outcome.py for how a query is classified and db.py:list_gaps for the grouping."""
+    if not _is_admin(request):
+        return _FORBIDDEN
+    return {
+        "groups": list_gaps(limit=max(1, min(limit, 500)), days=max(1, min(days, 365))),
+        "summary": gaps_summary(days=max(1, min(days, 365))),
+    }
+
+
 class SummarizeRequest(BaseModel):
     doc_id: str
 
 @app.post("/summarize")
 async def summarize_doc(req: SummarizeRequest):
     try:
-        weaviate_collection = weaviate_client.collections.get("GovDocs")
+        weaviate_collection = weaviate_client.collections.get(ACTIVE_COLLECTION)
         res = weaviate_collection.query.fetch_objects(
             filters=wvc.query.Filter.by_property("doc_number").equal(req.doc_id),
             limit=50
@@ -896,7 +928,7 @@ class CompareRequest(BaseModel):
 async def compare_docs(req: CompareRequest):
     try:
         def fetch(did):
-            weaviate_collection = weaviate_client.collections.get("GovDocs")
+            weaviate_collection = weaviate_client.collections.get(ACTIVE_COLLECTION)
             res = weaviate_collection.query.fetch_objects(
                 filters=wvc.query.Filter.by_property("doc_number").equal(did),
                 limit=50
