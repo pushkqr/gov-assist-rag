@@ -1,0 +1,14 @@
+# Optional. Higher-fidelity PDF layout parsing for scanned or table-heavy circulars. The
+# application's default parser is PyMuPDF, which is local and needs no service; this is a
+# tier-2 fallback, wired in the sovereign deployment mode (see scratch/build-plan.md Phase 6).
+#
+# Standalone in the sense every other service directory here is, except its build context
+# reaches back into the main repository (../../docling_ingestion) rather than being fully
+# self-contained, since the Docling service source lives there rather than being duplicated.
+
+services:
+  docling:
+    build: ../../docling_ingestion
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8002:8000"

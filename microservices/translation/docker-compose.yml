@@ -1,0 +1,20 @@
+# Marathi to English translation (IndicTrans2), used for Devanagari queries and for
+# translating Marathi source documents at ingestion time.
+#
+# Standalone: no dependency on any other service directory. Point the application's
+# TRANSLATION_SERVICE_URL at wherever this lands.
+
+services:
+  translation:
+    build: .
+    restart: unless-stopped
+    environment:
+      INDICTRANS_MODEL: ${INDICTRANS_MODEL:-ai4bharat/indictrans2-indic-en-dist-200M}
+      HF_HOME: /models
+    volumes:
+      - model_cache:/models
+    ports:
+      - "127.0.0.1:8001:8000"
+
+volumes:
+  model_cache:

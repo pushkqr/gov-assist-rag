@@ -1,0 +1,27 @@
+# Answer generation. Any OpenAI-compatible server works here (vLLM, llama.cpp, LM Studio);
+# Ollama is the least painful to operate on a single node.
+#
+# Standalone: no dependency on any other service directory. Point the application's
+# GEN_PROVIDER=local / LOCAL_GEN_URL / LOCAL_GEN_MODEL at wherever this lands.
+#
+# deploy.py in this directory picks the model in GEN_MODEL below based on detected hardware,
+# then pulls it after the container starts (docker compose exec generation ollama pull ...).
+
+services:
+  generation:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  ollama_models:

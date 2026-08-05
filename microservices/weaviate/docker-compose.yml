@@ -1,0 +1,35 @@
+# Vector store. Holds the chunk embeddings and serves hybrid dense + BM25 search.
+#
+# Standalone: this file has no dependency on any other service directory. Point the
+# application's WEAVIATE_URL / WEAVIATE_GRPC_PORT / WEAVIATE_API_KEY at wherever this lands.
+
+services:
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+    restart: unless-stopped
+    command:
+      - --host=0.0.0.0
+      - --port=8080
+      - --scheme=http
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: node1
+      # Authentication is on by default here. The upstream image ships with anonymous access
+      # enabled, which is the wrong default for a database holding a department's corpus.
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "false"
+      AUTHENTICATION_APIKEY_ENABLED: "true"
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: ${WEAVIATE_API_KEY:?set WEAVIATE_API_KEY in .env}
+      AUTHENTICATION_APIKEY_USERS: mimir@localhost
+      AUTHORIZATION_ADMINLIST_ENABLED: "true"
+      AUTHORIZATION_ADMINLIST_USERS: mimir@localhost
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50051:50051"
+
+volumes:
+  weaviate_data:
