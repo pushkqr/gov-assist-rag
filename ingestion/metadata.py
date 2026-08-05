@@ -3,6 +3,31 @@ import re
 from typing import Any, Dict
 
 
+# Matches a Maharashtra GR-style document number, e.g. "NGC-2010 / (193/10) / Mashi-4" or
+# "Rusayo-2013/ P.S. No.418/ VC-3D". Runs from the department stem to a natural terminator
+# (comma, a date word, or end of line) rather than to the first period, since these numbers
+# are full of abbreviation periods.
+_DOC_NUM_RE = re.compile(
+    r"No\.?\s*([A-Za-zऀ-ॿ]{2,}[-–]\d{2,4}[^,\n]{0,60}?)"
+    r"(?=\s*(?:,|\bdated\b|\bDy\.|\bDt\.|\bd\.|\bदिनांक\b|$))",
+    re.IGNORECASE,
+)
+
+
+def _extract_ref_target(clause: str) -> str:
+    """Reduce a citation clause to the referenced document number where one is present.
+
+    The clause is free text ("Government Resolution No. NGC-2010/(193/10)/Mashi-4, dated
+    30.10.2010"), so an abbreviation period would truncate a naive match at "No". Pull the
+    structured number out when it is there and fall back to the trimmed clause when it is not.
+    """
+    clause = re.sub(r"\s+", " ", clause).strip(" ,;:-")
+    match = _DOC_NUM_RE.search(clause)
+    if match:
+        return match.group(1).strip(" ,.;:-")
+    return clause[:120].rstrip(" ,.;:-")
+
+
 def extract_document_metadata(markdown_text: str, source_path: str, fallback_year: int = 2025) -> Dict[str, Any]:
     """Extract structured document metadata fields from markdown text."""
     normalized = (markdown_text or "").strip()
@@ -58,9 +83,9 @@ def extract_document_metadata(markdown_text: str, source_path: str, fallback_yea
             break
 
     supersedes = None
-    supersede_match = re.search(r"in\s+supersession\s+of\s+([^\n\.]+)", normalized, flags=re.IGNORECASE)
+    supersede_match = re.search(r"in\s+supersession\s+of\s+([^\n]{3,200})", normalized, flags=re.IGNORECASE)
     if supersede_match:
-        supersedes = supersede_match.group(1).strip()
+        supersedes = _extract_ref_target(supersede_match.group(1))
 
     references = None
     ref_match = re.search(r"reference\s*[:-]\s*([^\n]+)", normalized, flags=re.IGNORECASE)

@@ -54,6 +54,8 @@ brain/
 scratch/*
 !scratch/generate_benchmark_full.py
 !scratch/status_check.py
+# docs/ is ignored, so the conflict demonstration pair ships as its generator instead.
+!scratch/make_conflict_docs.py
 
 # Testing and Logs
 *.log

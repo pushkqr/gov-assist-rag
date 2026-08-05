@@ -18,6 +18,17 @@ from core.log_config import get_logger
 logger = get_logger(__name__)
 
 
+def _mentions(combined: str, *terms: str) -> bool:
+    """Match a term at a word start.
+
+    Deliberately not a plain substring test: 'itm' appears inside 'recruitment' and 'date'
+    inside 'candidate', so substring matching pulled unrelated alias sets into the BM25 query
+    and crowded genuinely relevant documents out of the candidate pool. Anchoring only the
+    start keeps stem matches working ('disabil' still fires on 'disabilities').
+    """
+    return any(re.search(r"\b" + re.escape(term), combined) for term in terms)
+
+
 def build_fast_search_query(original_query: str, translated_query: str) -> str:
     """Build a deterministic search string for fast mode without LLM query expansion."""
     parts = [translated_query]
@@ -29,29 +40,29 @@ def build_fast_search_query(original_query: str, translated_query: str) -> str:
 
     if re.search(r"\b(gr|government resolution|resolution number|gr number)\b", combined) or "शासन" in combined:
         aliases.extend(["Government Resolution No", "GR number", "Government Decision", "शासन निर्णय", "क्रमांक"])
-    if "appointment" in combined or "appointed" in combined or "नियुक्त" in combined:
+    if _mentions(combined, "appointment", "appointed", "नियुक्त"):
         aliases.extend(["appointment", "appointed", "APPOINTED", "nomination", "रुजू", "नियुक्ती"])
-    if "professor" in combined or "प्राध्यापक" in combined:
+    if _mentions(combined, "professor", "प्राध्यापक"):
         aliases.extend(["Professor", "Assistant Professor", "Associate Professor", "प्राध्यापक"])
-    if "chemistry" in combined or "रसायन" in combined:
+    if _mentions(combined, "chemistry", "रसायन"):
         aliases.extend(["Chemistry", "Professor (Chemistry)", "रसायनशास्त्र"])
-    if "probation" in combined or "परिवी" in combined:
+    if _mentions(combined, "probation", "परिवी"):
         aliases.extend(["probation", "probationary period", "continuation of appointment", "ending the probation period", "परिवीक्षाधीन"])
-    if "transfer" in combined or "बदली" in combined or "स्थानांतर" in combined:
+    if _mentions(combined, "transfer", "बदली", "स्थानांतर"):
         aliases.extend(["transfer", "transfers", "transferred", "बदली"])
-    if "date" in combined or "तारीख" in combined or "दिनांक" in combined:
+    if _mentions(combined, "date", "तारीख", "दिनांक"):
         aliases.extend(["Date", "dated", "The date", "दिनांक"])
-    if "course" in combined or "पाठ्यक्रम" in combined:
+    if _mentions(combined, "course", "पाठ्यक्रम"):
         aliases.extend(["closure of professional courses", "reduction in intake capacity", "professional courses"])
-    if "disabil" in combined or "दिव्यांग" in combined:
+    if _mentions(combined, "disabil", "दिव्यांग"):
         aliases.extend(["persons with benchmark disabilities", "reserve not less than five per cent seats", "Institutions of Higher Education"])
-    if "library" in combined or "ग्रंथालय" in combined:
+    if _mentions(combined, "library", "ग्रंथालय"):
         aliases.extend(["Library", "Raja Rammohun Roy Library Foundation", "matching fund", "MARAGRAN", "SASHI-5"])
-    if "temporary post" in combined or "तात्पुर" in combined or "मुदतवाढ" in combined:
+    if _mentions(combined, "temporary post", "तात्पुर", "मुदतवाढ"):
         aliases.extend(["temporary posts", "Directorate of Technical Education", "continue till"])
-    if "canteen" in combined or "chef" in combined or "उपहार" in combined or "आचारी" in combined:
+    if _mentions(combined, "canteen", "chef", "उपहार", "आचारी"):
         aliases.extend(["Mantralaya canteen", "chef", "outsourcing", "आचारी", "मंत्रालय उपहारगृह", "आस्था"])
-    if "itm" in combined or "कामठी" in combined:
+    if _mentions(combined, "itm", "कामठी"):
         aliases.extend(["ITM College of Engineering Kamthi", "university", "admission"])
 
     parts.extend(aliases)
@@ -132,6 +143,103 @@ search_policy_docs_tool = {
         },
     }
 }
+
+
+class _Result:
+    """Uniform wrapper so Weaviate objects and lineage-expanded objects look alike downstream."""
+
+    def __init__(self, props, metadata=None):
+        self.payload = props
+        self.metadata = metadata
+
+
+def expand_lineage(
+    weaviate_collection: Any,
+    top_results: List[Any],
+    query_vector: List[float],
+    bm25_query: str,
+    max_docs: int = 2,
+    max_chunks_per_doc: int = 3,
+) -> List[Any]:
+    """Follow supersedes edges so both sides of an amendment reach the generator.
+
+    Relevance ranking alone tends to surface only one side. A superseding circular normally
+    restates the original question in its preamble, and that preamble outranks the clause
+    carrying the revised figure, so the model can see that something was superseded but not
+    what changed, and reports the stale value with full confidence. That is the worst
+    possible failure for an officer.
+
+    Costs one filtered query per edge and runs only when an edge actually exists, so queries
+    against unamended documents pay nothing.
+    """
+    present = {(r.payload or {}).get("doc_number") for r in top_results}
+    present.discard(None)
+    if not present:
+        return []
+
+    targets = set()
+
+    # Forward edge: a retrieved document names the one it replaces.
+    for result in top_results:
+        superseded = ((result.payload or {}).get("supersedes") or "").strip()
+        if superseded:
+            targets.add(superseded)
+            targets.add((result.payload or {}).get("doc_number"))
+
+    # Backward edge: some other document names a retrieved one as superseded. Asked as a
+    # single contains_any rather than one query per retrieved document, because this runs on
+    # every search and most searches turn up no lineage at all.
+    candidates = [d for d in present if d][:10]
+    if candidates:
+        try:
+            back = weaviate_collection.query.fetch_objects(
+                filters=wvc.query.Filter.by_property("supersedes").contains_any(candidates),
+                limit=10,
+                return_properties=["doc_number", "supersedes"],
+            )
+            for obj in back.objects:
+                props = obj.properties or {}
+                number, superseded = props.get("doc_number"), props.get("supersedes")
+                if number and superseded in present:
+                    targets.add(number)
+                    targets.add(superseded)
+        except Exception as exc:
+            logger.warning(f"Lineage back-reference lookup failed: {exc}")
+
+    targets = {t for t in targets if t}
+    if not targets:
+        return []
+
+    # Both sides of an edge are pulled even when already retrieved. Being present is not
+    # enough: the chunk that matched the question is usually the preamble restating it,
+    # while the figure that actually changed sits in the operative clause.
+    seen = {((r.payload or {}).get("doc_number"), (r.payload or {}).get("child_text")) for r in top_results}
+
+    extra: List[Any] = []
+    for target in sorted(targets)[:max_docs]:
+        try:
+            linked = weaviate_collection.query.hybrid(
+                query=bm25_query,
+                query_properties=["translated_text", "parent_context", "section_title", "child_text"],
+                vector=query_vector,
+                alpha=0.5,
+                limit=max_chunks_per_doc,
+                filters=wvc.query.Filter.by_property("doc_number").equal(target),
+                return_metadata=wvc.query.MetadataQuery(score=True),
+            )
+            added = 0
+            for obj in linked.objects:
+                key = ((obj.properties or {}).get("doc_number"), (obj.properties or {}).get("child_text"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                extra.append(_Result(obj.properties, obj.metadata))
+                added += 1
+            logger.info(f"Lineage expansion pulled {added} new chunks from {target}")
+        except Exception as exc:
+            logger.warning(f"Lineage expansion failed for {target}: {exc}")
+
+    return extra
 
 
 def build_evidence(search_results: List[Any]) -> List[Dict[str, Any]]:
@@ -231,11 +339,6 @@ def run_hybrid_search(
     else:
         bm25_query = " ".join(query_variations) if query_variations else standalone_query
     
-    class DummyResult:
-        def __init__(self, props, metadata=None):
-            self.payload = props
-            self.metadata = metadata
-            
     weaviate_collection = weaviate_client.collections.get(collection_name)
     
     weaviate_filters = None
@@ -253,10 +356,10 @@ def run_hybrid_search(
         return_metadata=wvc.query.MetadataQuery(score=True)
     )
     hybrid_db_s = time.time() - t_hybrid_start
-    current_results = [DummyResult(obj.properties, obj.metadata) for obj in search_res.objects]
+    current_results = [_Result(obj.properties, obj.metadata) for obj in search_res.objects]
 
     if not current_results:
-        return [], [], [], {"hybrid_db_s": round(hybrid_db_s, 3), "rerank_s": 0.0}
+        return [], [], [], {"hybrid_db_s": round(hybrid_db_s, 3), "rerank_s": 0.0, "lineage_s": 0.0}
 
     t_rerank_start = time.time()
     rerank_on = os.getenv("RERANK_ENABLED", "true").strip().lower() in ("true", "1", "yes")
@@ -275,9 +378,16 @@ def run_hybrid_search(
         top_results = rerank_results(gemini_client, current_results, standalone_query, rerank_limit)
     rerank_s = time.time() - t_rerank_start
 
+    t_lineage_start = time.time()
+    lineage_results = expand_lineage(weaviate_collection, top_results, query_vector, bm25_query)
+    if lineage_results:
+        top_results = top_results + lineage_results
+    lineage_s = time.time() - t_lineage_start
+
     return current_results, top_results, build_evidence(top_results), {
         "hybrid_db_s": round(hybrid_db_s, 3),
         "rerank_s": round(rerank_s, 3),
+        "lineage_s": round(lineage_s, 3),
     }
 
 
@@ -379,6 +489,7 @@ def execute_search_tool(
         "weaviate_s": round(t_weaviate_time, 3),
         "hybrid_db_s": search_profile.get("hybrid_db_s", 0.0),
         "rerank_s": search_profile.get("rerank_s", 0.0),
+        "lineage_s": search_profile.get("lineage_s", 0.0),
     }
 
     if not evidence:

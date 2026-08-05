@@ -471,11 +471,25 @@
        H_RE=/^\s{0,3}(#{1,4})\s+(.+?)\s*#*\s*$/,
        UL_RE=/^\s*[-*•]\s+(.+)$/,
        OL_RE=/^\s*\d+[.)]\s+(.+)$/,
-       HR_RE=/^\s*(-{3,}|\*{3,}|_{3,})\s*$/;
+       HR_RE=/^\s*(-{3,}|\*{3,}|_{3,})\s*$/,
+       // esc() has already turned '>' into '&gt;' by the time block parsing runs.
+       BQ_RE=/^\s*&gt;\s?(.*)$/,
+       CO_RE=/^\s*\[!(WARNING|CAUTION|NOTE|IMPORTANT|TIP)\]\s*(.*)$/i;
  const tcells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
  const LI='<li class="ml-4 list-outside pl-1 marker:text-zinc-400">';
+ // The system prompt tells the generator to open with a `> [!WARNING]` block whenever
+ // retrieved documents disagree or one supersedes another. Without this it rendered as
+ // literal "> [!WARNING]" text, which is the one case where an officer most needs to notice.
+ const CO_STYLE={
+   WARNING:['border-amber-500','bg-amber-50 dark:bg-amber-500/10','text-amber-700 dark:text-amber-400'],
+   CAUTION:['border-red-500','bg-red-50 dark:bg-red-500/10','text-red-700 dark:text-red-400'],
+   NOTE:['border-blue-500','bg-blue-50 dark:bg-blue-500/10','text-blue-700 dark:text-blue-400'],
+   IMPORTANT:['border-violet-500','bg-violet-50 dark:bg-violet-500/10','text-violet-700 dark:text-violet-400'],
+   TIP:['border-emerald-500','bg-emerald-50 dark:bg-emerald-500/10','text-emerald-700 dark:text-emerald-400']};
+ const CO_ICON='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
  function fmtBlocks(h){
-   const lines=h.split('\n'),out=[];
+   // Strip CR: JS '.' does not match \r, so a CRLF payload would defeat every `(.*)$` below.
+   const lines=h.replace(/\r/g,'').split('\n'),out=[];
    for(let i=0;i<lines.length;){
      const ln=lines[i];
      // table: header row immediately followed by a |---|---| separator
@@ -488,6 +502,23 @@
          +head.map(c=>th+c+'</th>').join('')+'</tr></thead><tbody>'
          +rows.map(r=>'<tr>'+r.map(c=>td+c+'</td>').join('')+'</tr>').join('')
          +'</tbody></table></div>');
+       continue;
+     }
+     // blockquote / callout: consume the whole run, strip the markers, re-parse the inside
+     if(BQ_RE.test(ln)){
+       const raw=[];
+       while(i<lines.length&&BQ_RE.test(lines[i]))raw.push(lines[i++].match(BQ_RE)[1]);
+       const cm=raw.length?raw[0].match(CO_RE):null;
+       if(cm){
+         const kind=cm[1].toUpperCase(),trailing=cm[2].trim(),st=CO_STYLE[kind]||CO_STYLE.NOTE;
+         raw.shift();if(trailing)raw.unshift(trailing);
+         out.push('<div class="my-2 rounded-r-lg border-l-4 '+st[0]+' '+st[1]+' px-3 py-2">'
+           +'<div class="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide '+st[2]+'">'
+           +CO_ICON+kind+'</div><div>'+fmtBlocks(raw.join('\n'))+'</div></div>');
+       }else{
+         out.push('<blockquote class="my-2 border-l-2 border-zinc-300 pl-3 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">'
+           +fmtBlocks(raw.join('\n'))+'</blockquote>');
+       }
        continue;
      }
      if(HR_RE.test(ln)){out.push('<hr class="my-2 border-zinc-200 dark:border-zinc-800">');i++;continue;}
