@@ -160,6 +160,39 @@
     <pre id="ilog" class="mono mt-4 hidden max-h-56 overflow-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 text-[12px] leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300"></pre>
   </section>
 
+  <!-- Citation graph -->
+  <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Document Lineage</h2>
+      <button id="graphRebuild" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Rebuild</button>
+    </div>
+    <p id="graphSummary" class="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Loading&hellip;</p>
+
+    <div class="grid gap-4 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+      <div class="rounded-xl border border-zinc-200 p-2 dark:border-zinc-800">
+        <svg id="graphSvg" viewBox="0 0 320 320" class="h-auto w-full"></svg>
+        <div class="mt-1 flex items-center justify-center gap-3 text-[10px] text-zinc-400">
+          <span><span class="mr-1 inline-block h-px w-4 align-middle bg-amber-500"></span>supersedes</span>
+          <span><span class="mr-1 inline-block h-px w-4 align-middle bg-zinc-400"></span>references</span>
+          <span class="text-zinc-400">dashed = ambiguous</span>
+        </div>
+      </div>
+      <div class="max-h-80 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <table class="w-full text-left text-[12px]">
+          <thead class="sticky top-0 bg-zinc-50 dark:bg-zinc-900">
+            <tr class="text-[10px] uppercase tracking-wide text-zinc-500">
+              <th class="px-3 py-2 font-semibold">From</th>
+              <th class="px-3 py-2 font-semibold">Relation</th>
+              <th class="px-3 py-2 font-semibold">To</th>
+              <th class="px-3 py-2 font-semibold">Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="graphBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <!-- Access log -->
   <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
     <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -272,6 +305,63 @@ async function loadTopology(){
 }
 $('topoRefresh').onclick=loadTopology;
 
+/* ── citation graph ───────────────────────────────────── */
+// Circular layout rather than force-directed: the graph is small and sparse, and a static
+// deterministic layout is easier to read and to point at than a settling simulation.
+function drawGraph(nodes,edges){
+  const svg=$('graphSvg'),R=132,CX=160,CY=160;
+  const ids=[...new Set(edges.flatMap(e=>[e.source,e.target]))];
+  if(!ids.length){svg.innerHTML='<text x="160" y="160" text-anchor="middle" font-size="11" fill="#a1a1aa">No resolved links yet</text>';return;}
+  const byId=Object.fromEntries(nodes.map(n=>[n.id,n]));
+  const pos={};
+  ids.forEach((id,i)=>{const a=(i/ids.length)*2*Math.PI-Math.PI/2;pos[id]={x:CX+R*Math.cos(a),y:CY+R*Math.sin(a)};});
+  const lines=edges.map(e=>{
+    const s=pos[e.source],t=pos[e.target];if(!s||!t)return '';
+    const col=e.kind==='supersedes'?'#f59e0b':'#a1a1aa';
+    const dash=e.confidence==='resolved'?'':' stroke-dasharray="3 3"';
+    return `<line x1="${s.x.toFixed(1)}" y1="${s.y.toFixed(1)}" x2="${t.x.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="${col}" stroke-width="${e.kind==='supersedes'?1.6:0.9}" opacity="0.75"${dash}/>`;
+  }).join('');
+  const dots=ids.map(id=>{
+    const p=pos[id],n=byId[id]||{},lbl=(n.number||id).replace(/[<>&]/g,'');
+    const r=Math.min(6,3+(n.degree||1)*0.4);
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#f59e0b" fill-opacity="0.85"><title>${lbl}</title></circle>`;
+  }).join('');
+  svg.innerHTML=lines+dots;
+}
+
+async function loadGraph(){
+  const sum=$('graphSummary'),body=$('graphBody');
+  try{
+    const d=await(await api('/api/admin/graph')).json();
+    const s=d.stats||{},edges=d.edges||[],nodes=d.nodes||[];
+    if(!edges.length){
+      sum.textContent=d.detail||'No lineage links resolved yet.';
+      drawGraph([],[]);body.innerHTML='<tr><td colspan="4" class="px-3 py-6 text-center text-zinc-400">Nothing to show.</td></tr>';return;
+    }
+    sum.innerHTML=`<span class="font-medium text-zinc-700 dark:text-zinc-300">${s.edges} links across ${s.connected_documents} documents</span>, `+
+      `${s.resolved} resolved to a single document and ${s.probable} probable. `+
+      `A further ${s.citations_outside_corpus} citations point to Government Resolutions that predate this corpus.`;
+    drawGraph(nodes,edges);
+    const byId=Object.fromEntries(nodes.map(n=>[n.id,n]));
+    const nm=id=>esc((byId[id]||{}).number||id);
+    body.innerHTML=edges.map(e=>`<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+      <td class="mono px-3 py-2">${nm(e.source)}</td>
+      <td class="px-3 py-2">${e.kind==='supersedes'
+        ? '<span class="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">supersedes</span>'
+        : '<span class="text-zinc-500">references</span>'}</td>
+      <td class="mono px-3 py-2">${nm(e.target)}</td>
+      <td class="px-3 py-2 text-zinc-500">${esc(e.confidence)}</td>
+    </tr>`).join('');
+  }catch(_){sum.textContent='Could not load the lineage graph.';}
+}
+
+$('graphRebuild').onclick=async e=>{
+  const b=e.target,og=b.textContent;b.textContent='Rebuilding...';b.disabled=true;
+  try{await api('/api/admin/graph/rebuild',{method:'POST'});await loadGraph();}
+  catch(_){}
+  finally{b.textContent=og;b.disabled=false;}
+};
+
 /* ── access log ───────────────────────────────────────── */
 // Timestamps are stored UTC ISO; render them relative so an officer's last activity is
 // readable at a glance without anyone doing timezone arithmetic on stage.
@@ -334,6 +424,7 @@ async function refresh(){
   loadTokens();
   loadAudit();
   loadTopology();
+  loadGraph();
 }
 
 async function loadTokens(){

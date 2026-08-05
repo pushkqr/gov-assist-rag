@@ -1,0 +1,4528 @@
+{
+ "built_at": "2026-08-05T10:45:13+00:00",
+ "collection": "GovDocs",
+ "nodes": [
+  {
+   "id": "201710121514029708.pdf.en.txt",
+   "label": "201710121514029708.pdf.en.txt",
+   "number": "NGC-2012",
+   "year": 2018,
+   "chunks": 31,
+   "degree": 0
+  },
+  {
+   "id": "201710121531250208.pdf.en.txt",
+   "label": "2511/",
+   "number": null,
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201710121721500608.pdf.en.txt",
+   "label": "219/15/",
+   "number": null,
+   "year": 2015,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201710131542059108.pdf.en.txt",
+   "label": "1004/",
+   "number": "MUWAD-2016",
+   "year": 2016,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201710161112394708.pdf.en.txt",
+   "label": "201710161112394708.pdf.en",
+   "number": null,
+   "year": 2013,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201710181042062608.pdf.en.txt",
+   "label": "201710181042062608.pdf.en.txt",
+   "number": "APPROVAL-2017",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201710181250349808.pdf.en.txt",
+   "label": "11/17/",
+   "number": "SEWAJE-3117",
+   "year": 2009,
+   "chunks": 20,
+   "degree": 1
+  },
+  {
+   "id": "201710181255502108.pdf.en.txt",
+   "label": "11/17/",
+   "number": "SRHI-2011",
+   "year": 2009,
+   "chunks": 8,
+   "degree": 1
+  },
+  {
+   "id": "201710241254091808.pdf.en.txt",
+   "label": "315/17/",
+   "number": "SRIKH-2017",
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201710261617433808.pdf.en.txt",
+   "label": "USG-2006",
+   "number": "USG-2006",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 3
+  },
+  {
+   "id": "201710271627544508.pdf.en.txt",
+   "label": "2517/",
+   "number": "PURAK-2017",
+   "year": 2017,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201710301152236408.pdf.en.txt",
+   "label": "201710301152236408.pdf.en.txt",
+   "number": null,
+   "year": 2013,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201711061646497708.pdf.en.txt",
+   "label": "121/2017/",
+   "number": "PURAK-2017",
+   "year": 2017,
+   "chunks": 33,
+   "degree": 0
+  },
+  {
+   "id": "201711071621275808.pdf.en.txt",
+   "label": "Jyeshthasu-2017/",
+   "number": "JYESHTHASU-2017",
+   "year": 2017,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201711091147500408.pdf.en.txt",
+   "label": "61/17/",
+   "number": "SASENI-3217",
+   "year": 2017,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201711131231333608.pdf.en.txt",
+   "label": "201711131231333608.pdf.en.txt",
+   "number": "PARICHAY-2017",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201711131318527708.pdf.en.txt",
+   "label": "332/",
+   "number": "PAROCHIAL-2017",
+   "year": 2017,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201711131555527808.pdf.en.txt",
+   "label": "Appointment-2016/",
+   "number": "APPOINTMENT-2016",
+   "year": 2016,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201711131631473808.pdf.en.txt",
+   "label": "Transferred-3417/",
+   "number": "TRANSFERRED-3417",
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201711131731018208.pdf.en.txt",
+   "label": "281/",
+   "number": "SCHOLAR-4916",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201711141537469008.pdf.en.txt",
+   "label": "270/15/",
+   "number": "SASENI-3215",
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201711141542282108.pdf.en.txt",
+   "label": "Saseni-3215/",
+   "number": "SASENI-3215",
+   "year": 2017,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201711151549118808.pdf.en.txt",
+   "label": "151/16",
+   "number": "PARIVARTAN-1111",
+   "year": 2017,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201711171637104408.pdf.en.txt",
+   "label": "45/17/",
+   "number": "SASENI-3617",
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201711181136349708.pdf.en.txt",
+   "label": "186/16",
+   "number": "SVEEPRALAY-2216",
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201711181545162908.pdf.en.txt",
+   "label": "2017/",
+   "number": "APPROVAL-2017",
+   "year": 2017,
+   "chunks": 37,
+   "degree": 0
+  },
+  {
+   "id": "201711221219126608.pdf.en.txt",
+   "label": "86/17/",
+   "number": "SASENI-3617",
+   "year": 2017,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201711221225317108.pdf.en.txt",
+   "label": "86/17/",
+   "number": "SASENI-3617",
+   "year": 2017,
+   "chunks": 53,
+   "degree": 0
+  },
+  {
+   "id": "201711221234128408.pdf.en.txt",
+   "label": "100/17/",
+   "number": "SASENI-3217",
+   "year": 2017,
+   "chunks": 74,
+   "degree": 0
+  },
+  {
+   "id": "201711221237241008.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2017,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201711221612464008.pdf.en.txt",
+   "label": "84/17",
+   "number": "COMMITTEE-2511",
+   "year": 2017,
+   "chunks": 29,
+   "degree": 0
+  },
+  {
+   "id": "201711231300265508.pdf.en.txt",
+   "label": "201711231300265508.pdf.en.txt",
+   "number": "SCT-6512",
+   "year": 2017,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201711231647451008.pdf.en.txt",
+   "label": "2000/",
+   "number": "SASENI-2017",
+   "year": 2017,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201711231715013008.pdf.en.txt",
+   "label": "183/12/",
+   "number": "FEE-2012",
+   "year": 2012,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201711241331435008.pdf.en.txt",
+   "label": "201711241331435008.pdf.en.txt",
+   "number": "PAY-6000",
+   "year": 2017,
+   "chunks": 33,
+   "degree": 0
+  },
+  {
+   "id": "201711241549571608.pdf.en.txt",
+   "label": "201711241549571608.pdf.en.txt",
+   "number": "SASENI-2017",
+   "year": 2017,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "201711281706057308.pdf.en.txt",
+   "label": "ODR-2711/",
+   "number": "ODR-2711",
+   "year": 2017,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201711301704341108.pdf.en.txt",
+   "label": "Committee",
+   "number": null,
+   "year": 2017,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201712021255444108.pdf.en.txt",
+   "label": "Salary-2014/",
+   "number": "SALARY-2014",
+   "year": 2014,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201712021556112808.pdf.en.txt",
+   "label": "Anuda-2011/",
+   "number": "ANUDA-2011",
+   "year": 2011,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201712041154548208.pdf.en.txt",
+   "label": "Anuda-2011/",
+   "number": "ANUDA-2011",
+   "year": 2011,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201712081338504908.pdf.en.txt",
+   "label": "151/16/",
+   "number": "PARICHAY-2016",
+   "year": 2016,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201712081639150908.pdf.en.txt",
+   "label": "2017/",
+   "number": null,
+   "year": 2016,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201712111245118208.pdf.en.txt",
+   "label": "201712111245118208.pdf.en.txt",
+   "number": "SANKIRN-2017",
+   "year": 2017,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201712111259392008.pdf.en.txt",
+   "label": "Uwatanshi/",
+   "number": "TRANSFER-2017",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201712121443333508.pdf.en.txt",
+   "label": "Committee",
+   "number": null,
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201712141743086308.pdf.en.txt",
+   "label": "72/17/",
+   "number": "SASENI-3217",
+   "year": 2017,
+   "chunks": 179,
+   "degree": 0
+  },
+  {
+   "id": "201712181322299608.pdf.en.txt",
+   "label": "201712181322299608.pdf.en",
+   "number": null,
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201712201145112408.pdf.en.txt",
+   "label": "Validation",
+   "number": "TED-2010",
+   "year": 2009,
+   "chunks": 40,
+   "degree": 0
+  },
+  {
+   "id": "201712211235080408.pdf.en.txt",
+   "label": "Uvatshi/",
+   "number": "SRV-2017",
+   "year": 2017,
+   "chunks": 32,
+   "degree": 0
+  },
+  {
+   "id": "201712211250007208.pdf.en.txt",
+   "label": "2014/",
+   "number": "TED-2009",
+   "year": 2014,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201712261500258208.pdf.en.txt",
+   "label": "81/2017",
+   "number": "JUSTICE-2017",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201712271145167408.pdf.en.txt",
+   "label": "64/17/",
+   "number": null,
+   "year": 2017,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201801011619226708.pdf.en.txt",
+   "label": "Uwatanshi/",
+   "number": null,
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201801021130198408.pdf.en.txt",
+   "label": "102/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 35,
+   "degree": 0
+  },
+  {
+   "id": "201801021137039808.pdf.en.txt",
+   "label": "174/16/",
+   "number": "SASENI-3216",
+   "year": 2018,
+   "chunks": 28,
+   "degree": 0
+  },
+  {
+   "id": "201801051330190408.pdf.en.txt",
+   "label": "Matantra",
+   "number": "MUMBAI-4000",
+   "year": 2016,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201801061309569708.pdf.en.txt",
+   "label": "Uwatanshi/",
+   "number": "SRV-2017",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201801081438305108.pdf.en.txt",
+   "label": "Uwatanshi/",
+   "number": null,
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201801101543477608.pdf.en.txt",
+   "label": "2017/",
+   "number": "MANANATH-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201801171628325208.pdf.en.txt",
+   "label": "Rusayo-2016/",
+   "number": "RUSAYO-2016",
+   "year": 2016,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201801181505279408.pdf.en.txt",
+   "label": "2017/",
+   "number": null,
+   "year": 2016,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201801241426123008.pdf.en.txt",
+   "label": "45/2017/",
+   "number": "MARAGRAN-2511",
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201801241641057008.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201801241645071308.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201801301121469108.pdf.en.txt",
+   "label": "2014/",
+   "number": null,
+   "year": 2014,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201801301515456808.pdf.en.txt",
+   "label": "DBA-2008/",
+   "number": "DBA-2008",
+   "year": 2017,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201801311503103308.pdf.en.txt",
+   "label": "181/",
+   "number": "EBC-2012",
+   "year": 2012,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201802031216416508.pdf.en.txt",
+   "label": "RUSSAIO",
+   "number": "HEAD-2202",
+   "year": 2016,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201802061324377508.pdf.en.txt",
+   "label": "55/18/",
+   "number": null,
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201802061600545308.pdf.en.txt",
+   "label": "66/14",
+   "number": "NARROW-1111",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201802071724329408.pdf.en.txt",
+   "label": "USG-2006",
+   "number": "USG-2006",
+   "year": 2016,
+   "chunks": 12,
+   "degree": 3
+  },
+  {
+   "id": "201802121141395308.pdf.en.txt",
+   "label": "356/17/",
+   "number": "PADBH-2017",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201802141311555708.pdf.en.txt",
+   "label": "EBC-2018/",
+   "number": "EBC-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201802141318163508.pdf.en.txt",
+   "label": "465/",
+   "number": "PARICHAY-2017",
+   "year": 2017,
+   "chunks": 14,
+   "degree": 2
+  },
+  {
+   "id": "201802171635354208.pdf.en.txt",
+   "label": "DBA-2008/",
+   "number": "DBA-2008",
+   "year": 2017,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201802221214588808.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 45,
+   "degree": 0
+  },
+  {
+   "id": "201802221221121108.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201802221558121108.pdf.en.txt",
+   "label": "2527/",
+   "number": null,
+   "year": 2017,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201802221603270808.pdf.en.txt",
+   "label": "2017/",
+   "number": "APPROVAL-2017",
+   "year": 2017,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201802221751057508.pdf.en.txt",
+   "label": "407/",
+   "number": "PARICHAY-2017",
+   "year": 2017,
+   "chunks": 37,
+   "degree": 0
+  },
+  {
+   "id": "201802231216292408.pdf.en.txt",
+   "label": "201802231216292408.pdf.en.txt",
+   "number": "APPOINTMENT-2017",
+   "year": 2017,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201802271406114208.pdf.en.txt",
+   "label": "RUSSAIO",
+   "number": "FINANCE-2017",
+   "year": 2016,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201802281117052508.pdf.en.txt",
+   "label": "201802281117052508.pdf.en.txt",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 269,
+   "degree": 0
+  },
+  {
+   "id": "201803011703456908.pdf.en.txt",
+   "label": "2527/",
+   "number": "FINANCE-2017",
+   "year": 2017,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201803011707491308.pdf.en.txt",
+   "label": "-2517/",
+   "number": "FINANCE-2017",
+   "year": 2017,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201803011718152208.pdf.en.txt",
+   "label": "2010/",
+   "number": "MUMBAI-4000",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201803011737037508.pdf.en.txt",
+   "label": "332/",
+   "number": "PARICHAY-2017",
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201803031607183308.pdf.en.txt",
+   "label": "3416/",
+   "number": "MUMBAI-4000",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201803031708535908.pdf.en.txt",
+   "label": "2018/",
+   "number": null,
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201803051244235508.pdf.en.txt",
+   "label": "99/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201803051722393708.pdf.en.txt",
+   "label": "SCT-6513/",
+   "number": "SCT-6513",
+   "year": 2017,
+   "chunks": 9,
+   "degree": 6
+  },
+  {
+   "id": "201803051726537608.pdf.en.txt",
+   "label": "SCT-6513/",
+   "number": "SCT-6513",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 6
+  },
+  {
+   "id": "201803061103547708.pdf.en.txt",
+   "label": "446/17/",
+   "number": null,
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201803061234216808.pdf.en.txt",
+   "label": "SCT-6513/",
+   "number": "SCT-6513",
+   "year": 2018,
+   "chunks": 30,
+   "degree": 6
+  },
+  {
+   "id": "201803071118253908.pdf.en.txt",
+   "label": "2017/186/17/",
+   "number": "PUNE-4110",
+   "year": 2017,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201803071121493308.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2015,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201803071212129208.pdf.en.txt",
+   "label": "185/",
+   "number": "FEE-5217",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201803071449402308.pdf.en.txt",
+   "label": "1004/",
+   "number": "MUWAD-2016",
+   "year": 2016,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201803081708218508.pdf.en.txt",
+   "label": "ODR-2711",
+   "number": "ODR-2711",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201803121537027408.pdf.en.txt",
+   "label": "-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201803131131292508.pdf.en.txt",
+   "label": "151/16",
+   "number": "PARIVARTAN-1111",
+   "year": 2017,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201803131751197708.pdf.en.txt",
+   "label": "Recognition-2017/",
+   "number": "RECOGNITION-2017",
+   "year": 2017,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201803141529023308.pdf.en.txt",
+   "label": "201803141529023308.pdf.en.txt",
+   "number": "SRV-2017",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201803141735430208.pdf.en.txt",
+   "label": "45/2017/",
+   "number": "MARAGRAN-2511",
+   "year": 2017,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201803151752037208.pdf.en.txt",
+   "label": "2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201803201511472708.pdf.en.txt",
+   "label": "Validation-",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 1
+  },
+  {
+   "id": "201803221722024008.pdf.en.txt",
+   "label": "2017/",
+   "number": "MUN-2050",
+   "year": 2017,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201803231124467608.pdf.en.txt",
+   "label": "Parivartan-1111/",
+   "number": "PARIVARTAN-1111",
+   "year": 2017,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201803261635029808.pdf.en.txt",
+   "label": "Parivartan-1111/",
+   "number": "PARIVARTAN-1111",
+   "year": 2017,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201803281259420408.pdf.en.txt",
+   "label": "Complaint-2016",
+   "number": "COMPLAINT-2016",
+   "year": 2016,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201804051500484708.pdf.en.txt",
+   "label": "TRF-2000/",
+   "number": "TRF-2000",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201804071233074808.pdf.en.txt",
+   "label": "182/",
+   "number": "BEED-4616",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201804071711485808.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804071714503608.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201804071715475008.pdf.en.txt",
+   "label": "PAKAS-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201804101732283608.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2017,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804101803081508.pdf.en.txt",
+   "label": "99/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201804111502453708.pdf.en.txt",
+   "label": "2014/",
+   "number": "PADANI-2016",
+   "year": 2014,
+   "chunks": 18,
+   "degree": 1
+  },
+  {
+   "id": "201804111656087008.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804111656505108.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804111659549008.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201804111703188708.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201804111703472208.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201804171705060008.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804171707098008.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201804171708376908.pdf.en.txt",
+   "label": "3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201804171714228508.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201804171715129508.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201804181700578708.pdf.en.txt",
+   "label": "Representative-",
+   "number": "SRIKKEE-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201804211559430308.pdf.en.txt",
+   "label": "56/2014/",
+   "number": "MARAGRAN-2520",
+   "year": 2014,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201804211657494108.pdf.en.txt",
+   "label": "553/2017/",
+   "number": "COMMITTEE-2017",
+   "year": 2017,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201804211704004808.pdf.en.txt",
+   "label": "567/16/",
+   "number": "SRIKH-2016",
+   "year": 2016,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201804231115404308.pdf.en.txt",
+   "label": "Parivartan-2017/",
+   "number": "PARIVARTAN-2017",
+   "year": 2017,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201804231123126208.pdf.en.txt",
+   "label": "202/",
+   "number": "SHASHIM-2017",
+   "year": 2017,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201804231125599108.pdf.en.txt",
+   "label": "167/",
+   "number": "SCHOLAR-4917",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201804231457404608.pdf.en.txt",
+   "label": "1/18/",
+   "number": "SANKEERTH-1111",
+   "year": 2017,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201805031558152308.pdf.en.txt",
+   "label": "08/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201805031607093208.pdf.en.txt",
+   "label": "130/17/",
+   "number": "SESENI-3217",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201805041431372808.pdf.en.txt",
+   "label": "201805041431372808.pdf.en.txt",
+   "number": "SRV-2017",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201805051128245908.pdf.en.txt",
+   "label": "3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201805051132186908.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201805051135071708.pdf.en.txt",
+   "label": "3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201805051322269708.pdf.en.txt",
+   "label": "28/17",
+   "number": "PARICHAY-1111",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201805051332138308.pdf.en.txt",
+   "label": "20/18",
+   "number": "PARIVARTAN-1111",
+   "year": 2006,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201805081455184308.pdf.en.txt",
+   "label": "127/18/",
+   "number": "RASEYO-2018",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201805081526267108.pdf.en.txt",
+   "label": "128/18/",
+   "number": "RASEYO-2018",
+   "year": 2018,
+   "chunks": 30,
+   "degree": 0
+  },
+  {
+   "id": "201805141043286108.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201805151540176108.pdf.en.txt",
+   "label": "MIS-2018/C.R.151/2018/UNI-3",
+   "number": "MIS-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201805161135395208.pdf.en.txt",
+   "label": "201805161135395208.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201805161138380008.pdf.en.txt",
+   "label": "201805161138380008.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201805161142010408.pdf.en.txt",
+   "label": "201805161142010408.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201805161512457108.pdf.en.txt",
+   "label": "104/18/",
+   "number": "GOPA-2018",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 2
+  },
+  {
+   "id": "201805161628398808.pdf.en.txt",
+   "label": "24/18/",
+   "number": "SANKIRNA-1118",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 2
+  },
+  {
+   "id": "201805161634043608.pdf.en.txt",
+   "label": "08/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201805161642009508.pdf.en.txt",
+   "label": "ODR-2711/",
+   "number": "ODR-2711",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201805161701467008.pdf.en.txt",
+   "label": "215/",
+   "number": "CET-2017",
+   "year": 2017,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201805191725365708.pdf.en.txt",
+   "label": "2527/",
+   "number": "FINANCE-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201805191737487608.pdf.en.txt",
+   "label": "-2527/",
+   "number": "FINANCE-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201805191742361608.pdf.en.txt",
+   "label": "201805191742361608.pdf.en.txt",
+   "number": "CFR-1217",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 2
+  },
+  {
+   "id": "201805231702546908.pdf.en.txt",
+   "label": "Narikal-1111/",
+   "number": "NARIKAL-1111",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201805281735078408.pdf.en.txt",
+   "label": "Autonomous",
+   "number": null,
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201805291835500108.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201805301207465608.pdf.en.txt",
+   "label": "Parivartan-1111/",
+   "number": "PARIVARTAN-1111",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201805301520000108.pdf.en.txt",
+   "label": "201805301520000108.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201805301520232308.pdf.en.txt",
+   "label": "201805301520232308.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201805301520555508.pdf.en.txt",
+   "label": "201805301520555508.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201805301521049708.pdf.en.txt",
+   "label": "201805301521049708.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201805301827053608.pdf.en.txt",
+   "label": "88/18/",
+   "number": "TRANSFER-4318",
+   "year": 2018,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201805301827165308.pdf.en.txt",
+   "label": "89/18/",
+   "number": null,
+   "year": 2018,
+   "chunks": 129,
+   "degree": 0
+  },
+  {
+   "id": "201805301933103208.pdf.en.txt",
+   "label": "108/2018",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 52,
+   "degree": 0
+  },
+  {
+   "id": "201805301942034708.pdf.en.txt",
+   "label": "103/2018",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201805311733035008.pdf.en.txt",
+   "label": "72/18",
+   "number": null,
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201806011232241508.pdf.en.txt",
+   "label": "201806011232241508.pdf.en.txt",
+   "number": "SANKIRNA-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201806011245384808.pdf.en.txt",
+   "label": "79/2017/",
+   "number": null,
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201806011444065708.pdf.en.txt",
+   "label": "ACCEPTANCE-2018/",
+   "number": "ACCEPTANCE-2018",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201806011512353608.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 37,
+   "degree": 0
+  },
+  {
+   "id": "201806041251145708.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201806041251312208.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 33,
+   "degree": 0
+  },
+  {
+   "id": "201806041251408108.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201806051205019008.pdf.en.txt",
+   "label": "201806051205019008.pdf.en.txt",
+   "number": null,
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201806051247468308.pdf.en.txt",
+   "label": "28.04.2015",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 3
+  },
+  {
+   "id": "201806061212335808.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201806061218228008.pdf.en.txt",
+   "label": "45/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201806061225220008.pdf.en.txt",
+   "label": "48/18/",
+   "number": "PRATINIDHI-3518",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201806061557111808.pdf.en.txt",
+   "label": "201806061557111808.pdf.en.txt",
+   "number": "VIDHI-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201806071607409408.pdf.en.txt",
+   "label": "217/",
+   "number": "CET-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201806081124095008.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201806081127379508.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201806081132028408.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 28,
+   "degree": 0
+  },
+  {
+   "id": "201806081136214008.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 30,
+   "degree": 0
+  },
+  {
+   "id": "201806121103569208.pdf.en.txt",
+   "label": "201806121103569208.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201806121157332608.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201806121751159708.pdf.en.txt",
+   "label": "201806121751159708.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201806131527098508.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201806141501350408.pdf.en.txt",
+   "label": "2017/",
+   "number": null,
+   "year": 2017,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201806151657441908.pdf.en.txt",
+   "label": "80/11",
+   "number": "SCT-6511",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201806181633475908.pdf.en.txt",
+   "label": "185/",
+   "number": "SANKEERTH-2018",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201806181709221008.pdf.en.txt",
+   "label": "60/18/",
+   "number": null,
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201806181728239808.pdf.en.txt",
+   "label": "103/2018",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201806181734588908.pdf.en.txt",
+   "label": "201806181734588908.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201806191736247208.pdf.en.txt",
+   "label": "89/18/",
+   "number": "ACT-2005",
+   "year": 2018,
+   "chunks": 61,
+   "degree": 0
+  },
+  {
+   "id": "201806191739224508.pdf.en.txt",
+   "label": "89/18/",
+   "number": null,
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201806191741492908.pdf.en.txt",
+   "label": "88/18/",
+   "number": "TRANSFER-4318",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201806191749401408.pdf.en.txt",
+   "label": "88/18/",
+   "number": "TRANSFER-4318",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201806201639134408.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201806211121188808.pdf.en.txt",
+   "label": "210/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201806211507351608.pdf.en.txt",
+   "label": "208/",
+   "number": "SANKEERTH-2018",
+   "year": 2017,
+   "chunks": 30,
+   "degree": 2
+  },
+  {
+   "id": "201806221519056208.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201806251805298608.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201806251805405008.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 2
+  },
+  {
+   "id": "201806251805468208.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201806251805560408.pdf.en.txt",
+   "label": "Sarikhi-2018/",
+   "number": "SARIKHI-2018",
+   "year": 2016,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201806261224109208.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201806261231186508.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201806261231424208.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201806261237020208.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 43,
+   "degree": 0
+  },
+  {
+   "id": "201806281144318408.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201806281231037608.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201806281402293808.pdf.en.txt",
+   "label": "1419/2015.",
+   "number": "JUSTICE-2818",
+   "year": 2015,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201807021520470808.pdf.en.txt",
+   "label": "CDR-",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201807041531375808.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201807041533519008.pdf.en.txt",
+   "label": "08/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201807051506416208.pdf.en.txt",
+   "label": "252/",
+   "number": "NARIKAS-2017",
+   "year": 2018,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201807071107509408.pdf.en.txt",
+   "label": "11/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201807071111471908.pdf.en.txt",
+   "label": "JUSTICE-2011/",
+   "number": "JUSTICE-2011",
+   "year": 2011,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201807071422547608.pdf.en.txt",
+   "label": "Rusayo-2018/",
+   "number": "RUSAYO-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201807071518175608.pdf.en.txt",
+   "label": "28.04.2015",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 3
+  },
+  {
+   "id": "201807091252137908.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201807101206104908.pdf.en.txt",
+   "label": "Recognition-2018/",
+   "number": "RECOGNITION-2018",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201807101645216108.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201807111155016608.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201807111711477208.pdf.en.txt",
+   "label": "Parikshit-2018/",
+   "number": "PARIKSHIT-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 2
+  },
+  {
+   "id": "201807131102559908.pdf.en.txt",
+   "label": "Sankirin-2018/",
+   "number": "SANKIRIN-2018",
+   "year": 2018,
+   "chunks": 31,
+   "degree": 0
+  },
+  {
+   "id": "201807131733514708.pdf.en.txt",
+   "label": "48/18/",
+   "number": "PRATINIDHI-3518",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201807161610153508.pdf.en.txt",
+   "label": "F.No.Western/",
+   "number": "APPROVAL-2015",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 1
+  },
+  {
+   "id": "201807171623017508.pdf.en.txt",
+   "label": "APPOINTMENT-2018/",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201807181635539208.pdf.en.txt",
+   "label": "245/",
+   "number": "HEADING-2202",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201807181657102408.pdf.en.txt",
+   "label": "75/18/",
+   "number": "ODR-2711",
+   "year": 2018,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "201807191600325208.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201807191601134708.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201807191624385708.pdf.en.txt",
+   "label": "201807191624385708.pdf.en.txt",
+   "number": "SANKEEP-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201807201701293908.pdf.en.txt",
+   "label": "112/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 31,
+   "degree": 0
+  },
+  {
+   "id": "201807271152090208.pdf.en.txt",
+   "label": "249/",
+   "number": "RUSAYO-2013",
+   "year": 2018,
+   "chunks": 19,
+   "degree": 3
+  },
+  {
+   "id": "201807271736328608.pdf.en.txt",
+   "label": "PARAKKH",
+   "number": null,
+   "year": 2016,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201807311540358208.pdf.en.txt",
+   "label": "MARAGRAN-2517/",
+   "number": "MARAGRAN-2517",
+   "year": 2017,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201808011241242608.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201808011248278508.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201808011254158308.pdf.en.txt",
+   "label": "65/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "201808011300460008.pdf.en.txt",
+   "label": "102/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201808011611035808.pdf.en.txt",
+   "label": "Saseni-3117/",
+   "number": "SASENI-3117",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201808011740595408.pdf.en.txt",
+   "label": "0592",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201808021807136508.pdf.en.txt",
+   "label": "Parivartan-2018/",
+   "number": "PARIVARTAN-2018",
+   "year": 2018,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201808061516165108.pdf.en.txt",
+   "label": "2017/",
+   "number": "PARICHAY-2017",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201808061621027508.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201808061744060008.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201808071519511008.pdf.en.txt",
+   "label": "Maragran-2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201808071737131408.pdf.en.txt",
+   "label": "201808071737131408.pdf.en.txt",
+   "number": "PARIKSHIT-2017",
+   "year": 2017,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "201808081521575708.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201808091556010508.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2017,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201808091652341808.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201808101145435608.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201808101146021208.pdf.en.txt",
+   "label": "SRIKEE-",
+   "number": "SRIKEE-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201808101717545408.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201808101718076408.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "201808131554187708.pdf.en.txt",
+   "label": "204/",
+   "number": "PARICHAY-1018",
+   "year": 2016,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201808141453369108.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201808161119172908.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201808181547062408.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201808271133348808.pdf.en.txt",
+   "label": "Approval-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201808271311227908.pdf.en.txt",
+   "label": "201808271311227908.pdf.en",
+   "number": "RASSEYO-2018",
+   "year": 2017,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "201808281303217908.pdf.en.txt",
+   "label": "2095/19557/",
+   "number": "SRIKKEE-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201808301315394608.pdf.en.txt",
+   "label": "Seniway-",
+   "number": "SENIWAY-1001",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201808301620321808.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2010,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201808301633449208.pdf.en.txt",
+   "label": "151/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201808311113451208.pdf.en.txt",
+   "label": "201808311113451208.pdf.en.txt",
+   "number": "NGC-2018",
+   "year": 2018,
+   "chunks": 64,
+   "degree": 0
+  },
+  {
+   "id": "201808311114374908.pdf.en.txt",
+   "label": "NGC-2017/",
+   "number": "NGC-2017",
+   "year": 2018,
+   "chunks": 62,
+   "degree": 1
+  },
+  {
+   "id": "201808311119145008.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201808311204442208.pdf.en.txt",
+   "label": "226/",
+   "number": null,
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201809041242488508.pdf.en.txt",
+   "label": "169/13/",
+   "number": "LOAP-2013",
+   "year": 2013,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201809051713458108.pdf.en.txt",
+   "label": "201809051713458108.pdf.en.txt",
+   "number": "PRI-5417",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201809061216097608.pdf.en.txt",
+   "label": "5/18",
+   "number": "PARICHAY-1111",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201809061433220708.pdf.en.txt",
+   "label": "Designations-2012/",
+   "number": "DESIGNATIONS-2012",
+   "year": 2012,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201809061518126308.pdf.en.txt",
+   "label": "EBC-2018/",
+   "number": "EBC-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201809101441274808.pdf.en.txt",
+   "label": "Transfer",
+   "number": null,
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201809101451151408.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2017,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201809101458511208.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201809111545074908.pdf.en.txt",
+   "label": "201809111545074908.pdf.en.txt",
+   "number": "SAMRICH-2016",
+   "year": 2016,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201809121506576008.pdf.en.txt",
+   "label": "EBC-2018/",
+   "number": "EBC-2018",
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201809181217066508.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201809181221578408.pdf.en.txt",
+   "label": "112/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201809191151399308.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201809191509268108.pdf.en.txt",
+   "label": "2018/",
+   "number": "CODE-5232",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201809211147502308.pdf.en.txt",
+   "label": "155/",
+   "number": "PRI-5418",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201809251131353408.pdf.en.txt",
+   "label": "1004/",
+   "number": "MUWAD-2016",
+   "year": 2016,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201809271557573008.pdf.en.txt",
+   "label": "151/18/",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201809271609431008.pdf.en.txt",
+   "label": "208/18/",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 1
+  },
+  {
+   "id": "201809291426525108.pdf.en.txt",
+   "label": "Pakas-3318/",
+   "number": "PAKAS-3318",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201809291431098208.pdf.en.txt",
+   "label": "112/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201810011655055808.pdf.en.txt",
+   "label": "45/2017/",
+   "number": "MARAGRAN-2511",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201810031321285208.pdf.en.txt",
+   "label": "50/17/",
+   "number": "ODR-2711",
+   "year": 1998,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201810031622117908.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2010,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201810041511423308.pdf.en.txt",
+   "label": "TPS-1816/",
+   "number": "TPS-1816",
+   "year": 2017,
+   "chunks": 30,
+   "degree": 0
+  },
+  {
+   "id": "201810041656050508.pdf.en.txt",
+   "label": "218/",
+   "number": "SANKEERTH-2018",
+   "year": 2018,
+   "chunks": 32,
+   "degree": 0
+  },
+  {
+   "id": "201810051128386508.pdf.en.txt",
+   "label": "48/18/",
+   "number": "PRATINIDHI-3518",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201810051512405508.pdf.en.txt",
+   "label": "Padni-2016/",
+   "number": "PADNI-2016",
+   "year": 2013,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201810051522275308.pdf.en.txt",
+   "label": "TED-2016/",
+   "number": "TED-2016",
+   "year": 2016,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201810051603346708.pdf.en.txt",
+   "label": "48/18/",
+   "number": "PRATINIDHI-3518",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201810061127286108.pdf.en.txt",
+   "label": "59/18",
+   "number": "NARROW-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201810081252179208.pdf.en.txt",
+   "label": "151/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201810091433045808.pdf.en.txt",
+   "label": "SRIKEE-",
+   "number": "SANKEERTH-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201810091503491408.pdf.en.txt",
+   "label": "86/14",
+   "number": "COMMITTEE-2514",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201810091644222908.pdf.en.txt",
+   "label": "JUSTICE-2017/",
+   "number": "JUSTICE-2017",
+   "year": 2017,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "201810091725254608.pdf.en.txt",
+   "label": "Aastha/",
+   "number": "TANSHAVI-3711",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201810101459202508.pdf.en.txt",
+   "label": "201810101459202508.pdf.en.txt",
+   "number": "SAMRICH-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201810101613407308.pdf.en.txt",
+   "label": "TEM-2017/",
+   "number": "TEM-2017",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201810101633028308.pdf.en.txt",
+   "label": "TRANSFER-4318/",
+   "number": "TRANSFER-4318",
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201810111555038308.pdf.en.txt",
+   "label": "MARAGRAN-2517/",
+   "number": "MARAGRAN-2517",
+   "year": 2017,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201810121159594208.pdf.en.txt",
+   "label": "EXM-",
+   "number": "TANVEYA-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201810121507380908.pdf.en.txt",
+   "label": "Approval-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201810121752539308.pdf.en.txt",
+   "label": "201810121752539308.pdf.en.txt",
+   "number": null,
+   "year": 2018,
+   "chunks": 28,
+   "degree": 0
+  },
+  {
+   "id": "201810121806020108.pdf.en.txt",
+   "label": "Sankeerth-1111/",
+   "number": "SANKEERTH-1111",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201810151741287008.pdf.en.txt",
+   "label": "RUSSEAU",
+   "number": "FINANCE-2017",
+   "year": 2016,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201810151752423508.pdf.en.txt",
+   "label": "245/",
+   "number": "HEADING-2202",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201810161117458408.pdf.en.txt",
+   "label": "201810161117458408.pdf.en",
+   "number": "WBP-2911",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201810171713203808.pdf.en.txt",
+   "label": "201810171713203808.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201810191200275508.pdf.en.txt",
+   "label": "Approval-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201810231109489708.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201810241434265908.pdf.en.txt",
+   "label": "218/18/",
+   "number": "TANWAYO-1418",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201810251139556608.pdf.en.txt",
+   "label": "201810251139556608.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201810251415297708.pdf.en.txt",
+   "label": "Recognition-2018/",
+   "number": "RECOGNITION-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201810261159350708.pdf.en.txt",
+   "label": "Parikshit-2018/",
+   "number": "PARIKSHIT-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201810261258335208.pdf.en.txt",
+   "label": "DIR./",
+   "number": "SANKIRAN-1111",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201810261705187508.pdf.en.txt",
+   "label": "201810261705187508.pdf.en.txt",
+   "number": "MUMBAI-4000",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201810291446400208.pdf.en.txt",
+   "label": "10/2017/",
+   "number": null,
+   "year": 2017,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201810301207125808.pdf.en.txt",
+   "label": "EBC-2018/",
+   "number": "EBC-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201810301207326108.pdf.en.txt",
+   "label": "218/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201810301450207808.pdf.en.txt",
+   "label": "201810301450207808.pdf.en.txt",
+   "number": "DAP-1016",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201811021521406108.pdf.en.txt",
+   "label": "Recognition-2018/",
+   "number": "RECOGNITION-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201811021614340808.pdf.en.txt",
+   "label": "67/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "201811021616162708.pdf.en.txt",
+   "label": "100/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 31,
+   "degree": 0
+  },
+  {
+   "id": "201811021652438508.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2010,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201811021742316608.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201811031304405808.pdf.en.txt",
+   "label": "413/",
+   "number": "SCY-2018",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201811031425305808.pdf.en.txt",
+   "label": "201811031425305808.pdf.en.txt",
+   "number": null,
+   "year": 2017,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201811031450131908.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201811031457493908.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201811061542253708.pdf.en.txt",
+   "label": "147/",
+   "number": null,
+   "year": 2016,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201811141119267908.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2018,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201811141229390508.pdf.en.txt",
+   "label": "TED-2008/",
+   "number": "TED-2008",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201811161208069308.pdf.en.txt",
+   "label": "72/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 35,
+   "degree": 0
+  },
+  {
+   "id": "201811161520084308.pdf.en.txt",
+   "label": "201811161520084308.pdf.en.txt",
+   "number": "JUDGMENT-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201811171253105608.pdf.en.txt",
+   "label": "413/",
+   "number": "FEE-5218",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201811171256500808.pdf.en.txt",
+   "label": "Transfer",
+   "number": null,
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201811191726192708.pdf.en.txt",
+   "label": "100/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 31,
+   "degree": 0
+  },
+  {
+   "id": "201811201509009608.pdf.en.txt",
+   "label": "Parikshit-2018/",
+   "number": "PARIKSHIT-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201811221035582808.pdf.en.txt",
+   "label": "2013/",
+   "number": "SAMRICH-2013",
+   "year": 2013,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201811221239482008.pdf.en.txt",
+   "label": "TED-2018/",
+   "number": "TED-2018",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201811221642426208.pdf.en.txt",
+   "label": "ChAPA-1012/",
+   "number": "CHAPA-1012",
+   "year": 2017,
+   "chunks": 31,
+   "degree": 1
+  },
+  {
+   "id": "201811261450005408.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201811261452116608.pdf.en.txt",
+   "label": "68/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 29,
+   "degree": 0
+  },
+  {
+   "id": "201811271610567608.pdf.en.txt",
+   "label": "Transfer",
+   "number": null,
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201811281235176508.pdf.en.txt",
+   "label": "41/18",
+   "number": "SVEEPRALAY-3618",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201811291524153008.pdf.en.txt",
+   "label": "343/",
+   "number": "HEADING-2202",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201811301131594108.pdf.en.txt",
+   "label": "201811301131594108.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812011549416208.pdf.en.txt",
+   "label": "167/2018/",
+   "number": "MARAGRAN-2511",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201812031534336908.pdf.en.txt",
+   "label": "82/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201812031542308308.pdf.en.txt",
+   "label": "33/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "201812051519506608.pdf.en.txt",
+   "label": "82/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201812071540165608.pdf.en.txt",
+   "label": "68/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 34,
+   "degree": 0
+  },
+  {
+   "id": "201812071540560208.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812071553230808.pdf.en.txt",
+   "label": "Narrow-",
+   "number": "SALARY-1109",
+   "year": 2016,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201812101716374008.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201812101717052908.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201812101724457808.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201812121127119908.pdf.en.txt",
+   "label": "117/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201812131448137008.pdf.en.txt",
+   "label": "TEM-2016/",
+   "number": "TEM-2016",
+   "year": 2018,
+   "chunks": 23,
+   "degree": 4
+  },
+  {
+   "id": "201812131653180908.pdf.en.txt",
+   "label": "Uvatshi/",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201812131735333508.pdf.en.txt",
+   "label": "Rusayo-2018/",
+   "number": "RUSAYO-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201812131745105408.pdf.en.txt",
+   "label": "Rusayo-2018/",
+   "number": "RUSAYO-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 1
+  },
+  {
+   "id": "201812131747447608.pdf.en.txt",
+   "label": "Rusayo-2018/",
+   "number": "RUSAYO-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 1
+  },
+  {
+   "id": "201812131804566808.pdf.en.txt",
+   "label": "Rusayo-2018/",
+   "number": "RUSAYO-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 1
+  },
+  {
+   "id": "201812141148298208.pdf.en.txt",
+   "label": "Narrow",
+   "number": null,
+   "year": 2014,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201812141154328508.pdf.en.txt",
+   "label": "2014/",
+   "number": null,
+   "year": 2014,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201812141200163708.pdf.en.txt",
+   "label": "201812141200163708.pdf.en.txt",
+   "number": null,
+   "year": 2014,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812141206087308.pdf.en.txt",
+   "label": "PARTICULAR",
+   "number": null,
+   "year": 2014,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201812141632105108.pdf.en.txt",
+   "label": "91/16",
+   "number": "COMMITTEE-1111",
+   "year": 2018,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201812141651140908.pdf.en.txt",
+   "label": "Transfer",
+   "number": null,
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812141657070908.pdf.en.txt",
+   "label": "Transfer",
+   "number": null,
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201812151130226108.pdf.en.txt",
+   "label": "201812151130226108.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812151136511608.pdf.en.txt",
+   "label": "201812151136511608.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812151140348208.pdf.en.txt",
+   "label": "2014/",
+   "number": "MUMBAI-4000",
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201812151143349608.pdf.en.txt",
+   "label": "201812151143349608.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201812151146394608.pdf.en.txt",
+   "label": "201812151146394608.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812151149592508.pdf.en.txt",
+   "label": "201812151149592508.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812151153138608.pdf.en.txt",
+   "label": "201812151153138608.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812171512259308.pdf.en.txt",
+   "label": "343/",
+   "number": "HEADING-2202",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201812171522393208.pdf.en.txt",
+   "label": "664/15/",
+   "number": "DISCIPLINE-2015",
+   "year": 2015,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201812181235040808.pdf.en.txt",
+   "label": "90/16",
+   "number": "MAHARASHTRA-4450",
+   "year": 2016,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201812181452039908.pdf.en.txt",
+   "label": "228/",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201812181455562608.pdf.en.txt",
+   "label": "213/",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201812181611087208.pdf.en.txt",
+   "label": "Committee-2018/",
+   "number": "COMMITTEE-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812201730599608.pdf.en.txt",
+   "label": "110/18/",
+   "number": "SASENI-3218",
+   "year": 2018,
+   "chunks": 70,
+   "degree": 0
+  },
+  {
+   "id": "201812211534104308.pdf.en.txt",
+   "label": "678/10/",
+   "number": "ANNIO-2010",
+   "year": 2010,
+   "chunks": 26,
+   "degree": 0
+  },
+  {
+   "id": "201812241210033908.pdf.en.txt",
+   "label": "TEM-2017/",
+   "number": "TEM-2017",
+   "year": 2013,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812261205063708.pdf.en.txt",
+   "label": "Saseni-3217/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201812261210223208.pdf.en.txt",
+   "label": "102/17/",
+   "number": "SASENI-3217",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201812271647589608.pdf.en.txt",
+   "label": "Sankeerth-2018/",
+   "number": "SANKEERTH-2018",
+   "year": 2018,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201812281241170308.pdf.en.txt",
+   "label": "201812281241170308.pdf.en.txt",
+   "number": "JUDGMENT-2017",
+   "year": 2017,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201812291109523108.pdf.en.txt",
+   "label": "Pakas-3417/",
+   "number": "PAKAS-3417",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812291119329108.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812291124321108.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812291129235408.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201812291134210208.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201812291140219708.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201812291145372108.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201901021542275308.pdf.en.txt",
+   "label": "110/18/",
+   "number": "SASENI-3218",
+   "year": 2019,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "201901031201058008.pdf.en.txt",
+   "label": "Parichay-2018/",
+   "number": "PARICHAY-2018",
+   "year": 2015,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201901041110363808.pdf.en.txt",
+   "label": "201901041110363808.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201901071506275808.pdf.en.txt",
+   "label": "Parichay-2018/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 5,
+   "degree": 0
+  },
+  {
+   "id": "201901101107018608.pdf.en.txt",
+   "label": "Parichay-2018/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201901101508286608.pdf.en.txt",
+   "label": "201901101508286608.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201901111736506108.pdf.en.txt",
+   "label": "201901111736506108.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201901111737591008.pdf.en.txt",
+   "label": "201901111737591008.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "201901141531066108.pdf.en.txt",
+   "label": "167/17/",
+   "number": "DESIGNATION-2017",
+   "year": 2016,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201901141712361208.pdf.en.txt",
+   "label": "Parichay-2018/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201901161300416108.pdf.en.txt",
+   "label": "201901161300416108.pdf.en",
+   "number": "SWAVI-2019",
+   "year": 2019,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201901171549320008.pdf.en.txt",
+   "label": "343/",
+   "number": "RUSSAIO-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201901181515103808.pdf.en.txt",
+   "label": "Preamble",
+   "number": "TANSHAVI-3711",
+   "year": 2019,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201901221500374808.pdf.en.txt",
+   "label": "201901221500374808.pdf.en.txt",
+   "number": "APPOINTED-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201901221548233408.pdf.en.txt",
+   "label": "281/",
+   "number": "SCHOLAR-5415",
+   "year": 2019,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201901231559188508.pdf.en.txt",
+   "label": "ODR-2016/",
+   "number": "ODR-2016",
+   "year": 2016,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201901241623287308.pdf.en.txt",
+   "label": "201901241623287308.pdf.en.txt",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "201901241627201108.pdf.en.txt",
+   "label": "176/",
+   "number": "APPOINTMENT-2018",
+   "year": 2018,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201901241630022408.pdf.en.txt",
+   "label": "213/",
+   "number": "NUMBER-2018",
+   "year": 2018,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201901241712102508.pdf.en.txt",
+   "label": "TEM-2016/",
+   "number": "TEM-2016",
+   "year": 2016,
+   "chunks": 14,
+   "degree": 4
+  },
+  {
+   "id": "201901251137061608.pdf.en.txt",
+   "label": "ODR-2717/",
+   "number": "ODR-2717",
+   "year": 2019,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201901281532244708.pdf.en.txt",
+   "label": "1118/",
+   "number": "SCALE-1289",
+   "year": 2019,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201901281716523608.pdf.en.txt",
+   "label": "Narrow",
+   "number": "CFR-1217",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 2
+  },
+  {
+   "id": "201901281722589108.pdf.en.txt",
+   "label": "Narrow-",
+   "number": "NARROW-2015",
+   "year": 2015,
+   "chunks": 34,
+   "degree": 1
+  },
+  {
+   "id": "201901311115209808.pdf.en.txt",
+   "label": "201901311115209808.pdf.en.txt",
+   "number": "APPROVAL-2019",
+   "year": 2019,
+   "chunks": 293,
+   "degree": 0
+  },
+  {
+   "id": "201901311116043708.pdf.en.txt",
+   "label": "201901311116043708.pdf.en.txt",
+   "number": "JUSTICE-2016",
+   "year": 2016,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "201901311446486508.pdf.en.txt",
+   "label": "201901311446486508.pdf.en.txt",
+   "number": null,
+   "year": 2017,
+   "chunks": 22,
+   "degree": 0
+  },
+  {
+   "id": "201901311501587408.pdf.en.txt",
+   "label": "55/18/",
+   "number": null,
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201901311644586008.pdf.en.txt",
+   "label": "APPROVAL-2019/",
+   "number": "APPROVAL-2019",
+   "year": 2019,
+   "chunks": 6,
+   "degree": 0
+  },
+  {
+   "id": "201902021149105408.pdf.en.txt",
+   "label": "139/2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201902021154376008.pdf.en.txt",
+   "label": "343/",
+   "number": null,
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201902041150191908.pdf.en.txt",
+   "label": "APPROVAL-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2017,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201902061658492208.pdf.en.txt",
+   "label": "PLA-2015/",
+   "number": "PLA-2015",
+   "year": 2019,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201902081743356908.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2019,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201902081746449008.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2019,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201902111121432608.pdf.en.txt",
+   "label": "2013/",
+   "number": "SANKIRIN-2013",
+   "year": 2013,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201902111736001208.pdf.en.txt",
+   "label": "218/1/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201902121242399008.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2019,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201902121424467208.pdf.en.txt",
+   "label": "201902121424467208.pdf.en",
+   "number": "TRANSFER-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201902141212368208.pdf.en.txt",
+   "label": "108/",
+   "number": "SWAVI-2017",
+   "year": 2017,
+   "chunks": 12,
+   "degree": 2
+  },
+  {
+   "id": "201902141521546708.pdf.en.txt",
+   "label": "P.V.-2715/",
+   "number": "PARIVI-2019",
+   "year": 2019,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201902151156404208.pdf.en.txt",
+   "label": "MARAGRAN-2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201902151519596308.pdf.en.txt",
+   "label": "P.V.-2715/",
+   "number": "PARIVI-2019",
+   "year": 2019,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201902151624308108.pdf.en.txt",
+   "label": "262/16",
+   "number": "PARICHAY-2016",
+   "year": 2016,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201902161513284208.pdf.en.txt",
+   "label": "Pakas-3418/",
+   "number": "PAKAS-3418",
+   "year": 2019,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201902161701242808.pdf.en.txt",
+   "label": "P.V.-2715/",
+   "number": "PARIVI-2019",
+   "year": 2019,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201902181214567708.pdf.en.txt",
+   "label": "Mbhadi-2019/",
+   "number": "MBHADI-2019",
+   "year": 2019,
+   "chunks": 18,
+   "degree": 0
+  },
+  {
+   "id": "201902181721071208.pdf.en.txt",
+   "label": "57/2016.",
+   "number": "JUDGMENT-2018",
+   "year": 2016,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201902201155223908.pdf.en.txt",
+   "label": "67/17/",
+   "number": "SASENI-3217",
+   "year": 2019,
+   "chunks": 1,
+   "degree": 0
+  },
+  {
+   "id": "201902201158240608.pdf.en.txt",
+   "label": "110/18/",
+   "number": "SASENI-3218",
+   "year": 2019,
+   "chunks": 3,
+   "degree": 0
+  },
+  {
+   "id": "201902211121562208.pdf.en.txt",
+   "label": "127/",
+   "number": "PARIKH-2018",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201902211515094208.pdf.en.txt",
+   "label": "P.V.-2715/",
+   "number": "PARIVI-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201902221301436108.pdf.en.txt",
+   "label": "201902221301436108.pdf.en.txt",
+   "number": "MUMBAI-4000",
+   "year": 2019,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201902221527464608.pdf.en.txt",
+   "label": "413/",
+   "number": "SCY-2018",
+   "year": 2019,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "201902261207300108.pdf.en.txt",
+   "label": "P.V.-2715/",
+   "number": "PARIKA-2019",
+   "year": 2019,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201902261217057408.pdf.en.txt",
+   "label": "MARAGRAN-2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2018,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "201902261711112308.pdf.en.txt",
+   "label": "218/18/",
+   "number": "PARIKH-2018",
+   "year": 2018,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201902271428074508.pdf.en.txt",
+   "label": "Rusayo-2019/",
+   "number": "RUSAYO-2019",
+   "year": 2019,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201902271430108008.pdf.en.txt",
+   "label": "127/",
+   "number": "PARICHAY-2018",
+   "year": 2018,
+   "chunks": 4,
+   "degree": 0
+  },
+  {
+   "id": "201902281314269108.pdf.en.txt",
+   "label": "201902281314269108.pdf.en.txt",
+   "number": "FINANCE-2018",
+   "year": 2018,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201903011235180608.pdf.en.txt",
+   "label": "222/18",
+   "number": "RASEYO-2018",
+   "year": 2018,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201903021622326508.pdf.en.txt",
+   "label": "Pakas-3416/",
+   "number": "PAKAS-3416",
+   "year": 2019,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201903021634354108.pdf.en.txt",
+   "label": "Raseo",
+   "number": "RASEYO-2009",
+   "year": 2017,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "201903051248236508.pdf.en.txt",
+   "label": "91/16",
+   "number": "SANKIN-1111",
+   "year": 2019,
+   "chunks": 24,
+   "degree": 0
+  },
+  {
+   "id": "201903051737391208.pdf.en.txt",
+   "label": "SAVEYA-3211/",
+   "number": "SAVEYA-3211",
+   "year": 2019,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201903061622302508.pdf.en.txt",
+   "label": "201903061622302508.pdf.en",
+   "number": "SWAVI-2018",
+   "year": 2018,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "201903061627167908.pdf.en.txt",
+   "label": "201903061627167908.pdf.en.txt",
+   "number": "SWAVI-2019",
+   "year": 2019,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201903061632048008.pdf.en.txt",
+   "label": "201903061632048008.pdf.en.txt",
+   "number": "SWAVI-2019",
+   "year": 2019,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201903061647072208.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 1967,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201903061706218508.pdf.en.txt",
+   "label": "343/",
+   "number": "RUSSAIO-2018",
+   "year": 2018,
+   "chunks": 16,
+   "degree": 0
+  },
+  {
+   "id": "201903071119472508.pdf.en.txt",
+   "label": "Approval-2018/",
+   "number": "APPROVAL-2018",
+   "year": 2019,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "201903071643275408.pdf.en.txt",
+   "label": "2013/",
+   "number": "NARIKARI-2013",
+   "year": 2013,
+   "chunks": 15,
+   "degree": 0
+  },
+  {
+   "id": "201903081238288708.pdf.en.txt",
+   "label": "M.V.-2017/",
+   "number": null,
+   "year": 2017,
+   "chunks": 40,
+   "degree": 0
+  },
+  {
+   "id": "201903081440309208.pdf.en.txt",
+   "label": "Parichay-2019/",
+   "number": "PARICHAY-2019",
+   "year": 2019,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201903081445055708.pdf.en.txt",
+   "label": "45/2017/",
+   "number": "MARAGRAN-2511",
+   "year": 2017,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "201903081456273308.pdf.en.txt",
+   "label": "Misc-2018/C.R.56/18/UNI-1",
+   "number": "MISC-2018",
+   "year": 2018,
+   "chunks": 582,
+   "degree": 0
+  },
+  {
+   "id": "201903081506069608.pdf.en.txt",
+   "label": "APPROVAL-2014/",
+   "number": "APPROVAL-2014",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 1
+  },
+  {
+   "id": "201903081510174508.pdf.en.txt",
+   "label": "TEM-2018/",
+   "number": "TEM-2018",
+   "year": 2018,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201903081514222308.pdf.en.txt",
+   "label": "2018/",
+   "number": "APPROVAL-2018",
+   "year": 2016,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201903081805100408.pdf.en.txt",
+   "label": "2016/",
+   "number": "MUWAD-2016",
+   "year": 2016,
+   "chunks": 14,
+   "degree": 0
+  },
+  {
+   "id": "201903081939257308.pdf.en.txt",
+   "label": "Parichay-2019/",
+   "number": "PARICHAY-2019",
+   "year": 2019,
+   "chunks": 13,
+   "degree": 0
+  },
+  {
+   "id": "201903191721215808.pdf.en.txt",
+   "label": "MARAGRAN-2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201903191725450508.pdf.en.txt",
+   "label": "MARAGRAN-2527/",
+   "number": "MARAGRAN-2527",
+   "year": 2018,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "201903191729004108.pdf.en.txt",
+   "label": "MARAGRAN-2018/",
+   "number": "MARAGRAN-2018",
+   "year": 2018,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "201905171408137708.pdf",
+   "label": "महाराषर शासन",
+   "number": "मानयता-2019",
+   "year": 2019,
+   "chunks": 214,
+   "degree": 0
+  },
+  {
+   "id": "202007221553157808.pdf",
+   "label": "<u>पसतावना :</u>",
+   "number": "मानयता-२०१९",
+   "year": 2020,
+   "chunks": 62,
+   "degree": 0
+  },
+  {
+   "id": "202106181600251108.pdf",
+   "label": "<u>पसतावना :</u>",
+   "number": "मानयता-२०२०",
+   "year": 2021,
+   "chunks": 84,
+   "degree": 0
+  },
+  {
+   "id": "202303271151151908.pdf",
+   "label": "महाराषर शासन उचच व ताि भशकण भविाग",
+   "number": "मानयता-2022",
+   "year": 2022,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "202305301536057008.pdf",
+   "label": "<u>पसतावना :-</u>",
+   "number": "HTED-1402",
+   "year": 2023,
+   "chunks": 27,
+   "degree": 0
+  },
+  {
+   "id": "202405091651500908.pdf",
+   "label": "<u>शासन णनिय</u> : -",
+   "number": "HTED-1402",
+   "year": 2024,
+   "chunks": 79,
+   "degree": 0
+  },
+  {
+   "id": "202607281222057117.pdf",
+   "label": "RAJENDRA VITTHAL KUDALE",
+   "number": "संकीर्व-2016",
+   "year": 2026,
+   "chunks": 7,
+   "degree": 0
+  },
+  {
+   "id": "202607281242140322.pdf",
+   "label": "महाराषर िासि",
+   "number": "बीजीटी-2026",
+   "year": 2026,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "202607281252379207.pdf",
+   "label": "**महाराष्ट्र शासि**",
+   "number": "पिनन-2022",
+   "year": 2026,
+   "chunks": 59,
+   "degree": 0
+  },
+  {
+   "id": "202607281256566618.pdf",
+   "label": "**महाराष्ट्र शासन**",
+   "number": "खाक्षेस-2023",
+   "year": 2024,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "202607281444001022.pdf",
+   "label": "VIVEK RAMESH SHINDE",
+   "number": "नवसयो-2026",
+   "year": 2026,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "202607281500123003.pdf",
+   "label": "मिाराषर शासन",
+   "number": "आयटीआय-2026",
+   "year": 2026,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "202607281521177507.pdf",
+   "label": "DEVIDAS SANDUJI BHAGURE",
+   "number": "शाकाजा-1123",
+   "year": 2023,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "202607281703416107.pdf",
+   "label": "AKSHATA KAMOSH DESAI",
+   "number": "परीक्षा-2021",
+   "year": 2017,
+   "chunks": 43,
+   "degree": 0
+  },
+  {
+   "id": "202607281742062707.pdf",
+   "label": "शासि निण :-",
+   "number": "ईएलआर-२०26",
+   "year": 2026,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "202607281755278822.pdf",
+   "label": "<u>ा ाराषर‍‍शाान</u>",
+   "number": "ाािियो-2024",
+   "year": 2024,
+   "chunks": 11,
+   "degree": 0
+  },
+  {
+   "id": "202607281759538425.pdf",
+   "label": "संदिग :-",
+   "number": "स्वमअ-2022",
+   "year": 2026,
+   "chunks": 19,
+   "degree": 0
+  },
+  {
+   "id": "202607281808231124.pdf",
+   "label": "िहाराषर शासन आदिवासी दवकास दवभाग",
+   "number": "सांदहता-2019",
+   "year": 2026,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "202607281815565108.pdf",
+   "label": "शासन वनणणय:-",
+   "number": "साकीणण-2026",
+   "year": 2026,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "202607281911383107.pdf",
+   "label": "<u>आदश</u>",
+   "number": null,
+   "year": 2026,
+   "chunks": 8,
+   "degree": 0
+  },
+  {
+   "id": "202607281913141407.pdf",
+   "label": "<u>आदश</u>",
+   "number": "उसप-1126",
+   "year": 2026,
+   "chunks": 9,
+   "degree": 0
+  },
+  {
+   "id": "202607281922419107.pdf",
+   "label": "202607281922419107",
+   "number": null,
+   "year": 2026,
+   "chunks": 10,
+   "degree": 0
+  },
+  {
+   "id": "23-GR-08-07-2024-100-to-Female.pdf",
+   "label": "SATISH JAGDERAO TIDKE",
+   "number": "यशषयवृ-2024",
+   "year": 2024,
+   "chunks": 23,
+   "degree": 0
+  },
+  {
+   "id": "9.-06-08-2024-Foreign-Scholarship-Corrigendum.pdf",
+   "label": "SHAHAJAHAN SHAKUR MULANI",
+   "number": "शशषयवृ-2024",
+   "year": 2024,
+   "chunks": 21,
+   "degree": 0
+  },
+  {
+   "id": "DEMO-2019-AsstProf-AgeLimit.pdf",
+   "label": "Preamble:",
+   "number": "DEMO-2019",
+   "year": 2019,
+   "chunks": 5,
+   "degree": 1
+  },
+  {
+   "id": "DEMO-2022-AsstProf-AgeLimit-Revision.pdf",
+   "label": "Preamble:",
+   "number": "DEMO-2022",
+   "year": 2022,
+   "chunks": 7,
+   "degree": 1
+  },
+  {
+   "id": "FS-Increase-intake-GR.pdf",
+   "label": "FS Increase intake GR",
+   "number": "बैठक-2022",
+   "year": 2022,
+   "chunks": 17,
+   "degree": 0
+  },
+  {
+   "id": "GR-Unaided-30-June-2023.pdf",
+   "label": "अटी व िती:-",
+   "number": "MANYATA-2023",
+   "year": 2023,
+   "chunks": 20,
+   "degree": 0
+  },
+  {
+   "id": "Girls-Free-Education-GR-and-Circular-1.pdf",
+   "label": "व्यावसायिक अभ्यासक्रमास प्रवेश घेणाऱ्या आर्थिकदृष्ट्या दुर्बल घटक (EWS), सामाजिक व शैक्षणिकदृष्ट्या मागासवर्ग ",
+   "number": "मुंबई-४०००",
+   "year": 2074,
+   "chunks": 57,
+   "degree": 0
+  },
+  {
+   "id": "Girls-Free-Education-GR-and-Circular.pdf",
+   "label": "व्यावसायिक अभ्यासक्रमास प्रवेश घेणाऱ्या आर्थिकदृष्ट्या दुर्बल घटक (EWS), सामाजिक व शैक्षणिकदृष्ट्या मागासवर्ग ",
+   "number": "शिष्यवृ-२०२४",
+   "year": 2024,
+   "chunks": 63,
+   "degree": 0
+  },
+  {
+   "id": "Har-Ghar-Zanda-GR-dtd-20.06.2022.pdf",
+   "label": "महाराषर शासन",
+   "number": null,
+   "year": 2022,
+   "chunks": 44,
+   "degree": 0
+  },
+  {
+   "id": "Scholarship-Award-GR-03-10-2022.pdf",
+   "label": "<u>वाचा :</u>",
+   "number": "संकीिष-2019",
+   "year": 2022,
+   "chunks": 25,
+   "degree": 0
+  },
+  {
+   "id": "Selection-GR-13_10_2023_-202310131100027108 (1).pdf",
+   "label": "महाराषर शासन",
+   "number": "पशशयो-2023",
+   "year": 2023,
+   "chunks": 37,
+   "degree": 0
+  },
+  {
+   "id": "Selection-GR-13_10_2023_-202310131100027108.pdf",
+   "label": "महाराषर शासन",
+   "number": "पशशयो-2023",
+   "year": 2023,
+   "chunks": 37,
+   "degree": 0
+  },
+  {
+   "id": "pushkar_ai.pdf",
+   "label": "**Pushkar Oli**",
+   "number": null,
+   "year": 2027,
+   "chunks": 12,
+   "degree": 0
+  },
+  {
+   "id": "परदेशी-schol_4th-Oct.-2018.pdf",
+   "label": "महाराषर शासन उचच व तंत शशकण शवभाग",
+   "number": "संकीणण-2018",
+   "year": 2018,
+   "chunks": 104,
+   "degree": 0
+  }
+ ],
+ "edges": [
+  {
+   "source": "201710181250349808.pdf.en.txt",
+   "target": "201710181255502108.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201710261617433808.pdf.en.txt",
+   "target": "201802071724329408.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201802071724329408.pdf.en.txt",
+   "target": "201710261617433808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201802141318163508.pdf.en.txt",
+   "target": "201812131448137008.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201802141318163508.pdf.en.txt",
+   "target": "201901241712102508.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803051722393708.pdf.en.txt",
+   "target": "201803051726537608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803051722393708.pdf.en.txt",
+   "target": "201803061234216808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803051726537608.pdf.en.txt",
+   "target": "201803051722393708.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803051726537608.pdf.en.txt",
+   "target": "201803061234216808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803061234216808.pdf.en.txt",
+   "target": "201803051722393708.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803061234216808.pdf.en.txt",
+   "target": "201803051726537608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201803201511472708.pdf.en.txt",
+   "target": "201808311114374908.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201804111502453708.pdf.en.txt",
+   "target": "201903081506069608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201805161512457108.pdf.en.txt",
+   "target": "201805191742361608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201805161512457108.pdf.en.txt",
+   "target": "201901281716523608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201805161628398808.pdf.en.txt",
+   "target": "201805191742361608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201805161628398808.pdf.en.txt",
+   "target": "201901281716523608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806051247468308.pdf.en.txt",
+   "target": "201803051722393708.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806051247468308.pdf.en.txt",
+   "target": "201803051726537608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806051247468308.pdf.en.txt",
+   "target": "201803061234216808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806211507351608.pdf.en.txt",
+   "target": "201812131448137008.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806211507351608.pdf.en.txt",
+   "target": "201901241712102508.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201806251805405008.pdf.en.txt",
+   "target": "201807161610153508.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201806251805405008.pdf.en.txt",
+   "target": "201901281722589108.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201807071518175608.pdf.en.txt",
+   "target": "201803051722393708.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201807071518175608.pdf.en.txt",
+   "target": "201803051726537608.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201807071518175608.pdf.en.txt",
+   "target": "201803061234216808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201807111711477208.pdf.en.txt",
+   "target": "201812131448137008.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201807111711477208.pdf.en.txt",
+   "target": "201901241712102508.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201809271609431008.pdf.en.txt",
+   "target": "201811221642426208.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201812131448137008.pdf.en.txt",
+   "target": "201901241712102508.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201812131745105408.pdf.en.txt",
+   "target": "201807271152090208.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201812131747447608.pdf.en.txt",
+   "target": "201807271152090208.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201812131804566808.pdf.en.txt",
+   "target": "201807271152090208.pdf.en.txt",
+   "kind": "references",
+   "confidence": "resolved"
+  },
+  {
+   "source": "201902141212368208.pdf.en.txt",
+   "target": "201710261617433808.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "201902141212368208.pdf.en.txt",
+   "target": "201802071724329408.pdf.en.txt",
+   "kind": "references",
+   "confidence": "probable"
+  },
+  {
+   "source": "DEMO-2022-AsstProf-AgeLimit-Revision.pdf",
+   "target": "DEMO-2019-AsstProf-AgeLimit.pdf",
+   "kind": "supersedes",
+   "confidence": "resolved"
+  }
+ ],
+ "stats": {
+  "documents": 536,
+  "chunks": 10218,
+  "edges": 37,
+  "resolved": 10,
+  "probable": 27,
+  "supersedes": 1,
+  "connected_documents": 34,
+  "citations_outside_corpus": 38
+ }
+}

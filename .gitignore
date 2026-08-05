@@ -13,6 +13,9 @@ docs/
 gcp-key.json
 weaviate_data/
 data/*
+# The citation graph is derived from the corpus but cheap to ship and slow to rebuild
+# (a full scan of every chunk), so the deployment starts with it already populated.
+!data/citation_graph.json
 !data/docker-compose.yml
 docling_ingestion/
 CLAUDE.md

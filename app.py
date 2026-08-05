@@ -23,6 +23,7 @@ import weaviate
 import weaviate.classes as wvc
 from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
+from retrieval.graph import build_citation_graph, load_citation_graph
 from db import (
     init_db, validate_token, save_history, get_history,
     record_audit, touch_token, get_token_label, list_audit, audit_summary,
@@ -526,7 +527,46 @@ async def timeline():
 
 @app.get("/graph")
 async def graph():
-    return {"nodes": [], "edges": []}
+    """Citation graph over the corpus, from the cached build."""
+    cached = load_citation_graph()
+    if not cached:
+        return {"nodes": [], "edges": [], "stats": {}, "built_at": None,
+                "detail": "Not built yet. Rebuild it from the admin console."}
+    return cached
+
+
+@app.get("/api/admin/graph")
+async def api_admin_graph(request: Request):
+    """Same payload as /graph, but under the admin credential.
+
+    /graph is officer-facing and sits behind the officer token; the admin console holds an
+    admin token, which is deliberately not an officer token.
+    """
+    if not _is_admin(request):
+        return _FORBIDDEN
+    cached = load_citation_graph()
+    if not cached:
+        return {"nodes": [], "edges": [], "stats": {}, "built_at": None,
+                "detail": "Not built yet. Use Rebuild."}
+    return cached
+
+
+@app.post("/api/admin/graph/rebuild")
+async def api_admin_graph_rebuild(request: Request):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    if weaviate_client is None:
+        return JSONResponse({"error": "Vector store unavailable."}, status_code=503)
+    try:
+        built = await asyncio.get_running_loop().run_in_executor(
+            None, lambda: build_citation_graph(weaviate_client, "GovDocs")
+        )
+    except Exception as exc:
+        logger.error(f"Citation graph rebuild failed: {exc}")
+        return JSONResponse({"error": str(exc)[:200]}, status_code=500)
+    record_audit("graph.rebuilt", actor="Administrator", ip=_client_ip(request),
+                 detail=f"{built['stats']['edges']} edges over {built['stats']['documents']} documents")
+    return {"stats": built["stats"], "built_at": built["built_at"]}
 
 @app.get("/llm-config")
 async def llm_config():
