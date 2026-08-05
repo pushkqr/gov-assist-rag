@@ -16,6 +16,11 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
 
   caddy:
     image: caddy:2
@@ -30,7 +35,13 @@ services:
       - caddy_config:/config
     depends_on:
       - mimir
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
 
 volumes:
   caddy_data:
   caddy_config:
+

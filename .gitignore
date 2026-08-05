@@ -21,6 +21,8 @@ docling_ingestion/
 CLAUDE.md
 skills-lock.json
 mahGRs-main/
+mimir-aws-stack.yaml
+mimir-key.pem
 
 # Qdrant Database
 local_qdrant_db/

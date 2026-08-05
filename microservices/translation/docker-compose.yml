@@ -11,10 +11,24 @@ services:
     environment:
       INDICTRANS_MODEL: ${INDICTRANS_MODEL:-ai4bharat/indictrans2-indic-en-dist-200M}
       HF_HOME: /models
+      # TRANSLATE_MAX_TOKENS: 256 is the default in main.py, correct for the 200M model.
+      # The ingestion (1B) instance should override this to 512 via its .env file.
+      TRANSLATE_MAX_TOKENS: ${TRANSLATE_MAX_TOKENS:-256}
+      # TRANSLATE_TORCH_DTYPE: float32 for 200M (default). Set float16 in the 1B instance .env.
+      TRANSLATE_TORCH_DTYPE: ${TRANSLATE_TORCH_DTYPE:-float32}
     volumes:
       - model_cache:/models
     ports:
       - "127.0.0.1:8001:8000"
+    # Hard cap: prevents the PyTorch process from OOM-killing the host on t3.small (2 GB).
+    # 200M model in float32 uses ~1.2 GB; 1.8 GB leaves headroom for inference batches.
+    mem_limit: "1800m"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 volumes:
   model_cache:
+

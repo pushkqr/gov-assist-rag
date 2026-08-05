@@ -1,13 +1,3 @@
-# Embeddings and reranking. One Infinity process serves both models; the app calls
-# /embeddings for BGE-M3 vectors and /rerank for the cross-encoder.
-#
-# Standalone: no dependency on any other service directory. Point the application's
-# LOCAL_EMBED_URL / LOCAL_RERANK_URL / *_API_KEY at wherever this lands.
-#
-# The embedding model is fixed at BAAI/bge-m3 regardless of hardware. See deploy.py in this
-# directory for why: every vector already stored in the corpus is 1024-dimensional, and
-# swapping the model does not degrade quality, it makes the whole index unreadable.
-
 services:
   infinity:
     image: michaelf34/infinity:latest
@@ -18,12 +8,22 @@ services:
       - --model-id=${RERANK_MODEL:-BAAI/bge-reranker-base}
       - --port=7997
       - --api-key=${INFINITY_API_KEY:?set INFINITY_API_KEY in .env}
+      # NOTE: --engine=optimum (ONNX) is intentionally omitted.
+      # It attempts to AOT-compile both models simultaneously, which OOMs on t3.large (8 GB)
+      # before either model is ready. The default PyTorch engine is the safe choice here.
     environment:
       HF_HOME: /models
     volumes:
       - model_cache:/models
+    # Shared memory for PyTorch DataLoader workers (needed even in inference mode).
+    shm_size: '1gb'
     ports:
       - "127.0.0.1:7997:7997"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     # Runs on CPU as written. Uncomment for a GPU node; expect roughly an order of magnitude
     # improvement on rerank latency, which is the dominant cost in a query.
     # deploy:
@@ -36,3 +36,4 @@ services:
 
 volumes:
   model_cache:
+

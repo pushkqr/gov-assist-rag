@@ -11,10 +11,29 @@ services:
   generation:
     image: ollama/ollama:latest
     restart: unless-stopped
+    environment:
+      # Pin thread count to t3.xlarge physical cores. Ollama defaults to all logical
+      # (hyper-threaded) cores which causes context-switching overhead on CPU inference.
+      OLLAMA_NUM_THREADS: "4"
+      # One request at a time on CPU; parallel requests would just time-slice the cores.
+      OLLAMA_NUM_PARALLEL: "1"
+      # Keep only one model loaded; prevents unload/reload churn if Ollama ever sees
+      # multiple model names in requests.
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      # Grouped-query attention approximation - reduces memory bandwidth on CPU.
+      OLLAMA_FLASH_ATTENTION: "1"
+      # Keep the model warm for 30 min of idle. Without this, the model unloads after
+      # 5 min and the next query takes 20-30s just for weight reload on t3.xlarge.
+      OLLAMA_KEEP_ALIVE: "30m"
     volumes:
       - ollama_models:/root/.ollama
     ports:
       - "127.0.0.1:11434:11434"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
     # deploy:
     #   resources:
     #     reservations:
@@ -25,3 +44,4 @@ services:
 
 volumes:
   ollama_models:
+

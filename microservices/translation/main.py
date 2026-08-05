@@ -20,6 +20,12 @@ MODEL_NAME = os.getenv("INDICTRANS_MODEL", "ai4bharat/indictrans2-indic-en-dist-
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MAX_TOKENS = int(os.getenv("TRANSLATE_MAX_TOKENS", "256"))
 
+# float16 halves RAM usage for the 1B model (~2 GB vs ~4 GB on CPU).
+# Keep float32 for the 200M instance; it's already compact and float16 can
+# reduce translation quality on very short sequences.
+_DTYPE_MAP = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}
+TORCH_DTYPE = _DTYPE_MAP.get(os.getenv("TRANSLATE_TORCH_DTYPE", "float32"), torch.float32)
+
 app = FastAPI(title="Mimir Translation")
 
 _tokenizer = None
@@ -37,7 +43,9 @@ def _load():
     from IndicTransToolkit.processor import IndicProcessor
 
     _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
-    _model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, trust_remote_code=True).to(DEVICE)
+    _model = AutoModelForSeq2SeqLM.from_pretrained(
+        MODEL_NAME, trust_remote_code=True, torch_dtype=TORCH_DTYPE
+    ).to(DEVICE)
     _model.eval()
     _processor = IndicProcessor(inference=True)
 

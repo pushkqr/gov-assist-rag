@@ -13,8 +13,8 @@ Docker itself.
 This is the one service where hardware genuinely changes which model runs, per this table
 (see scratch/build-plan.md Phase 5 for the reasoning):
 
-    CPU, < 16GB RAM   -> qwen3:1.7b
-    CPU, >= 16GB RAM  -> qwen3:4b
+    CPU, < 15GB RAM   -> qwen3:1.7b
+    CPU, >= 15GB RAM  -> qwen3:4b
     GPU, 8-16GB VRAM  -> qwen3:8b
     GPU, > 16GB VRAM  -> qwen3:30b
 
@@ -47,7 +47,9 @@ HEALTH_URL = "http://127.0.0.1:11434/api/tags"
 
 GPU_VRAM_THRESHOLD_LARGE_MB = 16000
 GPU_VRAM_THRESHOLD_SMALL_MB = 8000
-RAM_THRESHOLD_GB = 16
+# Nominally-16GB cloud instances (e.g. AWS t3.xlarge) report less than 16 to sysconf due to
+# kernel/hypervisor reservation, so a strict >= 16 check misses them. 15 gives headroom.
+RAM_THRESHOLD_GB = 15
 
 
 def _run(cmd, **kwargs):

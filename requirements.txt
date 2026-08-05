@@ -22,6 +22,10 @@ weaviate-client>=4.5.0
 # Inference
 cerebras-cloud-sdk
 
-# HTTP (local microservice calls — embed + translation)
+# HTTP (local microservice calls - embed + translation)
 requests
 python-multipart
+
+# Async event loop and HTTP parser (drop-in uvicorn speedup ~40%; see Dockerfile CMD)
+uvloop
+httptools

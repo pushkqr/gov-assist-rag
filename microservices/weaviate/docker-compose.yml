@@ -25,11 +25,24 @@ services:
       AUTHENTICATION_APIKEY_USERS: mimir@localhost
       AUTHORIZATION_ADMINLIST_ENABLED: "true"
       AUTHORIZATION_ADMINLIST_USERS: mimir@localhost
+      # --- Performance & stability tuning ---
+      # Ingestion does not block live queries; each batch is indexed in the background.
+      ASYNC_INDEXING: "true"
+      # Hard cap Go's heap below the OOM threshold on a 4 GB instance. Without this,
+      # Weaviate will grow to fill available RAM and get OOM-killed by the kernel.
+      GOMEMLIMIT: "3500MiB"
+      # Suppress per-object verbose logs; only warnings and above reach stdout.
+      LOG_LEVEL: "warning"
     volumes:
       - weaviate_data:/var/lib/weaviate
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:50051:50051"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 volumes:
   weaviate_data:
