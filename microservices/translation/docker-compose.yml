@@ -11,6 +11,9 @@ services:
     environment:
       INDICTRANS_MODEL: ${INDICTRANS_MODEL:-ai4bharat/indictrans2-indic-en-dist-200M}
       HF_HOME: /models
+      # Both indictrans2 checkpoints are gated on HuggingFace; huggingface_hub reads this
+      # env var automatically for authenticated downloads. Set in .env, not here.
+      HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN in .env - both indictrans2 models are gated}
       # TRANSLATE_MAX_TOKENS: 256 is the default in main.py, correct for the 200M model.
       # The ingestion (1B) instance should override this to 512 via its .env file.
       TRANSLATE_MAX_TOKENS: ${TRANSLATE_MAX_TOKENS:-256}
