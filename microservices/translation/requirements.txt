@@ -2,7 +2,9 @@ fastapi
 uvicorn
 pydantic
 torch
-transformers
+# IndicTransToolkit's collator imports transformers.tokenization_utils.PreTrainedTokenizerBase,
+# which transformers 5.x removed/relocated. Pin below that break.
+transformers==4.46.3
 sentencepiece
 sacremoses
 IndicTransToolkit
