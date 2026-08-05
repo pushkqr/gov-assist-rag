@@ -136,6 +136,56 @@
     <pre id="ilog" class="mono mt-4 hidden max-h-56 overflow-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 text-[12px] leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300"></pre>
   </section>
 
+  <!-- Access log -->
+  <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Access Log</h2>
+      <span class="text-xs text-zinc-400">Append-only. Every authentication, query and corpus change</span>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Total</span>
+        <span id="auTotal" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Last 24h</span>
+        <span id="au24" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-red-500/80">Denied</span>
+        <span id="auDenied" class="mono ml-2 text-sm font-semibold text-red-600 dark:text-red-400">&mdash;</span>
+      </div>
+      <select id="auFilter" class="ml-auto rounded-xl border border-zinc-300 bg-white/50 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900/50">
+        <option value="">All events</option>
+        <option value="query">Queries</option>
+        <option value="auth.login">Officer logins</option>
+        <option value="auth.denied">Denied attempts</option>
+        <option value="admin.login">Admin logins</option>
+        <option value="token.issued">Tokens issued</option>
+        <option value="token.revoked">Tokens revoked</option>
+        <option value="document.uploaded">Uploads</option>
+        <option value="document.ingested">Ingestions</option>
+      </select>
+      <button id="auRefresh" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Refresh</button>
+    </div>
+
+    <div class="max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <table class="w-full text-left text-[12px]">
+        <thead class="sticky top-0 bg-zinc-50 dark:bg-zinc-900">
+          <tr class="text-[10px] uppercase tracking-wide text-zinc-500">
+            <th class="px-3 py-2 font-semibold">Time</th>
+            <th class="px-3 py-2 font-semibold">Event</th>
+            <th class="px-3 py-2 font-semibold">Actor</th>
+            <th class="px-3 py-2 font-semibold">Source IP</th>
+            <th class="px-3 py-2 font-semibold">Detail</th>
+          </tr>
+        </thead>
+        <tbody id="auBody"></tbody>
+      </table>
+    </div>
+  </section>
+
 </main>
 </div>
 
@@ -163,6 +213,56 @@ $('lock').onclick=()=>{sessionStorage.removeItem('mimir.admin');location.reload(
 
 function open_(){$('gate').classList.add('hidden');$('console').classList.remove('hidden');refresh();}
 
+/* ── access log ───────────────────────────────────────── */
+// Timestamps are stored UTC ISO; render them relative so an officer's last activity is
+// readable at a glance without anyone doing timezone arithmetic on stage.
+function rel(iso){
+  if(!iso)return 'unknown';
+  const t=Date.parse(iso.endsWith('Z')||/[+-]\d\d:\d\d$/.test(iso)?iso:iso+'Z');
+  if(isNaN(t))return 'unknown';
+  const s=Math.max(0,(Date.now()-t)/1000);
+  if(s<60)return 'just now';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  if(s<2592000)return Math.floor(s/86400)+'d ago';
+  return new Date(t).toISOString().slice(0,10);
+}
+const EV={
+  'auth.login':['Officer login','bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'],
+  'admin.login':['Admin login','bg-violet-500/10 text-violet-600 dark:text-violet-400'],
+  'auth.denied':['Denied','bg-red-500/10 text-red-600 dark:text-red-400'],
+  'query':['Query','bg-zinc-500/10 text-zinc-600 dark:text-zinc-300'],
+  'token.issued':['Token issued','bg-amber-500/10 text-amber-600 dark:text-amber-400'],
+  'token.renamed':['Token renamed','bg-amber-500/10 text-amber-600 dark:text-amber-400'],
+  'token.revoked':['Token revoked','bg-red-500/10 text-red-600 dark:text-red-400'],
+  'document.uploaded':['Upload','bg-blue-500/10 text-blue-600 dark:text-blue-400'],
+  'document.ingested':['Ingestion','bg-blue-500/10 text-blue-600 dark:text-blue-400']};
+
+async function loadAudit(){
+  const body=$('auBody');
+  try{
+    const ev=$('auFilter').value;
+    const d=await(await api('/api/admin/audit?limit=200'+(ev?'&event='+encodeURIComponent(ev):''))).json();
+    const s=d.summary||{};
+    $('auTotal').textContent=(s.total||0).toLocaleString();
+    $('au24').textContent=(s.last_24h||0).toLocaleString();
+    $('auDenied').textContent=(s.denied||0).toLocaleString();
+    const rows=d.entries||[];
+    if(!rows.length){body.innerHTML='<tr><td colspan="5" class="px-3 py-6 text-center text-zinc-400">No activity recorded yet.</td></tr>';return;}
+    body.innerHTML=rows.map(r=>{
+      const m=EV[r.event]||[r.event,'bg-zinc-500/10 text-zinc-500'];
+      return `<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="whitespace-nowrap px-3 py-2 text-zinc-500">${esc(rel(r.ts))}</td>
+        <td class="whitespace-nowrap px-3 py-2"><span class="rounded-md px-2 py-0.5 text-[11px] font-medium ${m[1]}">${esc(m[0])}</span></td>
+        <td class="whitespace-nowrap px-3 py-2">${esc(r.actor||'\u2014')}</td>
+        <td class="mono whitespace-nowrap px-3 py-2 text-zinc-500">${esc(r.ip||'\u2014')}</td>
+        <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400"><div class="max-w-md truncate" title="${esc(r.detail||'')}">${esc(r.detail||'')}</div></td>
+      </tr>`;}).join('');
+  }catch(_){body.innerHTML='<tr><td colspan="5" class="px-3 py-6 text-center text-red-500">Could not load the access log.</td></tr>';}
+}
+$('auFilter').onchange=loadAudit;
+$('auRefresh').onclick=loadAudit;
+
 /* ── stats + tokens ───────────────────────────────────── */
 async function refresh(){
   try{
@@ -173,6 +273,7 @@ async function refresh(){
     $('stOfficers').textContent=s.officers;
   }catch(_){}
   loadTokens();
+  loadAudit();
 }
 
 async function loadTokens(){
@@ -187,6 +288,7 @@ async function loadTokens(){
         <div class="min-w-0 flex-1">
           <div class="truncate text-sm font-medium">${esc(t.label||'Unnamed')}</div>
           <div class="mono truncate text-[11px] text-zinc-400">${esc(t.token_hash.slice(0,24))}...</div>
+          <div class="truncate text-[11px] text-zinc-400">issued ${rel(t.created_at)} &middot; ${t.last_used_at?('last used '+rel(t.last_used_at)):'<span class="text-zinc-400">never used</span>'}</div>
         </div>
         <button data-act="rename" data-h="${esc(t.token_hash)}" data-l="${esc(t.label||'')}" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Rename</button>
         <button data-act="revoke" data-h="${esc(t.token_hash)}" data-l="${esc(t.label||'')}" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-red-600 transition hover:border-red-500 dark:border-zinc-700 dark:text-red-400">Revoke</button>

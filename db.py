@@ -2,14 +2,26 @@ import sqlite3
 import json
 import hashlib
 import secrets
+from datetime import datetime, timezone
+from typing import Optional
 
 DB_PATH = "mimir_portal.db"
+
 
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
+
+def _connect():
+    return sqlite3.connect(DB_PATH)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS tokens (
@@ -23,24 +35,52 @@ def init_db():
             history_json TEXT NOT NULL
         )
     ''')
-    
+
+    # Additive migrations: the deployed database predates these columns and holds live
+    # tokens, so it is widened in place rather than recreated.
+    existing = {row[1] for row in c.execute("PRAGMA table_info(tokens)")}
+    if "created_at" not in existing:
+        c.execute("ALTER TABLE tokens ADD COLUMN created_at TEXT")
+    if "last_used_at" not in existing:
+        c.execute("ALTER TABLE tokens ADD COLUMN last_used_at TEXT")
+
+    # Append-only access log. Deliberately stores the token label and a short hash prefix
+    # rather than the token itself, so the trail stays useful for answering "who saw what"
+    # without becoming a second place credentials can leak from.
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,
+            actor TEXT,
+            actor_ref TEXT,
+            event TEXT NOT NULL,
+            ip TEXT,
+            detail TEXT
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit(ts DESC)")
+
     seed_tokens = [
         ("OFFICER-TOKEN-1", "Officer 1"),
         ("OFFICER-TOKEN-2", "Officer 2")
     ]
-    
+
     for raw_token, label in seed_tokens:
         t_hash = hash_token(raw_token)
         c.execute("SELECT token_hash FROM tokens WHERE token_hash=?", (t_hash,))
         if not c.fetchone():
-            c.execute("INSERT INTO tokens (token_hash, label) VALUES (?, ?)", (t_hash, label))
-            
+            c.execute(
+                "INSERT INTO tokens (token_hash, label, created_at) VALUES (?, ?, ?)",
+                (t_hash, label, _now()),
+            )
+
     conn.commit()
     conn.close()
 
+
 def validate_token(token: str) -> bool:
     """Returns True if the token exists in the DB."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     t_hash = hash_token(token)
     c.execute("SELECT token_hash FROM tokens WHERE token_hash=?", (t_hash,))
@@ -48,8 +88,89 @@ def validate_token(token: str) -> bool:
     conn.close()
     return bool(row)
 
+
+def get_token_label(token: str) -> Optional[str]:
+    """Resolve a raw token to its label so the audit trail can name the actor."""
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("SELECT label FROM tokens WHERE token_hash=?", (hash_token(token),))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def touch_token(token: str) -> Optional[str]:
+    """Stamp last_used_at and return the label, or None when the token is unknown."""
+    conn = _connect()
+    c = conn.cursor()
+    t_hash = hash_token(token)
+    c.execute("UPDATE tokens SET last_used_at=? WHERE token_hash=?", (_now(), t_hash))
+    updated = c.rowcount
+    label = None
+    if updated:
+        c.execute("SELECT label FROM tokens WHERE token_hash=?", (t_hash,))
+        row = c.fetchone()
+        label = row[0] if row else None
+    conn.commit()
+    conn.close()
+    return label
+
+
+def record_audit(event: str, actor: Optional[str] = None, ip: Optional[str] = None,
+                 detail: Optional[str] = None, token: Optional[str] = None) -> None:
+    """Append one access-log entry. Never raises: auditing must not break the request."""
+    try:
+        actor_ref = hash_token(token)[:12] if token else None
+        conn = _connect()
+        conn.execute(
+            "INSERT INTO audit (ts, actor, actor_ref, event, ip, detail) VALUES (?, ?, ?, ?, ?, ?)",
+            (_now(), actor, actor_ref, event, ip, (detail or "")[:500]),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+def list_audit(limit: int = 200, event: Optional[str] = None) -> list:
+    conn = _connect()
+    c = conn.cursor()
+    if event:
+        c.execute(
+            "SELECT ts, actor, actor_ref, event, ip, detail FROM audit WHERE event=? ORDER BY id DESC LIMIT ?",
+            (event, limit),
+        )
+    else:
+        c.execute(
+            "SELECT ts, actor, actor_ref, event, ip, detail FROM audit ORDER BY id DESC LIMIT ?",
+            (limit,),
+        )
+    rows = c.fetchall()
+    conn.close()
+    return [
+        {"ts": r[0], "actor": r[1], "actor_ref": r[2], "event": r[3], "ip": r[4], "detail": r[5]}
+        for r in rows
+    ]
+
+
+def audit_summary() -> dict:
+    """Counts for the admin panel header."""
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM audit")
+    total = c.fetchone()[0]
+    # strftime, not datetime(): datetime() yields "YYYY-MM-DD HH:MM:SS" while ts is ISO with a
+    # 'T', and 'T' sorts above ' ', so the space form would match every row ever written.
+    c.execute("SELECT COUNT(*) FROM audit WHERE ts >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-1 day')")
+    last_day = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM audit WHERE event='auth.denied'")
+    denied = c.fetchone()[0]
+    conn.close()
+    return {"total": total, "last_24h": last_day, "denied": denied}
+
+
 def save_history(user_id: str, history_list: list):
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     history_json = json.dumps(history_list)
     c.execute('''
@@ -60,8 +181,9 @@ def save_history(user_id: str, history_list: list):
     conn.commit()
     conn.close()
 
+
 def get_history(user_id: str) -> list:
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     c.execute("SELECT history_json FROM history WHERE user_id=?", (user_id,))
     row = c.fetchone()
@@ -75,24 +197,32 @@ def generate_officer_token(label: str) -> str:
     """Generates a new token, hashes it, stores it, and returns the raw token."""
     raw_token = f"OFFICER-{secrets.token_hex(8).upper()}"
     t_hash = hash_token(raw_token)
-    
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = _connect()
     c = conn.cursor()
-    c.execute("INSERT INTO tokens (token_hash, label) VALUES (?, ?)", (t_hash, label))
+    c.execute(
+        "INSERT INTO tokens (token_hash, label, created_at) VALUES (?, ?, ?)",
+        (t_hash, label, _now()),
+    )
     conn.commit()
     conn.close()
     return raw_token
 
+
 def list_tokens() -> list:
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
-    c.execute("SELECT token_hash, label FROM tokens")
+    c.execute("SELECT token_hash, label, created_at, last_used_at FROM tokens")
     rows = c.fetchall()
     conn.close()
-    return [{"token_hash": r[0], "label": r[1]} for r in rows]
+    return [
+        {"token_hash": r[0], "label": r[1], "created_at": r[2], "last_used_at": r[3]}
+        for r in rows
+    ]
+
 
 def update_token_label(token_hash: str, new_label: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     c.execute("UPDATE tokens SET label=? WHERE token_hash=?", (new_label, token_hash))
     rows_affected = c.rowcount
@@ -100,8 +230,9 @@ def update_token_label(token_hash: str, new_label: str) -> bool:
     conn.close()
     return rows_affected > 0
 
+
 def delete_token(token_hash: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     c = conn.cursor()
     c.execute("DELETE FROM tokens WHERE token_hash=?", (token_hash,))
     rows_affected = c.rowcount

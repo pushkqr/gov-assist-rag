@@ -23,7 +23,10 @@ import weaviate
 import weaviate.classes as wvc
 from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
-from db import init_db, validate_token, save_history, get_history
+from db import (
+    init_db, validate_token, save_history, get_history,
+    record_audit, touch_token, get_token_label, list_audit, audit_summary,
+)
 import ipaddress
 
 logger = logging.getLogger(__name__)
@@ -64,6 +67,19 @@ def _is_in_authorized_subnet(host: str) -> bool:
     except ValueError:
         return False
 
+def _client_ip(request: Request) -> str:
+    """Real client address. Caddy terminates TLS, so request.client is the proxy."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else ""
+
+
+def _bearer(request: Request) -> str:
+    header = request.headers.get("authorization", "")
+    return header[len("Bearer "):].strip() if header.startswith("Bearer ") else ""
+
+
 def _is_authenticated(request: Request) -> bool:
     h = request.headers.get("authorization", "")
     if not h.startswith("Bearer "): return False
@@ -90,12 +106,14 @@ async def _auth_gate(request: Request, call_next):
             client_host = request.client.host if request.client else ""
 
         if not _is_in_authorized_subnet(client_host):
+            record_audit("auth.denied", ip=client_host, detail=f"subnet block on {path}")
             return JSONResponse({
                 "detail": "Network Access Denied. Device is outside authorized government intranet."
             }, status_code=403)
 
         if _AUTH_TOKEN and not is_admin_api:
             if not _is_authenticated(request):
+                record_audit("auth.denied", ip=client_host, detail=f"invalid token on {path}")
                 return JSONResponse({"detail": "Unauthorized — provide the access token."}, status_code=401)
 
     return await call_next(request)
@@ -141,9 +159,13 @@ class LoginRequest(BaseModel):
     token: str
 
 @app.post("/api/login")
-async def api_login(req: LoginRequest):
-    if not validate_token(req.token):
+async def api_login(req: LoginRequest, request: Request):
+    ip = _client_ip(request)
+    label = touch_token(req.token)
+    if label is None:
+        record_audit("auth.denied", ip=ip, detail="officer login rejected")
         return JSONResponse({"error": "Invalid Officer Token."}, status_code=401)
+    record_audit("auth.login", actor=label, ip=ip, token=req.token, detail="officer login")
     return {"token": req.token}
 
 class HistorySaveRequest(BaseModel):
@@ -183,6 +205,8 @@ async def api_admin_create_token(req: TokenCreateRequest, request: Request):
         
     from db import generate_officer_token
     new_token = generate_officer_token(req.label)
+    record_audit("token.issued", actor="Administrator", ip=_client_ip(request),
+                 detail=f"issued token for '{req.label}'")
     return {"token": new_token, "label": req.label}
 
 class TokenUpdateRequest(BaseModel):
@@ -195,6 +219,8 @@ async def api_admin_update_token(token_hash: str, req: TokenUpdateRequest, reque
         return JSONResponse({"error": "Admin access required."}, status_code=403)
     from db import update_token_label
     if update_token_label(token_hash, req.label):
+        record_audit("token.renamed", actor="Administrator", ip=_client_ip(request),
+                     detail=f"{token_hash[:12]} renamed to '{req.label}'")
         return {"status": "ok"}
     return JSONResponse({"error": "Token not found."}, status_code=404)
 
@@ -205,6 +231,8 @@ async def api_admin_delete_token(token_hash: str, request: Request):
         return JSONResponse({"error": "Admin access required."}, status_code=403)
     from db import delete_token
     if delete_token(token_hash):
+        record_audit("token.revoked", actor="Administrator", ip=_client_ip(request),
+                     detail=f"revoked {token_hash[:12]}")
         return {"status": "ok"}
     return JSONResponse({"error": "Token not found."}, status_code=404)
 
@@ -228,9 +256,12 @@ async def serve_admin(request: Request):
 
 
 @app.post("/api/admin/login")
-async def api_admin_login(req: LoginRequest):
+async def api_admin_login(req: LoginRequest, request: Request):
+    ip = _client_ip(request)
     if not _ADMIN_TOKEN or not hmac.compare_digest(req.token.strip(), _ADMIN_TOKEN):
+        record_audit("auth.denied", ip=ip, detail="admin login rejected")
         return JSONResponse({"error": "Invalid admin token."}, status_code=401)
+    record_audit("admin.login", actor="Administrator", ip=ip, detail="admin console unlocked")
     return {"token": req.token.strip()}
 
 
@@ -262,6 +293,16 @@ async def api_admin_stats(request: Request):
     return stats
 
 
+@app.get("/api/admin/audit")
+async def api_admin_audit(request: Request, limit: int = 200, event: str = ""):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    return {
+        "entries": list_audit(limit=max(1, min(limit, 500)), event=(event or None)),
+        "summary": audit_summary(),
+    }
+
+
 @app.post("/api/admin/upload")
 async def api_admin_upload(request: Request, file: UploadFile = File(...)):
     if not _is_admin(request):
@@ -274,6 +315,8 @@ async def api_admin_upload(request: Request, file: UploadFile = File(...)):
         return JSONResponse({"error": "Empty file."}, status_code=400)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     (DOCS_DIR / name).write_bytes(data)
+    record_audit("document.uploaded", actor="Administrator", ip=_client_ip(request),
+                 detail=f"{name} ({len(data)} bytes)")
     return {"filename": name, "bytes": len(data)}
 
 
@@ -311,6 +354,8 @@ async def api_admin_ingest(req: IngestRequest, request: Request):
     name = os.path.basename(req.filename or "").strip()
     if not (DOCS_DIR / name).is_file():
         return JSONResponse({"error": f"{name} not found in docs."}, status_code=404)
+    record_audit("document.ingested", actor="Administrator", ip=_client_ip(request),
+                 detail=f"ingestion started for {name}")
     threading.Thread(target=_ingest_job, args=(name,), daemon=True).start()
     return {"status": "started", "filename": name}
 
@@ -392,6 +437,11 @@ async def ask_stream(request: Request):
 
     if not query:
         return JSONResponse({"error": "Empty query"}, status_code=400)
+
+    # Logged before retrieval runs, so an interrupted or failed query still leaves a trace.
+    _token = _bearer(request)
+    record_audit("query", actor=(get_token_label(_token) if _token else None),
+                 ip=_client_ip(request), token=(_token or None), detail=query)
 
     formatted_history = []
     for msg in history:
