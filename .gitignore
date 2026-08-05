@@ -74,3 +74,6 @@ pip-delete-this-directory.txt
 ehthumbs.db
 Thumbs.db
 *.db
+
+# Staged uploads awaiting review; contents are transient by design.
+quarantine/

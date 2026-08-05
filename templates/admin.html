@@ -158,6 +158,19 @@
     </div>
 
     <pre id="ilog" class="mono mt-4 hidden max-h-56 overflow-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 text-[12px] leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300"></pre>
+
+    <div class="mt-6 border-t border-zinc-200 pt-5 dark:border-zinc-800">
+      <div class="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-sm font-semibold">Quarantine</h3>
+        <span class="text-xs text-zinc-400">Uploads stage here and are not searchable until promoted</span>
+      </div>
+      <p class="mb-3 text-[12px] text-zinc-500 dark:text-zinc-400">
+        An uploaded document is indexed into a separate collection. Officers querying the
+        portal cannot see it. Promoting copies it into the live corpus; discarding removes it
+        entirely. Both actions are recorded in the access log.
+      </p>
+      <div id="qList" class="space-y-2"></div>
+    </div>
   </section>
 
   <!-- Citation graph -->
@@ -305,6 +318,38 @@ async function loadTopology(){
 }
 $('topoRefresh').onclick=loadTopology;
 
+/* ── quarantine ───────────────────────────────────────── */
+async function loadQuarantine(){
+  const box=$('qList');
+  try{
+    const d=await(await api('/api/admin/quarantine')).json();
+    const list=d.documents||[];
+    if(!list.length){box.innerHTML='<p class="py-3 text-center text-[12px] text-zinc-400">Nothing staged. Uploads appear here for review.</p>';return;}
+    box.innerHTML=list.map(f=>`
+      <div class="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-2.5">
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-sm font-medium">${esc(f.filename)}</div>
+          <div class="text-[11px] text-zinc-500">${f.chunks} chunk${f.chunks===1?'':'s'} indexed${f.bytes?' &middot; '+(f.bytes/1024).toFixed(0)+' KB':''} &middot; not searchable</div>
+        </div>
+        <button data-q="promote" data-f="${esc(f.filename)}" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-400">Promote</button>
+        <button data-q="discard" data-f="${esc(f.filename)}" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-red-600 transition hover:border-red-500 dark:border-zinc-700 dark:text-red-400">Discard</button>
+      </div>`).join('');
+  }catch(_){box.innerHTML='<p class="py-3 text-center text-[12px] text-red-500">Could not load quarantine.</p>';}
+}
+
+$('qList').onclick=async e=>{
+  const b=e.target.closest('button[data-q]');if(!b)return;
+  const act=b.dataset.q,f=b.dataset.f;
+  if(act==='discard'&&!confirm(`Discard ${f}? Its chunks are deleted and it never enters the corpus.`))return;
+  const og=b.textContent;b.textContent=act==='promote'?'Promoting...':'Discarding...';b.disabled=true;
+  try{
+    const r=await api('/api/admin/quarantine/'+act,{method:'POST',body:JSON.stringify({filename:f})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Failed.');
+    await loadQuarantine();refresh();
+  }catch(ex){alert(ex.message);b.textContent=og;b.disabled=false;}
+};
+
 /* ── citation graph ───────────────────────────────────── */
 // Circular layout rather than force-directed: the graph is small and sparse, and a static
 // deterministic layout is easier to read and to point at than a settling simulation.
@@ -425,6 +470,7 @@ async function refresh(){
   loadAudit();
   loadTopology();
   loadGraph();
+  loadQuarantine();
 }
 
 async function loadTokens(){

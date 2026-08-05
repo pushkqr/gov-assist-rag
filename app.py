@@ -24,6 +24,7 @@ import weaviate.classes as wvc
 from core.utils import get_genai_client, get_cerebras_client, get_weaviate_client
 from retrieval import run_retrieval
 from retrieval.graph import build_citation_graph, load_citation_graph
+from core.schema import ensure_collection, CORPUS_COLLECTION, QUARANTINE_COLLECTION
 from db import (
     init_db, validate_token, save_history, get_history,
     record_audit, touch_token, get_token_label, list_audit, audit_summary,
@@ -37,6 +38,7 @@ app = FastAPI(title="Mimir")
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 DOCS_DIR = BASE_DIR / "docs"
+QUARANTINE_DIR = BASE_DIR / "quarantine"
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
@@ -413,6 +415,135 @@ async def api_admin_topology(request: Request):
     }
 
 
+_CHUNK_PROPERTIES = [
+    "translated_text", "child_text", "parent_context", "document_title",
+    "doc_number", "year", "issuing_authority", "document_category",
+    "source_filename", "supersedes", "references",
+]
+
+
+def _quarantine_chunks(filename: str):
+    """Every chunk of one quarantined document, vectors included so promotion can copy them.
+
+    Filtered client-side. Quarantine holds at most a handful of documents, and a filtered
+    server-side query cannot return vectors through the same call.
+    """
+    collection = weaviate_client.collections.get(QUARANTINE_COLLECTION)
+    return [
+        obj for obj in collection.iterator(include_vector=True, return_properties=_CHUNK_PROPERTIES)
+        if (obj.properties or {}).get("source_filename") == filename
+    ]
+
+
+@app.get("/api/admin/quarantine")
+async def api_admin_quarantine(request: Request):
+    """Documents staged but not yet part of the corpus."""
+    if not _is_admin(request):
+        return _FORBIDDEN
+
+    staged = {}
+    if QUARANTINE_DIR.exists():
+        for path in sorted(QUARANTINE_DIR.glob("*.pdf")):
+            staged[path.name] = {"filename": path.name, "bytes": path.stat().st_size, "chunks": 0}
+
+    try:
+        if weaviate_client is not None and weaviate_client.collections.exists(QUARANTINE_COLLECTION):
+            collection = weaviate_client.collections.get(QUARANTINE_COLLECTION)
+            for obj in collection.iterator(return_properties=["source_filename"]):
+                name = (obj.properties or {}).get("source_filename")
+                if name in staged:
+                    staged[name]["chunks"] += 1
+                elif name:
+                    staged[name] = {"filename": name, "bytes": None, "chunks": 1}
+    except Exception as exc:
+        logger.warning(f"Could not count quarantined chunks: {exc}")
+
+    return {"documents": list(staged.values())}
+
+
+class QuarantineAction(BaseModel):
+    filename: str
+
+
+@app.post("/api/admin/quarantine/promote")
+async def api_admin_quarantine_promote(req: QuarantineAction, request: Request):
+    """Copy a reviewed document's chunks into the live corpus.
+
+    Copies the stored vectors rather than re-running ingestion: re-embedding would cost
+    another pass over the embedding service and could produce slightly different vectors
+    than the ones an administrator actually reviewed.
+    """
+    if not _is_admin(request):
+        return _FORBIDDEN
+    if weaviate_client is None:
+        return JSONResponse({"error": "Vector store unavailable."}, status_code=503)
+
+    name = os.path.basename(req.filename or "").strip()
+    if not name:
+        return JSONResponse({"error": "No filename given."}, status_code=400)
+
+    try:
+        chunks = _quarantine_chunks(name)
+        if not chunks:
+            return JSONResponse({"error": f"No indexed chunks found for {name}."}, status_code=404)
+
+        ensure_collection(weaviate_client, CORPUS_COLLECTION)
+        corpus = weaviate_client.collections.get(CORPUS_COLLECTION)
+        with corpus.batch.dynamic() as batch:
+            for obj in chunks:
+                vector = obj.vector.get("default") if isinstance(obj.vector, dict) else obj.vector
+                batch.add_object(properties=obj.properties, vector=vector)
+
+        quarantine = weaviate_client.collections.get(QUARANTINE_COLLECTION)
+        quarantine.data.delete_many(
+            where=wvc.query.Filter.by_property("source_filename").equal(name)
+        )
+
+        staged_file = QUARANTINE_DIR / name
+        if staged_file.is_file():
+            DOCS_DIR.mkdir(parents=True, exist_ok=True)
+            staged_file.replace(DOCS_DIR / name)
+    except Exception as exc:
+        logger.error(f"Promotion failed for {name}: {exc}")
+        return JSONResponse({"error": str(exc)[:200]}, status_code=500)
+
+    record_audit("document.promoted", actor="Administrator", ip=_client_ip(request),
+                 detail=f"{name} promoted to corpus ({len(chunks)} chunks)")
+    return {"status": "promoted", "filename": name, "chunks": len(chunks)}
+
+
+@app.post("/api/admin/quarantine/discard")
+async def api_admin_quarantine_discard(req: QuarantineAction, request: Request):
+    """Drop a staged document and its chunks without it ever reaching the corpus."""
+    if not _is_admin(request):
+        return _FORBIDDEN
+    if weaviate_client is None:
+        return JSONResponse({"error": "Vector store unavailable."}, status_code=503)
+
+    name = os.path.basename(req.filename or "").strip()
+    if not name:
+        return JSONResponse({"error": "No filename given."}, status_code=400)
+
+    removed = 0
+    try:
+        if weaviate_client.collections.exists(QUARANTINE_COLLECTION):
+            quarantine = weaviate_client.collections.get(QUARANTINE_COLLECTION)
+            result = quarantine.data.delete_many(
+                where=wvc.query.Filter.by_property("source_filename").equal(name)
+            )
+            removed = getattr(result, "successful", 0) or 0
+        staged_file = QUARANTINE_DIR / name
+        if staged_file.is_file():
+            staged_file.unlink()
+    except Exception as exc:
+        logger.error(f"Discard failed for {name}: {exc}")
+        return JSONResponse({"error": str(exc)[:200]}, status_code=500)
+
+    record_audit("document.discarded", actor="Administrator", ip=_client_ip(request),
+                 detail=f"{name} discarded from quarantine ({removed} chunks)")
+    return {"status": "discarded", "filename": name, "chunks": removed}
+
+
 @app.get("/api/admin/audit")
 async def api_admin_audit(request: Request, limit: int = 200, event: str = ""):
     if not _is_admin(request):
@@ -433,25 +564,31 @@ async def api_admin_upload(request: Request, file: UploadFile = File(...)):
     data = await file.read()
     if not data:
         return JSONResponse({"error": "Empty file."}, status_code=400)
-    DOCS_DIR.mkdir(parents=True, exist_ok=True)
-    (DOCS_DIR / name).write_bytes(data)
+    # Uploads land in quarantine, never straight into the corpus. Whoever operates the console
+    # is trusted to run it, not trusted to have verified the document, and an unreviewed file
+    # silently joining the corpus would be indistinguishable from an authentic circular.
+    QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
+    (QUARANTINE_DIR / name).write_bytes(data)
     record_audit("document.uploaded", actor="Administrator", ip=_client_ip(request),
-                 detail=f"{name} ({len(data)} bytes)")
-    return {"filename": name, "bytes": len(data)}
+                 detail=f"{name} ({len(data)} bytes) to quarantine")
+    return {"filename": name, "bytes": len(data), "staged": "quarantine"}
 
 
 def _ingest_job(filename: str):
-    _ingest.update(running=True, file=filename, log=[f"Starting ingestion of {filename}"], error=None, finished_at=None)
+    _ingest.update(running=True, file=filename, log=[f"Starting ingestion of {filename} into quarantine"],
+                   error=None, finished_at=None)
     try:
         from ingestion import run_ingestion
+        ensure_collection(weaviate_client, QUARANTINE_COLLECTION)
         records = run_ingestion(
             gemini_client,
             weaviate_client=weaviate_client,
-            collection_name="GovDocs",
-            docs_dir=str(DOCS_DIR),
+            collection_name=QUARANTINE_COLLECTION,
+            docs_dir=str(QUARANTINE_DIR),
             target_files=[filename],
         )
-        _ingest["log"].append(f"Indexed {len(records)} chunks from {filename}")
+        _ingest["log"].append(f"Indexed {len(records)} chunks from {filename} into quarantine")
+        _ingest["log"].append("Review it, then Promote to add it to the live corpus.")
     except Exception as e:
         logger.error(f"Ingestion failed for {filename}: {e}")
         _ingest["error"] = str(e)
@@ -472,10 +609,10 @@ async def api_admin_ingest(req: IngestRequest, request: Request):
     if _ingest["running"]:
         return JSONResponse({"error": f"Ingestion already running for {_ingest['file']}."}, status_code=409)
     name = os.path.basename(req.filename or "").strip()
-    if not (DOCS_DIR / name).is_file():
-        return JSONResponse({"error": f"{name} not found in docs."}, status_code=404)
+    if not (QUARANTINE_DIR / name).is_file():
+        return JSONResponse({"error": f"{name} not found in quarantine."}, status_code=404)
     record_audit("document.ingested", actor="Administrator", ip=_client_ip(request),
-                 detail=f"ingestion started for {name}")
+                 detail=f"ingestion started for {name} (quarantine)")
     threading.Thread(target=_ingest_job, args=(name,), daemon=True).start()
     return {"status": "started", "filename": name}
 
