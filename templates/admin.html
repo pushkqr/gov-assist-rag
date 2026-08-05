@@ -353,6 +353,58 @@
     </div>
   </section>
 
+  <!-- Query analytics -->
+  <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Query Analytics</h2>
+      <span class="text-xs text-zinc-400">Volume, latency and what officers actually cite</span>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Queries</span>
+        <span id="qaTotal" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-amber-600/80 dark:text-amber-400/80">Refusal rate</span>
+        <span id="qaRefusalRate" class="mono ml-2 text-sm font-semibold text-amber-600 dark:text-amber-400">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">p50 latency</span>
+        <span id="qaP50" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">p95 latency</span>
+        <span id="qaP95" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <select id="qaDays" class="ml-auto rounded-xl border border-zinc-300 bg-white/50 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900/50">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <button id="qaRefresh" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Refresh</button>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">Most-cited documents</div>
+        <div class="max-h-64 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <table class="w-full text-left text-[12px]">
+            <tbody id="qaDocsBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">Answers by model</div>
+        <div class="max-h-64 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <table class="w-full text-left text-[12px]">
+            <tbody id="qaModelBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
 </div>
 
@@ -388,6 +440,7 @@ async function loadTopology(){
     const d=await(await api('/api/admin/topology')).json();
     const cs=d.components||[];
     const dep=d.deployment||{};
+    const cfg=d.config||{};
     const modeChip=dep.mode==='sovereign'
       ? '<span class="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">SOVEREIGN</span>'
       : '<span class="rounded-md bg-zinc-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-500">HYBRID</span>';
@@ -396,7 +449,9 @@ async function loadTopology(){
         ? 'Generation is running on a self-hosted model, so no query text leaves the network.'
         : 'Generation is the only third-party call. Setting <code class="mono rounded bg-zinc-100 px-1 dark:bg-zinc-800">GEN_PROVIDER=local</code> moves it on-premise.')
       +` <br><span class="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">Deployment mode: ${modeChip} `
-      +`<span class="mono">ingest structuring=${esc(dep.ingest_structure||'?')} &middot; ingest translation=${esc(dep.ingest_translate||'?')} &middot; PDF OCR tier 2=${esc(dep.pdf_parse_tier2||'?')}</span></span>`;
+      +`<span class="mono">ingest structuring=${esc(dep.ingest_structure||'?')} &middot; ingest translation=${esc(dep.ingest_translate||'?')} &middot; PDF OCR tier 2=${esc(dep.pdf_parse_tier2||'?')}</span></span>`
+      +` <br><span class="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">Effective config: `
+      +`<span class="mono">collection=${esc(cfg.collection||'?')} &middot; embed=${esc(cfg.embed_model||'?')} &middot; rerank=${esc(cfg.rerank_model||'?')} &middot; generation=${esc(cfg.generation_model||'?')}</span></span>`;
     body.innerHTML=cs.map(c=>{
       const up=c.status==='up';
       const dot=up?'bg-emerald-500':'bg-red-500';
@@ -631,6 +686,36 @@ $('gpExport').onclick=()=>{
   URL.revokeObjectURL(a.href);
 };
 
+/* ── query analytics ──────────────────────────────────── */
+async function loadQueryAnalytics(){
+  const docsBody=$('qaDocsBody'),modelBody=$('qaModelBody');
+  try{
+    const days=$('qaDays').value;
+    const d=await(await api('/api/admin/query-analytics?days='+encodeURIComponent(days))).json();
+    $('qaTotal').textContent=(d.total||0).toLocaleString();
+    $('qaRefusalRate').textContent=d.refusal_rate_pct==null?'—':d.refusal_rate_pct+'%';
+    $('qaP50').textContent=d.p50_latency_ms==null?'—':(d.p50_latency_ms/1000).toFixed(1)+'s';
+    $('qaP95').textContent=d.p95_latency_ms==null?'—':(d.p95_latency_ms/1000).toFixed(1)+'s';
+
+    const docs=d.top_documents||[];
+    docsBody.innerHTML=docs.length?docs.map(r=>`<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="px-3 py-2"><div class="max-w-[220px] truncate" title="${esc(r.document)}">${esc(r.document)}</div></td>
+        <td class="mono whitespace-nowrap px-3 py-2 text-right text-zinc-500">${r.count}</td>
+      </tr>`).join('') : '<tr><td class="px-3 py-6 text-center text-zinc-400">No citations recorded yet.</td></tr>';
+
+    const models=d.by_model||[];
+    modelBody.innerHTML=models.length?models.map(r=>`<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="mono px-3 py-2">${esc(r.model)}</td>
+        <td class="mono whitespace-nowrap px-3 py-2 text-right text-zinc-500">${r.count}</td>
+      </tr>`).join('') : '<tr><td class="px-3 py-6 text-center text-zinc-400">No queries recorded yet.</td></tr>';
+  }catch(_){
+    docsBody.innerHTML='<tr><td class="px-3 py-6 text-center text-red-500">Could not load analytics.</td></tr>';
+    modelBody.innerHTML='';
+  }
+}
+$('qaDays').onchange=loadQueryAnalytics;
+$('qaRefresh').onclick=loadQueryAnalytics;
+
 /* ── stats + tokens ───────────────────────────────────── */
 async function refresh(){
   try{
@@ -644,6 +729,7 @@ async function refresh(){
   loadAudit();
   loadFeedback();
   loadGaps();
+  loadQueryAnalytics();
   loadTopology();
   loadGraph();
   loadQuarantine();

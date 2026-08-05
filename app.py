@@ -35,7 +35,7 @@ from db import (
     init_db, validate_token, save_history, get_history,
     record_audit, touch_token, get_token_label, list_audit, audit_summary,
     record_feedback, list_feedback, feedback_summary, import_legacy_feedback,
-    record_query_outcome, list_gaps, gaps_summary,
+    record_query_outcome, list_gaps, gaps_summary, query_analytics,
 )
 from core.outcome import classify_outcome, normalize_query
 from core.health import component_list, probe as health_probe
@@ -342,6 +342,15 @@ async def api_admin_topology(request: Request):
         "third_party": sum(1 for c in components if c["hosting"] != "self"),
         "generation_provider": "local" if local_gen else "cerebras",
         "deployment": deployment.summary(),
+        # Effective configuration, so an administrator can confirm what's actually running
+        # without SSH. Model names only, never keys/URLs with embedded credentials.
+        "config": {
+            "collection": ACTIVE_COLLECTION,
+            "embed_model": os.getenv("LOCAL_EMBED_MODEL_NAME", "BAAI/bge-m3"),
+            "rerank_model": os.getenv("LOCAL_RERANK_MODEL_NAME", "BAAI/bge-reranker-base"),
+            "generation_model": (os.getenv("LOCAL_GEN_MODEL", "qwen3:4b") if local_gen
+                                else os.getenv("CEREBRAS_MODELS", "gpt-oss-120b,gemma-4-31b")),
+        },
     }
 
 
@@ -741,11 +750,12 @@ async def ask_stream(request: Request):
             metrics["total_s"] = round(time.perf_counter() - _t_start, 3)
 
             outcome = classify_outcome("".join(full_answer), len(evidence))
+            cited_docs = list({e.get("document") for e in evidence if e.get("document")})
             record_query_outcome(
                 query=query, query_norm=normalize_query(query), outcome=outcome,
                 actor=(get_token_label(_token) if _token else None), token=(_token or None),
                 model=metrics.get("model"), latency_ms=round(metrics.get("total_s", 0) * 1000),
-                evidence_count=len(evidence),
+                evidence_count=len(evidence), citations=(cited_docs or None),
             )
 
             yield json.dumps({
@@ -811,6 +821,16 @@ async def api_admin_gaps(request: Request, limit: int = 100, days: int = 30):
         "groups": list_gaps(limit=max(1, min(limit, 500)), days=max(1, min(days, 365))),
         "summary": gaps_summary(days=max(1, min(days, 365))),
     }
+
+
+@app.get("/api/admin/query-analytics")
+async def api_admin_query_analytics(request: Request, days: int = 30):
+    """Volume, refusal rate, latency percentiles and most-cited documents. The operational
+    counterpart to /api/admin/gaps: that answers what's missing, this answers how the system
+    is actually performing and what it gets used for."""
+    if not _is_admin(request):
+        return _FORBIDDEN
+    return query_analytics(days=max(1, min(days, 365)))
 
 
 class SummarizeRequest(BaseModel):

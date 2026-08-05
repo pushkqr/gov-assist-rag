@@ -100,6 +100,13 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_query_log_norm ON query_log(query_norm)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_query_log_outcome ON query_log(outcome)")
 
+    # Additive: citations weren't tracked when query_log was first added (Phase 4 only needed
+    # outcome/query_norm for gap analysis). Phase 7's "most-cited documents" needs document
+    # identity per query, not just a count, so this widens the existing table in place.
+    existing_ql = {row[1] for row in c.execute("PRAGMA table_info(query_log)")}
+    if "citations" not in existing_ql:
+        c.execute("ALTER TABLE query_log ADD COLUMN citations TEXT")
+
     seed_tokens = [
         ("OFFICER-TOKEN-1", "Officer 1"),
         ("OFFICER-TOKEN-2", "Officer 2")
@@ -311,6 +318,7 @@ def record_query_outcome(
     query: str, query_norm: str, outcome: str, actor: Optional[str] = None,
     token: Optional[str] = None, model: Optional[str] = None,
     latency_ms: Optional[int] = None, evidence_count: Optional[int] = None,
+    citations: Optional[list] = None,
 ) -> None:
     """Log one query's classification. Best-effort like record_audit: a query having already
     streamed its answer to the officer by the time this runs, a logging failure here must not
@@ -320,14 +328,65 @@ def record_query_outcome(
         conn = _connect()
         conn.execute(
             """INSERT INTO query_log (ts, actor, actor_ref, query, query_norm, outcome, model,
-                                       latency_ms, evidence_count)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (_now(), actor, actor_ref, query, query_norm, outcome, model, latency_ms, evidence_count),
+                                       latency_ms, evidence_count, citations)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (_now(), actor, actor_ref, query, query_norm, outcome, model, latency_ms, evidence_count,
+             json.dumps(citations) if citations else None),
         )
         conn.commit()
         conn.close()
     except Exception:
         pass
+
+
+def query_analytics(days: int = 30) -> dict:
+    """Volume, refusal rate, latency percentiles and most-cited documents over a window.
+    Phase 7: the operational counterpart to list_gaps - that answers "what's missing",
+    this answers "how is the system actually performing and what does it get used for".
+    """
+    conn = _connect()
+    c = conn.cursor()
+    since = f"strftime('%Y-%m-%dT%H:%M:%S', 'now', '-{int(days)} day')"
+
+    c.execute(f"SELECT COUNT(*), SUM(CASE WHEN outcome='refused' THEN 1 ELSE 0 END) "
+             f"FROM query_log WHERE ts >= {since}")
+    total, refused = c.fetchone()
+    total, refused = total or 0, refused or 0
+
+    c.execute(f"SELECT latency_ms FROM query_log WHERE ts >= {since} AND latency_ms IS NOT NULL "
+             f"ORDER BY latency_ms")
+    latencies = [r[0] for r in c.fetchall()]
+
+    def _percentile(values, pct):
+        if not values:
+            return None
+        idx = min(len(values) - 1, int(round((pct / 100.0) * (len(values) - 1))))
+        return values[idx]
+
+    c.execute(f"SELECT citations FROM query_log WHERE ts >= {since} AND citations IS NOT NULL")
+    doc_counts: dict = {}
+    for (raw,) in c.fetchall():
+        try:
+            for doc in json.loads(raw):
+                doc_counts[doc] = doc_counts.get(doc, 0) + 1
+        except Exception:
+            continue
+    top_documents = sorted(doc_counts.items(), key=lambda kv: -kv[1])[:10]
+
+    c.execute(f"SELECT model, COUNT(*) FROM query_log WHERE ts >= {since} AND model IS NOT NULL "
+             f"GROUP BY model ORDER BY COUNT(*) DESC")
+    by_model = c.fetchall()
+
+    conn.close()
+    return {
+        "total": total,
+        "refused": refused,
+        "refusal_rate_pct": round(100.0 * refused / total, 1) if total else None,
+        "p50_latency_ms": _percentile(latencies, 50),
+        "p95_latency_ms": _percentile(latencies, 95),
+        "top_documents": [{"document": d, "count": n} for d, n in top_documents],
+        "by_model": [{"model": m, "count": n} for m, n in by_model],
+    }
 
 
 def list_gaps(limit: int = 100, days: int = 30) -> list:
