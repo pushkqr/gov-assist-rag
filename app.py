@@ -28,6 +28,7 @@ from core.schema import ensure_collection, CORPUS_COLLECTION, QUARANTINE_COLLECT
 from db import (
     init_db, validate_token, save_history, get_history,
     record_audit, touch_token, get_token_label, list_audit, audit_summary,
+    record_feedback, list_feedback, feedback_summary, import_legacy_feedback,
 )
 import ipaddress
 
@@ -130,6 +131,11 @@ async def startup_event():
     global gemini_client, cerebras_client, weaviate_client
     try:
         init_db()
+        legacy_path = BASE_DIR / "scratch" / "feedback.json"
+        if legacy_path.exists():
+            imported = import_legacy_feedback(str(legacy_path))
+            if imported:
+                logger.info(f"Imported {imported} legacy feedback entries from {legacy_path}")
         gemini_client = get_genai_client()
         cerebras_client = get_cerebras_client()
         weaviate_client = get_weaviate_client()
@@ -824,38 +830,40 @@ async def ask_stream(request: Request):
 class FeedbackRequest(BaseModel):
     query: str
     response: str
-    feedback: str
+    feedback: str  # 'up' | 'down'
+    citations: Optional[List[str]] = None
+    model: Optional[str] = None
+    latency_ms: Optional[int] = None
+    comment: Optional[str] = None
 
 @app.post("/feedback")
-async def submit_feedback(req: FeedbackRequest):
+async def submit_feedback(req: FeedbackRequest, request: Request):
+    if req.feedback not in ("up", "down"):
+        return JSONResponse({"error": "feedback must be 'up' or 'down'."}, status_code=400)
+    token = _bearer(request)
     try:
-        feedback_file = BASE_DIR / "scratch" / "feedback.json"
-        os.makedirs(feedback_file.parent, exist_ok=True)
-        
-        feedback_entry = {
-            "query": req.query,
-            "response": req.response,
-            "feedback": req.feedback,
-            "timestamp": __import__("datetime").datetime.now().isoformat()
-        }
-        
-        feedbacks = []
-        if feedback_file.exists():
-            with open(feedback_file, "r", encoding="utf-8") as f:
-                try:
-                    feedbacks = json.load(f)
-                except:
-                    pass
-                    
-        feedbacks.append(feedback_entry)
-        
-        with open(feedback_file, "w", encoding="utf-8") as f:
-            json.dump(feedbacks, f, indent=2)
-            
+        record_feedback(
+            verdict=req.feedback, query=req.query, response=req.response,
+            citations=req.citations, model=req.model, latency_ms=req.latency_ms,
+            comment=(req.comment or "").strip()[:1000] or None,
+            actor=(get_token_label(token) if token else None), token=(token or None),
+        )
+        record_audit("feedback", actor=(get_token_label(token) if token else None),
+                     ip=_client_ip(request), token=(token or None), detail=f"{req.feedback}: {req.query[:80]}")
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Error saving feedback: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/api/admin/feedback")
+async def api_admin_feedback(request: Request, limit: int = 200, verdict: str = ""):
+    if not _is_admin(request):
+        return _FORBIDDEN
+    return {
+        "entries": list_feedback(limit=max(1, min(limit, 500)), verdict=(verdict or None)),
+        "summary": feedback_summary(),
+    }
 
 class SummarizeRequest(BaseModel):
     doc_id: str

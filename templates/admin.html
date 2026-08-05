@@ -256,6 +256,55 @@
     </div>
   </section>
 
+  <!-- Feedback -->
+  <section class="mt-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Feedback</h2>
+      <span class="text-xs text-zinc-400">Thumbs up/down on answers, with citations and latency at the time</span>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="rounded-xl border border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400">Total</span>
+        <span id="fbTotal" class="mono ml-2 text-sm font-semibold">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-emerald-600/80 dark:text-emerald-400/80">Up</span>
+        <span id="fbUp" class="mono ml-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-red-500/80">Down</span>
+        <span id="fbDown" class="mono ml-2 text-sm font-semibold text-red-600 dark:text-red-400">&mdash;</span>
+      </div>
+      <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
+        <span class="text-[11px] uppercase tracking-wide text-amber-600/80 dark:text-amber-400/80">Satisfaction</span>
+        <span id="fbSat" class="mono ml-2 text-sm font-semibold text-amber-600 dark:text-amber-400">&mdash;</span>
+      </div>
+      <select id="fbFilter" class="ml-auto rounded-xl border border-zinc-300 bg-white/50 px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900/50">
+        <option value="">All feedback</option>
+        <option value="down">Downvotes only</option>
+        <option value="up">Upvotes only</option>
+      </select>
+      <button id="fbRefresh" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Refresh</button>
+    </div>
+
+    <div class="max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <table class="w-full text-left text-[12px]">
+        <thead class="sticky top-0 bg-zinc-50 dark:bg-zinc-900">
+          <tr class="text-[10px] uppercase tracking-wide text-zinc-500">
+            <th class="px-3 py-2 font-semibold">Time</th>
+            <th class="px-3 py-2 font-semibold"></th>
+            <th class="px-3 py-2 font-semibold">Officer</th>
+            <th class="px-3 py-2 font-semibold">Query</th>
+            <th class="px-3 py-2 font-semibold">Comment</th>
+            <th class="px-3 py-2 font-semibold">Model</th>
+          </tr>
+        </thead>
+        <tbody id="fbBody"></tbody>
+      </table>
+    </div>
+  </section>
+
 </main>
 </div>
 
@@ -457,6 +506,34 @@ async function loadAudit(){
 $('auFilter').onchange=loadAudit;
 $('auRefresh').onclick=loadAudit;
 
+/* ── feedback ─────────────────────────────────────────── */
+async function loadFeedback(){
+  const body=$('fbBody');
+  try{
+    const v=$('fbFilter').value;
+    const d=await(await api('/api/admin/feedback?limit=200'+(v?'&verdict='+encodeURIComponent(v):''))).json();
+    const s=d.summary||{};
+    $('fbTotal').textContent=(s.total||0).toLocaleString();
+    $('fbUp').textContent=(s.up||0).toLocaleString();
+    $('fbDown').textContent=(s.down||0).toLocaleString();
+    $('fbSat').textContent=s.satisfaction_pct==null?'—':s.satisfaction_pct+'%';
+    const rows=d.entries||[];
+    if(!rows.length){body.innerHTML='<tr><td colspan="6" class="px-3 py-6 text-center text-zinc-400">No feedback recorded yet.</td></tr>';return;}
+    body.innerHTML=rows.map(r=>{
+      const dot=r.verdict==='up'?'bg-emerald-500':'bg-red-500';
+      return `<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="whitespace-nowrap px-3 py-2 text-zinc-500">${esc(rel(r.ts))}</td>
+        <td class="px-3 py-2"><span class="inline-block h-2 w-2 rounded-full ${dot}"></span></td>
+        <td class="whitespace-nowrap px-3 py-2">${esc(r.actor||'—')}</td>
+        <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400"><div class="max-w-xs truncate" title="${esc(r.query||'')}">${esc(r.query||'')}</div></td>
+        <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400"><div class="max-w-xs truncate" title="${esc(r.comment||'')}">${esc(r.comment||'—')}</div></td>
+        <td class="mono whitespace-nowrap px-3 py-2 text-zinc-500">${esc(r.model||'—')}</td>
+      </tr>`;}).join('');
+  }catch(_){body.innerHTML='<tr><td colspan="6" class="px-3 py-6 text-center text-red-500">Could not load feedback.</td></tr>';}
+}
+$('fbFilter').onchange=loadFeedback;
+$('fbRefresh').onclick=loadFeedback;
+
 /* ── stats + tokens ───────────────────────────────────── */
 async function refresh(){
   try{
@@ -468,6 +545,7 @@ async function refresh(){
   }catch(_){}
   loadTokens();
   loadAudit();
+  loadFeedback();
   loadTopology();
   loadGraph();
   loadQuarantine();

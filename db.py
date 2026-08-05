@@ -60,6 +60,26 @@ def init_db():
     ''')
     c.execute("CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit(ts DESC)")
 
+    # Thumbs up/down on an answer. citations is a JSON-encoded list of document labels, kept
+    # denormalized here rather than joined against anything: feedback needs to remain readable
+    # even after the corpus that produced it has changed.
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,
+            actor TEXT,
+            actor_ref TEXT,
+            verdict TEXT NOT NULL,
+            query TEXT NOT NULL,
+            response TEXT,
+            citations TEXT,
+            model TEXT,
+            latency_ms INTEGER,
+            comment TEXT
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_feedback_ts ON feedback(ts DESC)")
+
     seed_tokens = [
         ("OFFICER-TOKEN-1", "Officer 1"),
         ("OFFICER-TOKEN-2", "Officer 2")
@@ -167,6 +187,104 @@ def audit_summary() -> dict:
     denied = c.fetchone()[0]
     conn.close()
     return {"total": total, "last_24h": last_day, "denied": denied}
+
+
+def record_feedback(
+    verdict: str, query: str, response: Optional[str] = None,
+    citations: Optional[list] = None, model: Optional[str] = None,
+    latency_ms: Optional[int] = None, comment: Optional[str] = None,
+    actor: Optional[str] = None, token: Optional[str] = None,
+) -> None:
+    """Store one thumbs up/down. Unlike record_audit, this is allowed to raise: feedback is
+    the request's actual content, not a side effect, so a write failure must reach the caller
+    and the caller must tell the officer rather than silently reporting success."""
+    actor_ref = hash_token(token)[:12] if token else None
+    conn = _connect()
+    conn.execute(
+        """INSERT INTO feedback (ts, actor, actor_ref, verdict, query, response, citations,
+                                  model, latency_ms, comment)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (_now(), actor, actor_ref, verdict, query, response,
+         json.dumps(citations) if citations else None, model, latency_ms, comment),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_feedback(limit: int = 200, verdict: Optional[str] = None) -> list:
+    conn = _connect()
+    c = conn.cursor()
+    query = ("SELECT id, ts, actor, verdict, query, response, citations, model, latency_ms, comment "
+             "FROM feedback")
+    params: tuple = ()
+    if verdict:
+        query += " WHERE verdict=?"
+        params = (verdict,)
+    query += " ORDER BY id DESC LIMIT ?"
+    c.execute(query, params + (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return [
+        {
+            "id": r[0], "ts": r[1], "actor": r[2], "verdict": r[3], "query": r[4],
+            "response": r[5], "citations": (json.loads(r[6]) if r[6] else []),
+            "model": r[7], "latency_ms": r[8], "comment": r[9],
+        }
+        for r in rows
+    ]
+
+
+def feedback_summary() -> dict:
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*), SUM(CASE WHEN verdict='up' THEN 1 ELSE 0 END) FROM feedback")
+    total, up = c.fetchone()
+    total = total or 0
+    up = up or 0
+    down = total - up
+    c.execute("SELECT COUNT(*) FROM feedback WHERE ts >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-7 day')")
+    last_7d = c.fetchone()[0]
+    conn.close()
+    satisfaction = round(100.0 * up / total, 1) if total else None
+    return {"total": total, "up": up, "down": down, "satisfaction_pct": satisfaction, "last_7d": last_7d}
+
+
+def import_legacy_feedback(json_path: str) -> int:
+    """One-time migration from the old scratch/feedback.json into this table.
+
+    Idempotent: only runs while the feedback table is still empty, so it is safe to call on
+    every startup. Best-effort; a malformed or missing file is not fatal to boot.
+    """
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM feedback")
+    if c.fetchone()[0] > 0:
+        conn.close()
+        return 0
+    conn.close()
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            legacy = json.load(f)
+    except Exception:
+        return 0
+
+    imported = 0
+    conn = _connect()
+    for entry in legacy:
+        verdict = entry.get("feedback")
+        query = entry.get("query")
+        if not verdict or not query:
+            continue
+        conn.execute(
+            "INSERT INTO feedback (ts, verdict, query, response, comment) VALUES (?, ?, ?, ?, ?)",
+            (entry.get("timestamp") or _now(), verdict, query, entry.get("response"),
+             "(imported from scratch/feedback.json)"),
+        )
+        imported += 1
+    conn.commit()
+    conn.close()
+    return imported
 
 
 def save_history(user_id: str, history_list: list):

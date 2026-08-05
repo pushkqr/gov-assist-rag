@@ -557,15 +557,45 @@
    const c=document.createElement('div');c.className='whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-100';c.innerHTML=html;
    box.appendChild(c);w.appendChild(av);w.appendChild(box);$('log').appendChild(w);$('log').scrollTop=$('log').scrollHeight;return c;
  }
- function addActions(c,q,answer){const box=c.parentElement;const bar=document.createElement('div');
+ function addActions(c,q,answer,mets,cites){const box=c.parentElement;const bar=document.createElement('div');
    bar.className='mt-1.5 flex items-center justify-start gap-1';
    const up=document.createElement('button');up.className='rounded p-1 text-zinc-400 hover:text-green-500 hover:bg-zinc-100 dark:hover:bg-zinc-800';up.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
    const dn=document.createElement('button');dn.className='rounded p-1 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800';dn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>';
-   function sendFeedback(type,btn){fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,response:answer,feedback:type})});up.disabled=true;dn.disabled=true;btn.classList.add(type==='up'?'text-green-500':'text-red-500');btn.classList.remove('text-zinc-400');}
-   up.onclick=()=>sendFeedback('up',up);dn.onclick=()=>sendFeedback('down',dn);
+   const status=document.createElement('span');status.className='text-[11px] text-zinc-400';
+   // Dedup to document labels only; the full evidence objects (quotes, scores) are already
+   // recoverable from the query itself and would bloat the feedback row for no benefit.
+   const citeLabels=[...new Set((cites||[]).map(s=>s.document).filter(Boolean))].slice(0,10);
+   async function postFeedback(type,comment){
+     const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+       query:q,response:answer,feedback:type,citations:citeLabels,
+       model:(mets&&mets.model)||null,latency_ms:(mets&&mets.retrieval_s!=null)?Math.round(mets.retrieval_s*1000):null,
+       comment:comment||null})});
+     if(!r.ok)throw new Error('save failed');
+   }
+   function markSent(type,btn){up.disabled=true;dn.disabled=true;btn.classList.add(type==='up'?'text-green-500':'text-red-500');btn.classList.remove('text-zinc-400');}
+   function flashError(){status.textContent='Could not save feedback — try again.';status.classList.add('text-red-500');
+     setTimeout(()=>{status.textContent='';status.classList.remove('text-red-500');},4000);}
+   up.onclick=async()=>{up.disabled=true;dn.disabled=true;
+     try{await postFeedback('up',null);markSent('up',up);}
+     catch(e){up.disabled=false;dn.disabled=false;flashError();}};
+   dn.onclick=()=>{
+     up.disabled=true;dn.disabled=true;
+     const wrap=document.createElement('div');wrap.className='mt-1 flex items-center gap-1.5';
+     const input=document.createElement('input');input.type='text';input.placeholder='What went wrong? (optional)';
+     input.className='min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs outline-none placeholder:text-zinc-400 focus:border-amber-500 dark:border-zinc-700 dark:bg-zinc-900';
+     const send=document.createElement('button');send.textContent='Send';send.className='rounded-md bg-zinc-950 px-2.5 py-1 text-xs text-white dark:bg-white dark:text-black';
+     const skip=document.createElement('button');skip.textContent='Skip';skip.className='rounded-md border border-zinc-300 px-2.5 py-1 text-xs dark:border-zinc-700';
+     async function finish(comment){
+       send.disabled=true;skip.disabled=true;
+       try{await postFeedback('down',comment);wrap.remove();markSent('down',dn);}
+       catch(e){wrap.remove();up.disabled=false;dn.disabled=false;flashError();}}
+     send.onclick=()=>finish(input.value.trim()||null);
+     skip.onclick=()=>finish(null);
+     input.onkeydown=e=>{if(e.key==='Enter')finish(input.value.trim()||null);};
+     wrap.appendChild(input);wrap.appendChild(send);wrap.appendChild(skip);box.appendChild(wrap);input.focus();};
    const copy=document.createElement('button');copy.className='ml-1 rounded-md px-1.5 py-0.5 text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200';copy.textContent='Copy';
    copy.onclick=()=>{try{navigator.clipboard.writeText(answer);}catch(e){}copy.textContent='Copied';setTimeout(()=>{copy.textContent='Copy';},1200);};
-   bar.appendChild(up);bar.appendChild(dn);bar.appendChild(copy);box.appendChild(bar);}
+   bar.appendChild(up);bar.appendChild(dn);bar.appendChild(copy);bar.appendChild(status);box.appendChild(bar);}
  function addSources(c,sources){const box=c.parentElement;const bar=document.createElement('div');
    bar.className='mt-1.5 flex flex-wrap items-center gap-1.5';
    bar.innerHTML='<span class="mono text-[10px] uppercase tracking-wide text-zinc-400">sources</span>';
@@ -724,7 +754,7 @@
      }
      clearTimeout(to);
      if(errored)throw new Error(errored);
-     answer=answer.trim();c.innerHTML=fmt(answer);addActions(c,q,answer);if(mets)addTiming(c,mets);if(cites&&cites.length)addSources(c,cites);if(recs&&recs.length)addRecommendations(c,recs);
+     answer=answer.trim();c.innerHTML=fmt(answer);addActions(c,q,answer,mets,cites);if(mets)addTiming(c,mets);if(cites&&cites.length)addSources(c,cites);if(recs&&recs.length)addRecommendations(c,recs);
      t.msgs.push({role:'assistant',content:answer,sources:cites,recs:recs,metrics:mets});saveThreads();
    }catch(e){
      const slow=e&&e.name==='AbortError';
