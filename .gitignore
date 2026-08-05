@@ -59,6 +59,8 @@ scratch/*
 !scratch/status_check.py
 # docs/ is ignored, so the conflict demonstration pair ships as its generator instead.
 !scratch/make_conflict_docs.py
+# Volume benchmark; the numbers it produces back the scaling claim, so it ships with them.
+!scratch/loadtest.py
 
 # Testing and Logs
 *.log
