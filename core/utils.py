@@ -354,6 +354,14 @@ def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float =
             yield _TextChunk(text)
 
 
+def local_generate_sync(system_prompt: str, user_prompt: str, timeout: float = None) -> str:
+    """Non-streaming wrapper over local_generate_stream, for ingestion-time calls (structuring
+    raw OCR text, translation fallback) that just need the final text and have no UI to stream
+    tokens into. Used by ingestion/parsers.py when INGEST_STRUCTURE_PROVIDER=local (see
+    core/deployment.py)."""
+    return "".join(chunk.text for chunk in local_generate_stream(system_prompt, user_prompt, timeout=timeout))
+
+
 @with_retry_and_throttle(constant_delay_env="CEREBRAS_API_DELAY", default_delay=0, initial_backoff=10)
 def cerebras_chat_completions_create_safe(client, *args, **kwargs):
     """Wrapper for cerebras_client.chat.completions.create with rate limiting for TPM limits."""

@@ -31,6 +31,18 @@ from retrieval.pipeline import run_retrieval  # noqa: E402
 COLLECTION = "GovDocs"
 QUERY_SPACING_S = 12
 
+# The model (temperature 0.0, but this varies across runs/models regardless) sometimes
+# renders GR numbers with typographic hyphen/dash variants instead of ASCII '-' - cosmetically
+# identical, but an ASCII-only regex silently misses them. Found when check_q3 failed on a
+# genuinely correct answer that cited "DEMO‑2019" (U+2011 NON-BREAKING HYPHEN) rather
+# than "DEMO-2019". Every literal '-' check below runs against normalized text instead.
+_HYPHEN_VARIANTS = "‐‑‒–—―−"  # hyphen, nb-hyphen, figure
+# dash, en dash, em dash, horizontal bar, minus sign
+
+
+def _normalize_hyphens(text: str) -> str:
+    return text.translate({ord(c): "-" for c in _HYPHEN_VARIANTS})
+
 
 def _is_mostly_devanagari(text: str, threshold: float = 0.25) -> bool:
     if not text:
@@ -124,7 +136,7 @@ def main():
                     gemini, cerebras, weaviate_client=weaviate_client,
                     query=query, collection_name=COLLECTION, fast_mode=True,
                 )
-                text = "".join(result["answer_stream"])
+                text = _normalize_hyphens("".join(result["answer_stream"]))
                 elapsed = time.time() - started
                 passed, detail = checker(text)
             except Exception as exc:

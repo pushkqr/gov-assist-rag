@@ -14,6 +14,7 @@ from core.log_config import get_logger
 from core.utils import cerebras_chat_completions_create_safe, local_generate_stream
 from retrieval.search import search_policy_docs_tool, execute_search_tool
 from retrieval.query import contextualize_query
+import core.deployment as deployment
 
 logger = get_logger(__name__)
 
@@ -154,8 +155,9 @@ def run_retrieval(
     # Everything upstream of generation (embeddings, reranking, translation, the vector
     # store) is already self-hosted. Generation is the one hop to a third party, so it is
     # the one that has to be swappable for an air-gapped deployment. GEN_PROVIDER=local
-    # points it at any OpenAI-compatible server on the department's own hardware.
-    _local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+    # points it at any OpenAI-compatible server on the department's own hardware; setting
+    # DEPLOYMENT_MODE=sovereign instead flips this and the ingestion-time switches together.
+    _local_gen = deployment.gen_provider() == "local"
 
     if _local_gen:
         target_model = os.getenv("LOCAL_GEN_MODEL", "qwen3:4b")

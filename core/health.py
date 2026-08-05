@@ -17,6 +17,8 @@ from urllib.parse import urlparse
 
 import requests
 
+import core.deployment as deployment
+
 
 def host_of(url: str) -> str:
     try:
@@ -91,7 +93,7 @@ def probe_translation() -> str:
 
 
 def probe_generation(cerebras_client: Optional[Any] = None) -> str:
-    local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+    local_gen = deployment.gen_provider() == "local"
     if local_gen:
         gen_url = os.getenv("LOCAL_GEN_URL", "http://localhost:11434/v1")
         r = requests.get(f"{gen_url.rstrip('/')}/models", headers=_service_headers("LOCAL_GEN_API_KEY"), timeout=8)
@@ -110,7 +112,7 @@ def probe_generation(cerebras_client: Optional[Any] = None) -> str:
 def component_list(weaviate_client: Optional[Any] = None, cerebras_client: Optional[Any] = None) -> list:
     """The six components with their probe functions attached (under the 'fn' key, popped by
     the caller before the result is serialized)."""
-    local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+    local_gen = deployment.gen_provider() == "local"
     gen_url = os.getenv("LOCAL_GEN_URL", "http://localhost:11434/v1")
 
     return [
@@ -142,7 +144,7 @@ def run_all_probes(weaviate_client: Optional[Any] = None, cerebras_client: Optio
         fn = component.pop("fn")
         component.update(probe(fn))
 
-    local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+    local_gen = deployment.gen_provider() == "local"
     return {
         "components": components,
         "self_hosted": sum(1 for c in components if c["hosting"] == "self"),

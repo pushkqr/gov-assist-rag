@@ -39,6 +39,7 @@ from db import (
 )
 from core.outcome import classify_outcome, normalize_query
 from core.health import component_list, probe as health_probe
+import core.deployment as deployment
 import ipaddress
 
 logger = logging.getLogger(__name__)
@@ -334,12 +335,13 @@ async def api_admin_topology(request: Request):
     for component, result in zip(components, results):
         component.update(result)
 
-    local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+    local_gen = deployment.gen_provider() == "local"
     return {
         "components": components,
         "self_hosted": sum(1 for c in components if c["hosting"] == "self"),
         "third_party": sum(1 for c in components if c["hosting"] != "self"),
         "generation_provider": "local" if local_gen else "cerebras",
+        "deployment": deployment.summary(),
     }
 
 

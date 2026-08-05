@@ -8,6 +8,8 @@ from google.genai import types
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from core.log_config import get_logger
 from core.utils import embed_content_safe, embed_batch_safe, generate_content_safe
+import core.deployment as deployment
+import requests
 
 logger = get_logger(__name__)
 
@@ -15,6 +17,43 @@ try:
     from google.cloud import translate_v3 as translate
 except ImportError:
     translate = None
+
+
+def translate_marathi_batch_indictrans2(chunks: List[str]) -> List[str]:
+    """Translate via the self-hosted IndicTrans2 microservice (microservices/translation/),
+    the sovereign-mode alternative to GCP Cloud Translation. Same List[str] -> List[str]
+    contract as translate_marathi_batch_gcp: an empty string for an item signals the caller
+    to fall back to the Gemini per-chunk path for that one chunk, same as a GCP failure would.
+
+    The microservice takes one text at a time (see microservices/translation/main.py), unlike
+    GCP's true batch API, so this is one HTTP call per chunk. Slower, and an explicit instance
+    of the same tradeoff the rest of the sovereign path makes: self-hosted costs time.
+    """
+    if not chunks:
+        return []
+
+    url = (
+        os.environ.get("INGEST_TRANSLATION_SERVICE_URL")
+        or os.environ.get("TRANSLATION_SERVICE_URL", "http://localhost:8001/translate")
+    )
+    timeout = float(os.environ.get("TRANSLATION_TIMEOUT_S", "10"))
+    results = []
+    failures = 0
+    for chunk in chunks:
+        try:
+            response = requests.post(
+                url, json={"text": chunk[:2000], "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"},
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            results.append((response.json().get("translated_text") or "").strip())
+        except Exception as exc:
+            logger.warning(f"IndicTrans2 translation failed for one chunk: {exc}")
+            results.append("")
+            failures += 1
+
+    logger.info(f"  -> Translated {len(chunks) - failures}/{len(chunks)} Marathi chunks via IndicTrans2.")
+    return results
 
 
 def translate_marathi_batch_gcp(chunks: List[str]) -> List[str]:
@@ -158,9 +197,17 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
         marathi_indices = [idx for idx, ct in enumerate(child_texts) if re.search(r"[\u0900-\u097F]", ct)]
         marathi_chunks = [child_texts[idx] for idx in marathi_indices]
 
-        # Batch translate via GCP Cloud Translation v3
-        gcp_translations = translate_marathi_batch_gcp(marathi_chunks) if marathi_chunks else []
-        gcp_trans_map = dict(zip(marathi_indices, gcp_translations))
+        # Batch translate via GCP Cloud Translation or the self-hosted IndicTrans2 microservice,
+        # per INGEST_TRANSLATE_PROVIDER (core/deployment.py). Either way, an empty string for a
+        # chunk falls through to the per-chunk Gemini fallback a few lines below, unchanged.
+        if marathi_chunks:
+            if deployment.ingest_translate_provider() == "indictrans2":
+                batch_translations = translate_marathi_batch_indictrans2(marathi_chunks)
+            else:
+                batch_translations = translate_marathi_batch_gcp(marathi_chunks)
+        else:
+            batch_translations = []
+        translation_map = dict(zip(marathi_indices, batch_translations))
 
         enriched_child_texts = []
         translated_texts = []
@@ -168,7 +215,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             prefix = f"Context: {full_context_prefix}\n\nContent: {ct}"
 
             if c_idx in marathi_indices:
-                tr_text = gcp_trans_map.get(c_idx, "")
+                tr_text = translation_map.get(c_idx, "")
                 if not tr_text:
                     # Fallback to Gemini if GCP batch translation returned empty
                     logger.debug(f"     [Gemini Translation Fallback {c_idx+1}/{len(child_texts)}]")

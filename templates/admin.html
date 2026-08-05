@@ -387,10 +387,16 @@ async function loadTopology(){
   try{
     const d=await(await api('/api/admin/topology')).json();
     const cs=d.components||[];
+    const dep=d.deployment||{};
+    const modeChip=dep.mode==='sovereign'
+      ? '<span class="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">SOVEREIGN</span>'
+      : '<span class="rounded-md bg-zinc-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-500">HYBRID</span>';
     sum.innerHTML=`<span class="font-medium text-zinc-700 dark:text-zinc-300">${d.self_hosted} of ${cs.length} components run on our own infrastructure.</span> `+
       (d.generation_provider==='local'
         ? 'Generation is running on a self-hosted model, so no query text leaves the network.'
-        : 'Generation is the only third-party call. Setting <code class="mono rounded bg-zinc-100 px-1 dark:bg-zinc-800">GEN_PROVIDER=local</code> moves it on-premise.');
+        : 'Generation is the only third-party call. Setting <code class="mono rounded bg-zinc-100 px-1 dark:bg-zinc-800">GEN_PROVIDER=local</code> moves it on-premise.')
+      +` <br><span class="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">Deployment mode: ${modeChip} `
+      +`<span class="mono">ingest structuring=${esc(dep.ingest_structure||'?')} &middot; ingest translation=${esc(dep.ingest_translate||'?')} &middot; PDF OCR tier 2=${esc(dep.pdf_parse_tier2||'?')}</span></span>`;
     body.innerHTML=cs.map(c=>{
       const up=c.status==='up';
       const dot=up?'bg-emerald-500':'bg-red-500';

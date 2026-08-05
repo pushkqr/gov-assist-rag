@@ -9,22 +9,12 @@ from google import genai
 from google.genai import types
 
 from core.log_config import get_logger
-from core.utils import generate_content_safe
+from core.utils import generate_content_safe, local_generate_sync
+import core.deployment as deployment
 
 logger = get_logger(__name__)
 
-
-def format_plain_text_with_llm(client: genai.Client, raw_text: str) -> str:
-    """Use Gemini Flash to structure raw OCR plain text into semantic Markdown headers."""
-    if not raw_text or len(raw_text.strip()) < 50:
-        return raw_text
-
-    # If text already has markdown headers, return as-is
-    if re.search(r"^#{1,3}\s+", raw_text, re.MULTILINE):
-        return raw_text
-
-    try:
-        prompt = f"""You are an expert document structure parser.
+_STRUCTURE_PROMPT_TEMPLATE = """You are an expert document structure parser.
 Organize the following raw document OCR text into clean Markdown format.
 
 Requirements:
@@ -36,13 +26,39 @@ Requirements:
 Raw Text:
 {raw_text}
 """
-        response = generate_content_safe(
-            client,
-            model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.0),
-        )
-        formatted = getattr(response, "text", "") or ""
+
+
+def format_plain_text_with_llm(client: genai.Client, raw_text: str) -> str:
+    """Structure raw OCR plain text into semantic Markdown headers.
+
+    Routes through Gemini Flash or a self-hosted OpenAI-compatible model depending on
+    INGEST_STRUCTURE_PROVIDER (core/deployment.py; DEPLOYMENT_MODE=sovereign sets this to
+    'local'). Same prompt either way, so the two paths should produce comparable structure.
+    """
+    if not raw_text or len(raw_text.strip()) < 50:
+        return raw_text
+
+    # If text already has markdown headers, return as-is
+    if re.search(r"^#{1,3}\s+", raw_text, re.MULTILINE):
+        return raw_text
+
+    prompt = _STRUCTURE_PROMPT_TEMPLATE.format(raw_text=raw_text)
+
+    try:
+        if deployment.ingest_structure_provider() == "local":
+            formatted = local_generate_sync(
+                "You are an expert document structure parser. Follow the user's instructions exactly.",
+                prompt,
+            )
+        else:
+            response = generate_content_safe(
+                client,
+                model=os.getenv("GEN_MODEL_NAME", "gemini-2.5-flash"),
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.0),
+            )
+            formatted = getattr(response, "text", "") or ""
+
         if formatted and len(formatted.strip()) >= 50:
             logger.info("  -> LLM semantic structuring successfully generated Markdown headers.")
             return formatted.strip()
@@ -154,6 +170,36 @@ def parse_pdf_with_document_ai(client: genai.Client, target_file: str) -> Option
     return None
 
 
+def parse_pdf_with_docling(client: genai.Client, target_file: str) -> Optional[str]:
+    """Parse PDF via the self-hosted Docling microservice (microservices/docling/), the
+    sovereign-mode alternative to Document AI OCR. Same tier-2 role, same "return None on
+    failure so the chain falls through to tier 3" contract as parse_pdf_with_document_ai.
+    """
+    import requests
+
+    docling_url = os.getenv("DOCLING_SERVICE_URL", "http://localhost:8002/parse")
+    filename = os.path.basename(target_file)
+
+    try:
+        t0 = time.time()
+        with open(target_file, "rb") as f:
+            response = requests.post(
+                docling_url, files={"file": (filename, f, "application/pdf")},
+                timeout=float(os.getenv("DOCLING_TIMEOUT_S", "120")),
+            )
+        response.raise_for_status()
+        elapsed = time.time() - t0
+        markdown = (response.json().get("markdown") or "").strip()
+
+        if markdown and len(markdown) > 50:
+            formatted_md = format_plain_text_with_llm(client, markdown)
+            logger.info(f"  -> Docling extracted {len(formatted_md)} chars in {elapsed:.1f}s.")
+            return formatted_md
+    except Exception as exc:
+        logger.error(f"[Docling] Processing failed for {filename}: {exc}")
+    return None
+
+
 def parse_pdf_with_gemini_vision(client: genai.Client, target_file: str, timeout: int = 30) -> Optional[str]:
     """Parse PDF using Gemini Vision API with configurable timeout."""
     filename = os.path.basename(target_file)
@@ -209,17 +255,24 @@ def parse_pdf_with_pymupdf(target_file: str) -> Optional[str]:
 
 
 def parse_pdf(client: genai.Client, target_file: str) -> Optional[str]:
-    """Orchestrate PDF parsing: PyMuPDF -> DocAI OCR -> Gemini Vision -> PyMuPDF fallback."""
+    """Orchestrate PDF parsing: PyMuPDF -> OCR tier 2 -> Gemini Vision -> PyMuPDF fallback.
+
+    Tier 2 is Document AI or Docling depending on PDF_PARSE_TIER2_PROVIDER (core/deployment.py;
+    DEPLOYMENT_MODE=sovereign sets this to 'docling'). Both return None on failure so the
+    chain falls through to tier 3 identically either way.
+    """
     filename = os.path.basename(target_file)
 
     # Step 1: Primary parser is PyMuPDF
     logger.info(f"Parsing {filename} with PyMuPDF...")
     target_md = parse_pdf_with_pymupdf(target_file)
 
-    # Step 2: Fallback to Document AI OCR if PyMuPDF returned empty or < 100 chars
+    # Step 2: Fallback to OCR tier 2 if PyMuPDF returned empty or < 100 chars
     if not target_md or len(target_md.strip()) < 100:
-        logger.warning(f"PyMuPDF yielded insufficient content for {filename}. Falling back to Google Document AI OCR...")
-        target_md = parse_pdf_with_document_ai(client, target_file)
+        tier2 = deployment.pdf_parse_tier2_provider()
+        logger.warning(f"PyMuPDF yielded insufficient content for {filename}. Falling back to {tier2} OCR...")
+        target_md = (parse_pdf_with_docling(client, target_file) if tier2 == "docling"
+                    else parse_pdf_with_document_ai(client, target_file))
 
     # Step 3: Fallback to Gemini Vision if DocAI OCR also returned empty or < 100 chars
     if not target_md or len(target_md.strip()) < 100:
