@@ -1,0 +1,114 @@
+# Mimir, complete on-premise stack.
+#
+# Brings up every dependency the application has on a single machine, so a deployment inside
+# a government intranet needs no outbound internet access at runtime. Model weights and
+# images are pulled once at install time; after that nothing leaves the network.
+#
+#   docker compose -f microservices/docker-compose.yml --env-file microservices/.env up -d
+#
+# Ports are all bound to 127.0.0.1 by default. Publish them deliberately, behind the
+# reverse proxy, rather than by removing the loopback prefix here.
+
+services:
+
+  # Vector store. Holds the chunk embeddings and serves hybrid dense + BM25 search.
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+    restart: unless-stopped
+    command:
+      - --host=0.0.0.0
+      - --port=8080
+      - --scheme=http
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: node1
+      # Authentication is on by default here. The upstream image ships with anonymous access
+      # enabled, which is the wrong default for a database holding a department's corpus.
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "false"
+      AUTHENTICATION_APIKEY_ENABLED: "true"
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: ${WEAVIATE_API_KEY:?set WEAVIATE_API_KEY}
+      AUTHENTICATION_APIKEY_USERS: mimir@localhost
+      AUTHORIZATION_ADMINLIST_ENABLED: "true"
+      AUTHORIZATION_ADMINLIST_USERS: mimir@localhost
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50051:50051"
+
+  # Embeddings and reranking. One Infinity process serves both models; the app calls
+  # /embeddings for BGE-M3 vectors and /rerank for the cross-encoder.
+  infinity:
+    image: michaelf34/infinity:latest
+    restart: unless-stopped
+    command:
+      - v2
+      - --model-id=BAAI/bge-m3
+      - --model-id=BAAI/bge-reranker-base
+      - --port=7997
+      - --api-key=${INFINITY_API_KEY:?set INFINITY_API_KEY}
+    environment:
+      HF_HOME: /models
+    volumes:
+      - model_cache:/models
+    ports:
+      - "127.0.0.1:7997:7997"
+    # Runs on CPU as written. Uncomment for a GPU node; expect roughly an order of
+    # magnitude improvement on rerank latency, which is the dominant cost in a query.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Marathi to English translation (IndicTrans2), used for Devanagari queries and for
+  # translating Marathi source documents at ingestion time.
+  translation:
+    build: ./translation
+    restart: unless-stopped
+    environment:
+      INDICTRANS_MODEL: ${INDICTRANS_MODEL:-ai4bharat/indictrans2-indic-en-dist-200M}
+      HF_HOME: /models
+    volumes:
+      - model_cache:/models
+    ports:
+      - "127.0.0.1:8001:8000"
+
+  # Answer generation. Any OpenAI-compatible server works here (vLLM, llama.cpp,
+  # LM Studio); Ollama is the least painful to operate on a single node.
+  #
+  # Pull a model once after first start:
+  #   docker compose exec generation ollama pull qwen3:4b
+  generation:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Optional. Higher-fidelity PDF layout parsing for scanned or table-heavy circulars.
+  # The application's default parser is PyMuPDF, which is local and needs no service.
+  docling:
+    build: ../docling_ingestion
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8002:8000"
+    profiles: ["full"]
+
+volumes:
+  weaviate_data:
+  model_cache:
+  ollama_models:

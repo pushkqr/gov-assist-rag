@@ -91,6 +91,30 @@
     </div>
   </div>
 
+  <!-- Deployment topology -->
+  <section class="mb-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="serif text-2xl tracking-tight">Deployment</h2>
+      <button id="topoRefresh" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs transition hover:border-amber-500 hover:text-amber-600 dark:border-zinc-700 dark:hover:text-amber-400">Re-probe</button>
+    </div>
+    <p id="topoSummary" class="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Probing components&hellip;</p>
+
+    <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <table class="w-full text-left text-[12px]">
+        <thead class="bg-zinc-50 dark:bg-zinc-900">
+          <tr class="text-[10px] uppercase tracking-wide text-zinc-500">
+            <th class="px-3 py-2 font-semibold">Component</th>
+            <th class="px-3 py-2 font-semibold">Runs on</th>
+            <th class="px-3 py-2 font-semibold">Host</th>
+            <th class="px-3 py-2 font-semibold">Hosting</th>
+            <th class="px-3 py-2 font-semibold">Status</th>
+          </tr>
+        </thead>
+        <tbody id="topoBody"></tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- Officer tokens -->
   <section class="mb-8 rounded-3xl border border-zinc-200/90 bg-white/60 p-6 backdrop-blur dark:border-zinc-800/80 dark:bg-[#10151f]/50">
     <div class="mb-4 flex items-baseline justify-between">
@@ -213,6 +237,41 @@ $('lock').onclick=()=>{sessionStorage.removeItem('mimir.admin');location.reload(
 
 function open_(){$('gate').classList.add('hidden');$('console').classList.remove('hidden');refresh();}
 
+/* ── deployment topology ──────────────────────────────── */
+async function loadTopology(){
+  const body=$('topoBody'),sum=$('topoSummary');
+  body.innerHTML='<tr><td colspan="5" class="px-3 py-6 text-center text-zinc-400">Probing&hellip;</td></tr>';
+  try{
+    const d=await(await api('/api/admin/topology')).json();
+    const cs=d.components||[];
+    sum.innerHTML=`<span class="font-medium text-zinc-700 dark:text-zinc-300">${d.self_hosted} of ${cs.length} components run on our own infrastructure.</span> `+
+      (d.generation_provider==='local'
+        ? 'Generation is running on a self-hosted model, so no query text leaves the network.'
+        : 'Generation is the only third-party call. Setting <code class="mono rounded bg-zinc-100 px-1 dark:bg-zinc-800">GEN_PROVIDER=local</code> moves it on-premise.');
+    body.innerHTML=cs.map(c=>{
+      const up=c.status==='up';
+      const dot=up?'bg-emerald-500':'bg-red-500';
+      const stat=up?`${c.latency_ms} ms`:'unreachable';
+      const badge=c.hosting==='self'
+        ? '<span class="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Self-hosted</span>'
+        : '<span class="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">Third-party</span>';
+      return `<tr class="border-t border-zinc-100 dark:border-zinc-800/70">
+        <td class="px-3 py-2"><div class="font-medium">${esc(c.name)}</div><div class="text-[11px] text-zinc-400">${esc(c.role)}</div></td>
+        <td class="mono px-3 py-2 text-zinc-600 dark:text-zinc-400">${esc(c.tech)}</td>
+        <td class="mono px-3 py-2 text-zinc-500">${esc(c.host||'—')}</td>
+        <td class="px-3 py-2">${badge}</td>
+        <td class="whitespace-nowrap px-3 py-2">
+          <span class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${dot}"></span>
+          <span class="${up?'text-zinc-500':'text-red-500'}" title="${esc(c.detail||'')}">${esc(stat)}</span>
+        </td>
+      </tr>`;}).join('');
+  }catch(_){
+    sum.textContent='Could not probe the deployment.';
+    body.innerHTML='<tr><td colspan="5" class="px-3 py-6 text-center text-red-500">Probe failed.</td></tr>';
+  }
+}
+$('topoRefresh').onclick=loadTopology;
+
 /* ── access log ───────────────────────────────────────── */
 // Timestamps are stored UTC ISO; render them relative so an officer's last activity is
 // readable at a glance without anyone doing timezone arithmetic on stage.
@@ -274,6 +333,7 @@ async function refresh(){
   }catch(_){}
   loadTokens();
   loadAudit();
+  loadTopology();
 }
 
 async function loadTokens(){

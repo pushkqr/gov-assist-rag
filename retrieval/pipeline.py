@@ -2,6 +2,7 @@ import os
 import re
 import time
 import json
+import itertools
 import concurrent.futures
 from typing import Any, Dict, List, Optional, Callable
 
@@ -10,7 +11,7 @@ from google.genai import types
 from cerebras.cloud.sdk import Cerebras
 
 from core.log_config import get_logger
-from core.utils import cerebras_chat_completions_create_safe
+from core.utils import cerebras_chat_completions_create_safe, local_generate_stream
 from retrieval.search import search_policy_docs_tool, execute_search_tool
 from retrieval.query import contextualize_query
 
@@ -150,9 +151,18 @@ def run_retrieval(
         for idx, doc in enumerate(evidence):
             context_text += f"Document: {doc.get('document')} Section: {doc.get('section')}\nQuote: {doc.get('quote')}\n\n"
 
-    _MODEL_COUNTER += 1
-    target_model = _CEREBRAS_MODELS[(_MODEL_COUNTER - 1) % len(_CEREBRAS_MODELS)]
-    logger.info(f"Selected model {target_model} for request #{_MODEL_COUNTER}")
+    # Everything upstream of generation (embeddings, reranking, translation, the vector
+    # store) is already self-hosted. Generation is the one hop to a third party, so it is
+    # the one that has to be swappable for an air-gapped deployment. GEN_PROVIDER=local
+    # points it at any OpenAI-compatible server on the department's own hardware.
+    _local_gen = os.getenv("GEN_PROVIDER", "cerebras").strip().lower() == "local"
+
+    if _local_gen:
+        target_model = os.getenv("LOCAL_GEN_MODEL", "qwen3:4b")
+    else:
+        _MODEL_COUNTER += 1
+        target_model = _CEREBRAS_MODELS[(_MODEL_COUNTER - 1) % len(_CEREBRAS_MODELS)]
+        logger.info(f"Selected model {target_model} for request #{_MODEL_COUNTER}")
 
     if status_callback:
         status_callback(f"Synthesizing answer using {target_model}...")
@@ -221,27 +231,36 @@ def run_retrieval(
         user_prompt = f"Context:\n{context_text}\n\nQuestion: {query}"
 
     try:
-        # Cerebras limits are per-minute, so retrying a 429 a few seconds later just fails
-        # again while burning the latency budget. Disable SDK retries and let the Gemini
-        # fallback below take over immediately instead.
-        _gen_client = cerebras_client
-        try:
-            _gen_client = cerebras_client.with_options(max_retries=0)
-        except Exception:
-            pass
-        stream = cerebras_chat_completions_create_safe(
-            _gen_client,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            model=target_model,
-            stream=True,
-            max_completion_tokens=8192,
-            temperature=0.0
-        )
+        if _local_gen:
+            _local_stream = local_generate_stream(system_prompt, user_prompt)
+            # Pull the first chunk eagerly so a refused connection or an unknown model name
+            # raises here and falls through to the Gemini fallback, instead of surfacing as a
+            # silently empty answer once the UI is already iterating the generator.
+            _first = next(_local_stream, None)
+            stream = itertools.chain([_first], _local_stream) if _first is not None else iter(())
+        else:
+            # Cerebras limits are per-minute, so retrying a 429 a few seconds later just fails
+            # again while burning the latency budget. Disable SDK retries and let the Gemini
+            # fallback below take over immediately instead.
+            _gen_client = cerebras_client
+            try:
+                _gen_client = cerebras_client.with_options(max_retries=0)
+            except Exception:
+                pass
+            stream = cerebras_chat_completions_create_safe(
+                _gen_client,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                model=target_model,
+                stream=True,
+                max_completion_tokens=8192,
+                temperature=0.0
+            )
     except Exception as exc:
-        logger.error(f"Cerebras LLM failed ({exc}). Falling back to Gemini...")
+        _which = "Local generation" if _local_gen else "Cerebras LLM"
+        logger.error(f"{_which} failed ({exc}). Falling back to Gemini...")
         try:
             gemini_prompt = f"System Instructions:\n{system_prompt}\n\n{user_prompt}"
             

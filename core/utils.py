@@ -214,6 +214,71 @@ def local_rerank_safe(query: str, texts: list[str], top_n: int = 35) -> list[int
         return list(range(min(top_n, len(texts))))
 
 
+class _TextChunk:
+    """Minimal stand-in exposing .text, the shape StreamingResponse already unwraps."""
+
+    __slots__ = ("text",)
+
+    def __init__(self, text: str):
+        self.text = text
+
+
+def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float = None):
+    """Stream a completion from a self-hosted, OpenAI-compatible inference server.
+
+    Deliberately speaks the /v1/chat/completions dialect over plain requests rather than
+    Ollama's native API: the same code then runs against Ollama, vLLM, llama.cpp or LM
+    Studio, so an on-premise deployment is a base URL change and not a code change.
+
+    Yields chunks lazily. The caller sees the first token as soon as the server emits it,
+    which matters because a CPU-only department server is slow enough that waiting for a
+    complete response would look like a hang.
+    """
+    base_url = os.getenv("LOCAL_GEN_URL", "http://localhost:11434/v1").rstrip("/")
+    model = os.getenv("LOCAL_GEN_MODEL", "qwen3:4b")
+    api_key = os.getenv("LOCAL_GEN_API_KEY", "")
+    timeout = timeout if timeout is not None else float(os.getenv("LOCAL_GEN_TIMEOUT_S", "120"))
+
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "stream": True,
+        "temperature": 0.0,
+    }
+
+    logger.info(f"Generating via self-hosted model {model} at {base_url}")
+    response = requests.post(
+        f"{base_url}/chat/completions", json=payload, headers=headers,
+        stream=True, timeout=timeout,
+    )
+    response.raise_for_status()
+
+    for raw_line in response.iter_lines(decode_unicode=True):
+        if not raw_line:
+            continue
+        if raw_line.startswith("data:"):
+            raw_line = raw_line[5:].strip()
+        if not raw_line or raw_line == "[DONE]":
+            continue
+        try:
+            chunk = json.loads(raw_line)
+        except json.JSONDecodeError:
+            continue
+        choices = chunk.get("choices") or []
+        if not choices:
+            continue
+        text = (choices[0].get("delta") or {}).get("content")
+        if text:
+            yield _TextChunk(text)
+
+
 @with_retry_and_throttle(constant_delay_env="CEREBRAS_API_DELAY", default_delay=0, initial_backoff=10)
 def cerebras_chat_completions_create_safe(client, *args, **kwargs):
     """Wrapper for cerebras_client.chat.completions.create with rate limiting for TPM limits."""
