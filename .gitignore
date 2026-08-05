@@ -20,6 +20,7 @@ data/*
 docling_ingestion/
 CLAUDE.md
 skills-lock.json
+mahGRs-main/
 
 # Qdrant Database
 local_qdrant_db/
@@ -61,6 +62,8 @@ scratch/*
 !scratch/make_conflict_docs.py
 # Volume benchmark; the numbers it produces back the scaling claim, so it ships with them.
 !scratch/loadtest.py
+# Regression suite for the four demo queries; every build-plan phase runs this to gate itself.
+!scratch/regress.py
 
 # Testing and Logs
 *.log
