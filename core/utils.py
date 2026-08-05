@@ -5,6 +5,7 @@ import requests
 from functools import wraps
 
 from google import genai
+from google.genai import types
 from cerebras.cloud.sdk import Cerebras
 from core.log_config import get_logger
 
@@ -178,6 +179,80 @@ def embed_content_safe(client, *args, **kwargs):
         embed_client = get_aistudio_client()
         return embed_client.models.embed_content(*args, **kwargs)
     return client.models.embed_content(*args, **kwargs)
+
+
+def embed_batch_safe(client, texts: list[str], model_name: str = None) -> list[list[float] | None]:
+    """Embed many texts per HTTP request instead of one. Returns a list of vectors (or None
+    for an item that could not be embedded) in the same order as `texts`, always.
+
+    ingestion/chunking.py previously called embed_content_safe once per chunk. At department
+    scale (roughly 90,000 chunks for one department) that is 90,000 sequential round trips,
+    which is measured at several hours. Batching to EMBED_BATCH_SIZE (default 64) collapses
+    that to roughly 1,400 calls.
+
+    Only the local Infinity path is actually batched: it is the configured path in this
+    deployment and speaks the OpenAI embeddings dialect, which returns each item's `index`
+    explicitly. That index is not trusted to already be in order — it is sorted on, always,
+    because a batch server reordering results under concurrent load would otherwise attach a
+    vector to the wrong chunk silently, with no error and no visible symptom short of degraded
+    retrieval quality discovered much later. See build-plan.md Phase 2 for how this was
+    verified against the live endpoint before being trusted.
+
+    Without LOCAL_EMBED_URL configured, this falls back to one embed_content_safe call per
+    item — identical to the pre-batching behavior, so there is no regression on that path, just
+    no speedup. Batching Vertex/AI Studio's own embed_content(contents=[...]) was deliberately
+    not attempted: its ordering guarantee was not verified against this deployment, and the
+    local path is what ingestion actually uses.
+    """
+    local_url = os.getenv("LOCAL_EMBED_URL")
+    if not local_url:
+        results = []
+        config = types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+        for text in texts:
+            try:
+                resp = embed_content_safe(client, model=model_name or os.getenv("EMBED_MODEL_NAME", "text-embedding-004"),
+                                          contents=text, config=config)
+                results.append(resp.embeddings[0].values if resp.embeddings else None)
+            except Exception as exc:
+                logger.error(f"Fallback single-item embed failed: {exc}")
+                results.append(None)
+        return results
+
+    api_key = os.getenv("LOCAL_EMBED_API_KEY", "")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    resolved_model = os.getenv("LOCAL_EMBED_MODEL_NAME") or model_name or "BAAI/bge-m3"
+    batch_size = int(os.getenv("EMBED_BATCH_SIZE", "64"))
+    timeout = float(os.getenv("LOCAL_EMBED_BATCH_TIMEOUT_S", "60"))
+
+    results: list = [None] * len(texts)
+    for start in range(0, len(texts), batch_size):
+        batch = texts[start:start + batch_size]
+        try:
+            resp = requests.post(local_url, json={"input": batch, "model": resolved_model},
+                                 headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            items = resp.json()["data"]
+            # Defensive: sort by the index the server assigns rather than trust response order.
+            items.sort(key=lambda item: item["index"])
+            if len(items) != len(batch):
+                raise ValueError(f"batch returned {len(items)} embeddings for {len(batch)} inputs")
+            for offset, item in enumerate(items):
+                results[start + offset] = item["embedding"]
+        except Exception as exc:
+            logger.warning(f"Batch embed failed for {len(batch)} items starting at {start} "
+                           f"({exc}); falling back to per-item calls for this batch.")
+            for offset, text in enumerate(batch):
+                try:
+                    single = requests.post(local_url, json={"input": text, "model": resolved_model},
+                                           headers=headers, timeout=float(os.getenv("LOCAL_EMBED_TIMEOUT_S", "10")))
+                    single.raise_for_status()
+                    results[start + offset] = single.json()["data"][0]["embedding"]
+                except Exception as item_exc:
+                    logger.error(f"Per-item embed fallback also failed at index {start + offset}: {item_exc}")
+                    results[start + offset] = None
+    return results
 
 
 def local_rerank_safe(query: str, texts: list[str], top_n: int = 35) -> list[int]:

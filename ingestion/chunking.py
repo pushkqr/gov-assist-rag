@@ -7,7 +7,7 @@ from google import genai
 from google.genai import types
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from core.log_config import get_logger
-from core.utils import embed_content_safe, generate_content_safe
+from core.utils import embed_content_safe, embed_batch_safe, generate_content_safe
 
 logger = get_logger(__name__)
 
@@ -74,10 +74,14 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
     markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on, strip_headers=False)
     parent_docs = markdown_splitter.split_text(markdown_text)
 
-    database_payload = []
+    # Embedding is deferred to a single batched pass over the whole document (see the loop
+    # below the parent_docs loop) rather than called once per chunk inside it. A document with
+    # many small sections previously meant many small round trips; collecting every chunk
+    # first and embedding them together is what actually cuts the call count, since batching
+    # only within one parent section barely helps when most sections hold just a few chunks.
+    pending_chunks: List[Dict[str, Any]] = []
     child_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
 
-    config = types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
     model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
 
     for parent_doc in parent_docs:
@@ -195,34 +199,49 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
             enriched_child_texts.append(prefix)
 
         for i, child_text in enumerate(child_texts):
-            logger.debug(f"     [Embedding {i+1}/{len(child_texts)}] Generating dense vector ({model_name})...")
-            dense_response = embed_content_safe(client, model=model_name, contents=enriched_child_texts[i], config=config)
-
-            if not hasattr(dense_response, "embeddings") or not dense_response.embeddings:
-                continue
-
-            dense_vector = dense_response.embeddings[0].values
-            vector_dict = {
-                "dense": dense_vector,
-            }
-
-            payload_metadata = {
-                **parent_metadata,
-                **global_metadata,
-                "parent_id": parent_id,
-                "parent_context": parent_context_with_section,
+            pending_chunks.append({
+                "enriched_text": enriched_child_texts[i],
                 "child_text": child_text,
                 "translated_text": translated_texts[i],
+                "parent_id": parent_id,
+                "parent_context_with_section": parent_context_with_section,
+                "parent_metadata": parent_metadata,
                 "section_title": section_title,
-            }
+            })
 
-            database_payload.append(
-                {
-                    "id": str(uuid.uuid4()),
-                    "vector": vector_dict,
-                    "metadata": payload_metadata,
-                    "enriched_text_used_for_embedding": enriched_child_texts[i],
-                }
-            )
+    if not pending_chunks:
+        return []
+
+    logger.info(f"  -> Embedding {len(pending_chunks)} passages ({model_name})...")
+    vectors = embed_batch_safe(client, [p["enriched_text"] for p in pending_chunks], model_name=model_name)
+
+    database_payload = []
+    skipped = 0
+    for chunk, dense_vector in zip(pending_chunks, vectors):
+        if dense_vector is None:
+            skipped += 1
+            continue
+
+        payload_metadata = {
+            **chunk["parent_metadata"],
+            **global_metadata,
+            "parent_id": chunk["parent_id"],
+            "parent_context": chunk["parent_context_with_section"],
+            "child_text": chunk["child_text"],
+            "translated_text": chunk["translated_text"],
+            "section_title": chunk["section_title"],
+        }
+
+        database_payload.append(
+            {
+                "id": str(uuid.uuid4()),
+                "vector": {"dense": dense_vector},
+                "metadata": payload_metadata,
+                "enriched_text_used_for_embedding": chunk["enriched_text"],
+            }
+        )
+
+    if skipped:
+        logger.warning(f"  -> {skipped} of {len(pending_chunks)} passages could not be embedded and were dropped.")
 
     return database_payload
