@@ -81,8 +81,9 @@
       <div id="stChunks" class="serif mt-1 text-3xl text-amber-600 dark:text-amber-400">&mdash;</div>
     </div>
     <div class="rounded-2xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-[#10151f]/50">
-      <div class="mono text-[10px] uppercase tracking-wide text-zinc-400">Source PDFs</div>
+      <div class="mono text-[10px] uppercase tracking-wide text-zinc-400">Source Files</div>
       <div id="stPdfs" class="serif mt-1 text-3xl text-amber-600 dark:text-amber-400">&mdash;</div>
+      <div id="stBreak" class="mono mt-0.5 text-[10px] text-zinc-500"></div>
     </div>
     <div class="rounded-2xl border border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-[#10151f]/50">
       <div class="mono text-[10px] uppercase tracking-wide text-zinc-400">Officers</div>
@@ -167,7 +168,9 @@ async function refresh(){
   try{
     const s=await(await api('/api/admin/stats')).json();
     $('stChunks').textContent=s.chunks==null?'n/a':s.chunks.toLocaleString();
-    $('stPdfs').textContent=s.pdfs;$('stOfficers').textContent=s.officers;
+    $('stPdfs').textContent=(s.files!=null?s.files:s.pdfs).toLocaleString();
+    $('stBreak').textContent=(s.documents?s.documents+' documents · '+s.pdfs+' PDF, '+s.orgpedia+' GR':'');
+    $('stOfficers').textContent=s.officers;
   }catch(_){}
   loadTokens();
 }

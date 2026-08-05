@@ -239,11 +239,21 @@ async def api_admin_stats(request: Request):
     if not _is_admin(request):
         return _FORBIDDEN
     from db import list_tokens
-    stats = {"chunks": None, "pdfs": 0, "officers": len(list_tokens())}
+    stats = {"chunks": None, "documents": 0, "pdfs": 0, "orgpedia": 0, "officers": len(list_tokens())}
     try:
-        stats["pdfs"] = len([p for p in DOCS_DIR.rglob("*") if p.suffix.lower() == ".pdf"]) if DOCS_DIR.exists() else 0
+        if DOCS_DIR.exists():
+            # One source document is either a PDF or an Orgpedia GR. Orgpedia GRs ship as a
+            # pair (<id>.pdf.txt original, <id>.pdf.en.txt translation), so count only the
+            # .en.txt side to avoid double-counting one document as two.
+            files = [p for p in DOCS_DIR.rglob("*") if p.is_file()]
+            stats["files"] = len(files)
+            stats["pdfs"] = sum(1 for p in files if p.suffix.lower() == ".pdf")
+            # Orgpedia GRs ship as a pair per document (<id>.pdf.en.txt English,
+            # <id>.pdf.mr.txt Marathi), so the file count is double the document count.
+            stats["orgpedia"] = sum(1 for p in files if p.name.lower().endswith(".en.txt"))
+            stats["documents"] = stats["pdfs"] + stats["orgpedia"]
     except Exception as e:
-        logger.warning(f"Could not count PDFs: {e}")
+        logger.warning(f"Could not count source documents: {e}")
     try:
         agg = weaviate_client.collections.get("GovDocs").aggregate.over_all(total_count=True)
         stats["chunks"] = agg.total_count
