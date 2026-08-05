@@ -22,7 +22,9 @@ services:
       - "127.0.0.1:8001:8000"
     # Hard cap: prevents the PyTorch process from OOM-killing the host on t3.small (2 GB).
     # 200M model in float32 uses ~1.2 GB; 1.8 GB leaves headroom for inference batches.
-    mem_limit: "1800m"
+    # The 1B ingestion instance runs on a larger host and must raise this (float16 weights
+    # alone are ~2 GB), so it overrides TRANSLATE_MEM_LIMIT in its own .env.
+    mem_limit: ${TRANSLATE_MEM_LIMIT:-1800m}
     logging:
       driver: "json-file"
       options:

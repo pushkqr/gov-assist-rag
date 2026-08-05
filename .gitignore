@@ -17,7 +17,6 @@ data/*
 # (a full scan of every chunk), so the deployment starts with it already populated.
 !data/citation_graph.json
 !data/docker-compose.yml
-docling_ingestion/
 CLAUDE.md
 skills-lock.json
 mahGRs-main/
