@@ -40,10 +40,17 @@ def app_health():
 
 def weaviate():
     from core.utils import get_weaviate_client
+    from core.schema import CORPUS_COLLECTION
+
+    # Resolved the same way app.py and scratch/regress.py resolve it. Hardcoding "GovDocs"
+    # here meant this probe queried a collection the deployment had stopped using, so a
+    # perfectly healthy stack reported a failed pre-flight and told the operator to fall
+    # back to the recording. regress.py carried the identical bug and was fixed the same way.
+    name = os.environ.get("CORPUS_COLLECTION", CORPUS_COLLECTION).strip() or CORPUS_COLLECTION
     client = get_weaviate_client()
     try:
-        total = client.collections.get("GovDocs").aggregate.over_all(total_count=True).total_count
-        return f"{total} chunks indexed"
+        total = client.collections.get(name).aggregate.over_all(total_count=True).total_count
+        return f"{total} chunks indexed in {name}"
     finally:
         client.close()
 
