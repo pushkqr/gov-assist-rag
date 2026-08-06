@@ -350,8 +350,15 @@ def cmd_check(_args):
     return 0 if (ok_docker and ok_env) else 1
 
 
-def cmd_tier(_args):
-    _print_plan(detect_plan())
+def cmd_tier(args):
+    plan = detect_plan()
+    # --model-only exists so the repo-root orchestrator can read the tier without parsing
+    # human-readable output, and without importing this module: the tiering rule stays in
+    # one place and the two entry points cannot drift.
+    if getattr(args, "model_only", False):
+        print(plan["model"])
+        return 0
+    _print_plan(plan)
     return 0
 
 
@@ -432,7 +439,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("check", help="Verify Docker and .env are ready. Changes nothing.")
-    sub.add_parser("tier", help="Report detected hardware and the model tier it implies. Changes nothing.")
+    tier_parser = sub.add_parser("tier", help="Report detected hardware and the engine/model it implies. Changes nothing.")
+    tier_parser.add_argument("--model-only", action="store_true",
+                             help="Print just the model name, for scripts.")
     sub.add_parser("up", help="Start the service and pull the tiered model.")
     sub.add_parser("down", help="Stop the service.")
     sub.add_parser("status", help="Check whether it is reachable right now.")
