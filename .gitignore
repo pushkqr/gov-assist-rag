@@ -1,6 +1,9 @@
 # Environments
 .env
 .env.backup-*
+# The live backup on the app instance is named .env.bak-presovereign, which .env.backup-*
+# does not match. It holds every credential in the deployment.
+.env.bak*
 .venv
 env/
 venv/
