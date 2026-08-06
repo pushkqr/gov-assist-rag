@@ -45,6 +45,32 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
 ### Query flow
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1C1C1E',
+    'primaryTextColor': '#F5F5F5',
+    'primaryBorderColor': '#F5A623',
+    'lineColor': '#F5A623',
+    'secondaryColor': '#2A2A2E',
+    'tertiaryColor': '#141416',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '14px',
+    'actorBkg': '#1C1C1E',
+    'actorBorder': '#F5A623',
+    'actorTextColor': '#F5A623',
+    'actorLineColor': '#5A5A60',
+    'signalColor': '#F5F5F5',
+    'signalTextColor': '#F5F5F5',
+    'labelBoxBkgColor': '#1C1C1E',
+    'labelBoxBorderColor': '#F5A623',
+    'labelTextColor': '#F5F5F5',
+    'noteBkgColor': '#2A2A2E',
+    'noteBorderColor': '#F5A623',
+    'noteTextColor': '#F5F5F5',
+    'sequenceNumberColor': '#141416'
+  }
+} }%%
 sequenceDiagram
     participant User as Officer / Frontend
     participant API as FastAPI Backend
@@ -68,11 +94,78 @@ sequenceDiagram
     API-->>User: Cited answer + conflict warnings
 ```
 
+### Logical components
+
+What the parts are and how they relate, independent of where they run. Ingestion and retrieval are separate pipelines that share the same three services, which is why a document is indexed with exactly the model that will later search it.
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1C1C1E',
+    'primaryTextColor': '#F5F5F5',
+    'primaryBorderColor': '#F5A623',
+    'lineColor': '#F5A623',
+    'secondaryColor': '#2A2A2E',
+    'tertiaryColor': '#141416',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '14px',
+    'clusterBkg': '#141416',
+    'clusterBorder': '#8C6D1F',
+    'edgeLabelBackground': '#141416',
+    'nodeTextColor': '#F5F5F5'
+  }
+} }%%
+flowchart LR
+    UI["Officer UI<br/>Vanilla JS, SSE"] -->|"HTTP / SSE"| MW["Zero-Trust Middleware<br/>geofence, then token"]
+    MW --> API["FastAPI Core<br/>ask, admin, audit"]
+
+    API --> RET["Retrieval<br/>pipeline"]
+    API --> ING["Ingestion<br/>pipeline"]
+    API --- DB[("SQLite<br/>tokens, history, audit")]
+
+    subgraph SHARED["Shared services"]
+        direction TB
+        TR["IndicTrans2<br/>translation"]
+        EM["BGE-M3 + cross-encoder<br/>Infinity"]
+        WV[("Weaviate<br/>dense + BM25")]
+    end
+
+    RET --> SHARED
+    ING --> SHARED
+    ING --> OCR["Docling<br/>PDF OCR"]
+
+    RET --> GEN{"Generation"}
+    GEN -->|"sovereign"| LOC["Self-hosted<br/>open-weight model"]
+    GEN -->|"hosted"| CER["Cerebras<br/>Gemini on fallback"]
+
+    style MW fill:#3A1F1C,stroke:#C25C46,color:#F5F5F5
+    style GEN fill:#3A2E14,stroke:#F5A623,color:#F5F5F5
+    style LOC fill:#1F3A2A,stroke:#4FA36F,color:#F5F5F5
+```
+
 ### Deployment topology
 
 Each service is independently deployable. The reference AWS deployment runs one per instance inside a single VPC, where only the application instance has a public address and every service is reached over private addressing.
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1C1C1E',
+    'primaryTextColor': '#F5F5F5',
+    'primaryBorderColor': '#F5A623',
+    'lineColor': '#F5A623',
+    'secondaryColor': '#2A2A2E',
+    'tertiaryColor': '#141416',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '14px',
+    'clusterBkg': '#141416',
+    'clusterBorder': '#8C6D1F',
+    'edgeLabelBackground': '#141416',
+    'nodeTextColor': '#F5F5F5'
+  }
+} }%%
 graph LR
     Net(["Public internet"]) -->|"80 / 443 only"| App
 
@@ -110,6 +203,45 @@ graph LR
 | `INGEST_TRANSLATE_PROVIDER` | `indictrans2` | `gcp` |
 
 In `sovereign` mode no query text leaves the network at inference time. Set the mode once; the admin console's Deployment panel shows the effective configuration actually in force, resolved at runtime rather than assumed.
+
+Only the final step differs. Everything that reads the corpus is self-hosted either way, which is what makes the switch a configuration change rather than a migration.
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1C1C1E',
+    'primaryTextColor': '#F5F5F5',
+    'primaryBorderColor': '#F5A623',
+    'lineColor': '#F5A623',
+    'secondaryColor': '#2A2A2E',
+    'tertiaryColor': '#141416',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '14px',
+    'clusterBkg': '#141416',
+    'clusterBorder': '#8C6D1F',
+    'edgeLabelBackground': '#141416',
+    'nodeTextColor': '#F5F5F5'
+  }
+} }%%
+flowchart LR
+    Q(["Officer query"]) --> SELF
+
+    subgraph SELF["Identical in both modes, all self-hosted"]
+        direction TB
+        T["Translation<br/>IndicTrans2"] --> E["Embeddings + reranking<br/>BGE-M3, cross-encoder"] --> R["Hybrid search<br/>Weaviate"]
+    end
+
+    SELF --> SW{"GEN_PROVIDER"}
+    SW -->|"local"| S["Generation on our instance<br/>no external call"]
+    SW -->|"cerebras"| H["Hosted generation<br/>one external component"]
+    S --> A(["Cited, grounded answer"])
+    H --> A
+
+    style SW fill:#3A2E14,stroke:#F5A623,color:#F5F5F5
+    style S fill:#1F3A2A,stroke:#4FA36F,color:#F5F5F5
+    style H fill:#2A2A2E,stroke:#8A8A90,color:#F5F5F5
+```
 
 ---
 

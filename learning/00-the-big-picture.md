@@ -20,22 +20,40 @@ That is the entire architecture of Mimir.
 ## The real pipeline
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1C1C1E',
+    'primaryTextColor': '#F5F5F5',
+    'primaryBorderColor': '#F5A623',
+    'lineColor': '#F5A623',
+    'secondaryColor': '#2A2A2E',
+    'tertiaryColor': '#141416',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '14px',
+    'clusterBkg': '#141416',
+    'clusterBorder': '#8C6D1F',
+    'edgeLabelBackground': '#141416',
+    'nodeTextColor': '#F5F5F5'
+  }
+} }%%
 flowchart TD
-    Q["Officer asks a policy question\n(English / Marathi / Hindi)"] -->|"POST /ask"| A{"Auth Gate\n(Token + IP check)"}
+    Q["Officer asks a policy question<br/>(English / Marathi / Hindi)"] -->|"POST /ask"| A{"Auth Gate<br/>(Token + IP check)"}
     A -- "Unauthorized / Off-network" --> Z["403 / 401 Error"]
-    A -- "Authorized" --> T["Detect script\n(Devanagari?)"]
-    T -- "Indic script" --> TR["IndicTrans2 Microservice\nTranslate → English"]
+    A -- "Authorized" --> T["Detect script<br/>(Devanagari?)"]
+    T -- "Indic script" --> TR["IndicTrans2 Microservice<br/>Translate to English"]
     TR --> E
-    T -- "Already English" --> E["Embed query\n(BGE-M3 / Infinity)"]
+    T -- "Already English" --> E["Embed query<br/>(BGE-M3 / Infinity)"]
     E -->|"Dense vector search (meaning)"| W[("Weaviate")]
     E -->|"BM25 search (keywords)"| W
     W -->|"Alpha Fusion"| F["Top-K candidate chunks"]
-    F -->|"Cross-encoder scores\nquery + chunk together"| R["Reranked, diversified\nevidence"]
-    R -->|"Context + query"| G["Generation\n(self-hosted by default)"]
-    G -->|"Stream tokens (SSE)"| H["Officer sees cited,\ngrounded answer"]
+    F -->|"Cross-encoder scores<br/>query + chunk together"| R["Reranked, diversified<br/>evidence"]
+    R -->|"Context + query"| G["Generation<br/>(self-hosted by default)"]
+    G -->|"Stream tokens (SSE)"| H["Officer sees cited,<br/>grounded answer"]
 
-    style A fill:#b5432f,color:#fff
-    style H fill:#13241a,color:#a9e6c0
+    style A fill:#3A1F1C,stroke:#C25C46,color:#F5F5F5
+    style Z fill:#3A1F1C,stroke:#C25C46,color:#F5F5F5
+    style H fill:#1F3A2A,stroke:#4FA36F,color:#F5F5F5
 ```
 
 ---
