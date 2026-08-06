@@ -206,13 +206,15 @@ def cmd_config(args):
     try:
         from dotenv import load_dotenv
         load_dotenv()
-        from core.config_check import check_config, ERROR, WARN, OK
+        from core.config_check import check_config, check_env_file, ERROR, WARN, OK
     except ImportError as exc:
         print(f"Could not import this repo's dependencies ({exc}). "
               f"Run this from an environment with requirements.txt installed.")
         return 1
 
     findings = check_config(probe_services=not args.offline)
+    if args.env_file:
+        findings = check_env_file(args.env_file) + findings
 
     marker = {ERROR: "FAIL", WARN: "WARN", OK: "ok  "}
     errors = warnings = 0
@@ -267,6 +269,7 @@ def main():
     config_parser = sub.add_parser("config", help="Validate configuration: required values, values that must agree, and what the services actually report.")
     config_parser.add_argument("--offline", action="store_true", help="Skip the service probes and check local configuration only.")
     config_parser.add_argument("--verbose", action="store_true", help="List the checks that passed as well as the ones that did not.")
+    config_parser.add_argument("--env-file", help="Also check this env file for duplicate keys and for values that never reached the process.")
 
     logs_parser = sub.add_parser("logs", help="Follow one service's container logs.")
     logs_parser.add_argument("name", choices=SERVICE_ORDER + OPTIONAL_SERVICES)

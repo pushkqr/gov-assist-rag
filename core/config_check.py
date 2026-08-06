@@ -58,6 +58,52 @@ def _required(sovereign_gen: bool, ingest_indictrans: bool) -> List[Tuple[str, s
     return required
 
 
+def check_env_file(path: str) -> List[Finding]:
+    """Check an env file against the environment this process actually received.
+
+    Two failures live here that reading either side alone cannot see. A key written twice
+    silently keeps only the last value, so editing the first one changes nothing and nothing
+    reports it. And a key present in the file but absent from the environment means it never
+    reached the process, which is what happens when a compose file does not pass it through.
+    """
+    findings: List[Finding] = []
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.readlines()
+    except OSError as exc:
+        return [(WARN, "env file", f"{path}: {exc}")]
+
+    seen: dict = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        seen.setdefault(key, []).append(value.strip())
+
+    duplicates = {k: v for k, v in seen.items() if len(v) > 1}
+    for key, values in duplicates.items():
+        distinct = set(values)
+        detail = (f"set {len(values)} times with different values {sorted(distinct)}; "
+                  f"only the last is used"
+                  if len(distinct) > 1 else
+                  f"set {len(values)} times; harmless now, but an edit to the first has no effect")
+        findings.append((ERROR if len(distinct) > 1 else WARN, key, detail))
+    if not duplicates:
+        findings.append((OK, "env file", f"{len(seen)} keys, none duplicated"))
+
+    missing = [k for k in seen if not os.getenv(k, "").strip() and seen[k][-1]]
+    for key in missing:
+        findings.append((ERROR, key,
+                         "present in the env file but not in this process: it never reached "
+                         "the container (check the compose environment block)"))
+    if not missing:
+        findings.append((OK, "env file delivery", "every key in the file reached the process"))
+
+    return findings
+
+
 def check_config(probe_services: bool = True) -> List[Finding]:
     findings: List[Finding] = []
 
