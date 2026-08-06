@@ -117,18 +117,33 @@ In `sovereign` mode no query text leaves the network at inference time. Set the 
 
 ### The deployment CLI
 
-`deploy.py` at the repository root orchestrates the whole stack on one machine:
+On a machine with Docker and nothing else configured, the whole deployment is one command:
 
 ```bash
-python deploy.py check               # hardware report and per-service readiness
+git clone https://github.com/pushkqr/mimir.git && cd mimir && python deploy.py up
+```
+
+`up` writes any missing `.env` files first, then starts everything in order. The individual
+steps, when you want to see them:
+
+```bash
+python deploy.py init                # write every .env: derived URLs, generated secrets
+python deploy.py check               # prerequisites, hardware report, per-service readiness
 python deploy.py up                  # bring every service up in order, then the app
 python deploy.py up --only weaviate  # just one service
 python deploy.py status              # live reachability, same probes as the admin panel
+python deploy.py config              # required values, values that must agree, what services report
 python deploy.py logs weaviate       # follow one service's container logs
 python deploy.py down                # tear everything down, reverse order
 ```
 
+`init` removes the configuration a deployer would otherwise derive by hand: service URLs follow from the host and the ports each compose file publishes, and secrets that exist only to match on both sides are generated into both at once. Credentials for third parties cannot be invented and are listed as outstanding.
+
+`check` asks whether services can start, `status` whether they are reachable, and `config` whether what they were told is coherent. A stack can pass the first two and still be misconfigured in ways that only surface under real traffic.
+
 It never reimplements a service's startup logic. It shells out to the same `deploy.py` each service directory carries, so the single-machine path and the distributed path cannot drift.
+
+**[`DEPLOYMENT.md`](DEPLOYMENT.md) is the full walkthrough**, including distributed deployment, hardware tiers, corpus loading, and the failure modes that have actually occurred.
 
 ### Distributing services across machines
 
@@ -138,6 +153,8 @@ Every directory under `microservices/` is standalone and stdlib-only. Copy one t
 scp -r microservices/embeddings/ user@node:~/mimir-embeddings/
 ssh user@node 'cd ~/mimir-embeddings && cp .env.example .env && python3 deploy.py up'
 ```
+
+Then point the application at it with `python deploy.py init --host <node>`. Note that the compose files publish on `127.0.0.1` only, which is right for one machine and wrong for several: change the port binding on any service that has to be reached from another host, and only where the network itself is trusted.
 
 | Service | Port | Runs |
 |---|---|---|

@@ -36,17 +36,22 @@ service directory carries on its own, so the orchestrated path and the "just thi
 on a strange machine" path can never silently diverge.
 
 ```bash
-python deploy.py check     # hardware report, and can each service reach what it needs
+python deploy.py init      # write every .env: derived URLs, generated secrets
+python deploy.py check     # prerequisites, hardware report, and per-service readiness
 python deploy.py up        # bring every service up, in order, then build and start the app
 python deploy.py status    # live reachability of all six components, same probes /admin uses
+python deploy.py config    # required values, values that must agree, what the services report
 python deploy.py down      # tear everything down, reverse order
 ```
+
+`up` runs `init` when `.env` files are missing, so a clean checkout deploys in one command.
+See [`../DEPLOYMENT.md`](../DEPLOYMENT.md) for the full walkthrough.
 
 Or one service directly, which is exactly what `deploy.py up` calls internally:
 
 ```bash
 cd microservices/weaviate
-cp .env.example .env   # fill in WEAVIATE_API_KEY
+cp .env.example .env   # or let the root `deploy.py init` write it, with a generated key
 python deploy.py up
 ```
 
@@ -69,10 +74,34 @@ starting anything.
 | Embeddings | **BAAI/bge-m3, always** | — |
 | Reranker (in `embeddings/`) | | CPU: `bge-reranker-base` &middot; GPU 6GB+: `bge-reranker-v2-m3` |
 | Translation | | CPU: `indictrans2-dist-200M` &middot; GPU 6GB+: `indictrans2-1B` |
-| Generation | | < 15GB RAM: `qwen3:1.7b` &middot; 15GB+ RAM: `qwen3:4b` &middot; GPU 8-16GB: `qwen3:8b` &middot; GPU 16GB+: `qwen3:30b` |
+| Generation | | picks an engine as well as a model, see below |
 
-The generation RAM threshold is 15GB rather than 16 on purpose. A nominally-16GB cloud
-instance reports slightly less than that to the operating system once the hypervisor and
+Generation selects the serving engine from the hardware, because the right engine on a GPU is
+not the right engine on a CPU:
+
+| Engine | Selected when | Models |
+|---|---|---|
+| SGLang | CUDA GPU, compute capability >= 7.5, Docker nvidia runtime present | `Qwen/Qwen3-1.7B` through `32B` by VRAM |
+| Ollama + GPU | CUDA GPU older than 7.5 (K80, P100, V100) | `qwen3:1.7b` through `30b` by VRAM |
+| Ollama | no usable GPU | `qwen3:1.7b`, or `4b` given 16+ cores |
+
+All three bind `127.0.0.1:11434` and speak `/v1/chat/completions`, so `LOCAL_GEN_URL` does not
+change with the engine and switching is not an application change. Compute capability 7.5 is
+SGLang's floor, which excludes several cards still common in university clusters; those get
+Ollama with the device attached rather than a failure.
+
+Whether a GPU exists and whether Docker can hand it to a container are checked separately,
+because they fail differently. A host can pass `nvidia-smi` and still have no nvidia container
+runtime, in which case the container silently receives no device and runs a large tiered model
+on the CPU, which is slower than the CPU tier it declined. That case falls back with a warning
+rather than starting.
+
+The CPU tier requires core count and not merely enough RAM to hold the weights. A 16GB
+four-vCPU host runs `qwen3:4b` at 3.0 tokens per second, which is not usable interactively;
+the binding constraint on CPU is arithmetic throughput, not capacity.
+
+Where RAM is still consulted the threshold is 15GB rather than 16 on purpose. A nominally-16GB
+cloud instance reports slightly less than that to the operating system once the hypervisor and
 kernel have taken their share, so a strict `>= 16` test silently drops such a machine to the
 smallest tier. That failure is invisible: the service starts, serves, and answers with a
 weaker model than intended.
@@ -97,11 +126,14 @@ index unreadable and forces a full re-ingest. This is enforced in code, not just
 The stack runs on CPU as written, which is enough to demonstrate the full pipeline. It is not
 enough to be pleasant.
 
-- **CPU only, 16GB RAM.** Works. Reranking dominates query latency and generation with a 4B
-  model is slow enough to be felt. Suitable for evaluation.
-- **One NVIDIA GPU with 16GB or more.** The intended configuration. Uncomment the `deploy`
-  blocks for `infinity` and `generation` in the compose file. Reranking drops by roughly an
-  order of magnitude, and a 12B to 30B generation model becomes practical.
+- **CPU only, 16GB RAM.** Works. Reranking dominates query latency, and generation is bounded
+  by prompt processing rather than by the model: measured on 4 vCPUs with a 1.7B model, 1024
+  prompt tokens take 19s and 4096 take 100s, the rate decaying as the window grows. Suitable
+  for evaluation, and honest about what a department without a GPU would experience.
+- **One NVIDIA GPU with 16GB or more.** The intended configuration. `generation/` attaches the
+  device itself now, choosing SGLang or Ollama from the card's compute capability; there is no
+  longer a block to uncomment. For `embeddings/`, uncomment the `deploy` block in its compose
+  file. Reranking drops by roughly an order of magnitude.
 
 Disk: about 12GB for images, plus roughly 5GB of model weights, plus the corpus index.
 

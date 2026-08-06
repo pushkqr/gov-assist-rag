@@ -62,7 +62,11 @@ def translate_marathi_batch_indictrans2(chunks: List[str]) -> List[str]:
         os.environ.get("INGEST_TRANSLATION_SERVICE_URL")
         or os.environ.get("TRANSLATION_SERVICE_URL", "http://localhost:8001/translate")
     )
-    timeout = float(os.environ.get("TRANSLATION_TIMEOUT_S", "10"))
+    # Same variable the query path reads, so one setting governs both and cannot be raised in
+    # one place while the other keeps timing out. The defaults used to differ, and backwards:
+    # this path sends chunks of up to 2000 characters through the larger 1B ingestion model
+    # and had the shorter budget of the two.
+    timeout = float(os.environ.get("TRANSLATION_TIMEOUT_S", "15"))
     results = []
     failures = 0
     for chunk in chunks:
