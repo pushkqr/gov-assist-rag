@@ -1,0 +1,59 @@
+# Answer generation on a CUDA GPU, served by SGLang.
+#
+# Used INSTEAD of docker-compose.yml, not alongside it: deploy.py selects one engine and
+# passes only that file. Both bind 127.0.0.1:11434 and both speak /v1/chat/completions, so
+# the application's LOCAL_GEN_URL is identical either way and switching engines is not an
+# application change.
+#
+# SGLang needs compute capability 7.5 or newer (Turing). deploy.py checks this and falls
+# back to Ollama with GPU passthrough on older cards rather than failing to start.
+#
+# GEN_MODEL here is a HuggingFace repo id (Qwen/Qwen3-8B), not an Ollama tag (qwen3:8b).
+# SGLang downloads it on first launch, so there is no separate pull step.
+
+services:
+  generation:
+    image: lmsysorg/sglang:latest
+    restart: unless-stopped
+    entrypoint: ["python3", "-m", "sglang.launch_server"]
+    command:
+      - "--model-path"
+      - "${GEN_MODEL:?GEN_MODEL must be set; run deploy.py tier}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "11434"
+      - "--context-length"
+      - "${SGLANG_CONTEXT_LENGTH:-16384}"
+      # Fraction of VRAM held for weights plus the RadixAttention prefix cache. 0.85 leaves
+      # room for activation spikes; lower it if the server OOMs on a card shared with a
+      # display server.
+      - "--mem-fraction-static"
+      - "${SGLANG_MEM_FRACTION:-0.85}"
+    environment:
+      # Only needed for gated repos. Qwen3 is not gated, but a department substituting a
+      # gated model will need this.
+      HF_TOKEN: "${HF_TOKEN:-}"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    ports:
+      - "127.0.0.1:11434:11434"
+    # SGLang's tokeniser workers communicate over shared memory; the 64MB Docker default
+    # causes them to die under concurrency.
+    shm_size: "16gb"
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  hf_cache:

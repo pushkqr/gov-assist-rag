@@ -1,0 +1,25 @@
+# GPU passthrough for the Ollama engine, layered over docker-compose.yml.
+#
+# Used when a CUDA GPU is present but SGLang will not run on it - compute capability below
+# 7.5 (Tesla K80, P100, V100), which is common in university clusters bought before 2019.
+# Ollama drives those cards fine through its own CUDA build.
+#
+#     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+#
+# deploy.py passes both files automatically. Without this override the container never sees
+# the GPU, and Ollama silently runs the model on CPU instead - which on a large tiered model
+# is far slower than the CPU tier would have been.
+
+services:
+  generation:
+    environment:
+      # The CPU thread pinning in the base file is meaningless once layers are on the GPU,
+      # and capping it can slow the layers that do stay resident.
+      OLLAMA_NUM_THREADS: ""
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

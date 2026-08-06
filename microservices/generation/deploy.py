@@ -10,22 +10,31 @@ machine that has never seen the rest of this repository:
 So it cannot import anything from core/ or depend on a package installed system-wide beyond
 Docker itself.
 
-This is the one service where hardware genuinely changes which model runs, per this table
-(see scratch/build-plan.md Phase 5 for the reasoning):
+This is the one service where hardware genuinely changes both which engine runs and which
+model it serves. `deploy.py tier` reports the decision and changes nothing; `up` acts on it.
 
-    CPU, < 15GB RAM   -> qwen3:1.7b
-    CPU, >= 15GB RAM  -> qwen3:4b
-    GPU, 8-16GB VRAM  -> qwen3:8b
-    GPU, > 16GB VRAM  -> qwen3:30b
+    engine   when                                        models by capacity
+    ------   -----------------------------------------   --------------------------------
+    sglang   CUDA GPU, compute capability >= 7.5,        Qwen3-1.7B / 4B / 8B / 14B / 32B
+             docker nvidia runtime present                by VRAM
+    ollama   CUDA GPU older than 7.5 (K80, P100, V100)   qwen3:1.7b .. 30b by VRAM
+      +gpu   or nvidia runtime present but SGLang unfit
+    ollama   no usable GPU                                qwen3:1.7b, or 4b on a large host
+
+All three bind 127.0.0.1:11434 and speak /v1/chat/completions, so the application config is
+identical whichever is chosen and switching engines is not an application change.
+
+The CPU tier is deliberately conservative. On four vCPUs qwen3:4b was measured at 17.5 tok/s
+prompt processing and 3.0 tok/s generation, which is not usable for interactive answers, so
+the 4b tier now needs real core count rather than merely enough RAM to hold the weights.
 
 Point the application at this service with GEN_PROVIDER=local, LOCAL_GEN_URL and
-LOCAL_GEN_MODEL matching whatever `deploy.py tier` reports (core/utils.py:local_generate_stream
-speaks the standard /v1/chat/completions dialect, so any OpenAI-compatible server works, not
-only Ollama).
+LOCAL_GEN_MODEL matching what `deploy.py tier` reports (core/utils.py:local_generate_stream
+speaks the standard /v1/chat/completions dialect, so any OpenAI-compatible server works).
 
-    python deploy.py check   # is docker available, is .env present
-    python deploy.py tier    # report detected hardware and the model tier it implies
-    python deploy.py up      # start the container, then pull the tiered model
+    python deploy.py check   # is docker available, is .env present, is a GPU usable
+    python deploy.py tier    # report detected hardware and the engine/model it implies
+    python deploy.py up      # start the chosen engine, then pull the tiered model
     python deploy.py down
     python deploy.py status
 """
@@ -43,13 +52,40 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SERVICE_NAME = "generation"
-HEALTH_URL = "http://127.0.0.1:11434/api/tags"
+# Ollama and SGLang both listen on 11434 but disagree about what a health probe looks like.
+HEALTH_URL_OLLAMA = "http://127.0.0.1:11434/api/tags"
+HEALTH_URL_SGLANG = "http://127.0.0.1:11434/v1/models"
 
-GPU_VRAM_THRESHOLD_LARGE_MB = 16000
-GPU_VRAM_THRESHOLD_SMALL_MB = 8000
+# SGLang's attention kernels require Turing or newer. Older datacentre cards (K80 3.7,
+# P100 6.0, V100 7.0) are common in university clusters and must fall back to Ollama, which
+# drives them through its own CUDA build.
+SGLANG_MIN_COMPUTE_CAPABILITY = 7.5
+
+# VRAM needed to serve each model at fp16 with room left for the KV cache. SGLang loads
+# HuggingFace weights unquantised, so these are roughly 2 bytes per parameter plus headroom.
+SGLANG_TIERS = [
+    (70000, "Qwen/Qwen3-32B"),
+    (36000, "Qwen/Qwen3-14B"),
+    (20000, "Qwen/Qwen3-8B"),
+    (12000, "Qwen/Qwen3-4B"),
+    (8000, "Qwen/Qwen3-1.7B"),
+]
+# Ollama ships 4-bit quantised GGUF, so the same card holds a considerably larger model.
+OLLAMA_GPU_TIERS = [
+    (24000, "qwen3:30b"),
+    (12000, "qwen3:14b"),
+    (8000, "qwen3:8b"),
+    (6000, "qwen3:4b"),
+    (0, "qwen3:1.7b"),
+]
+
 # Nominally-16GB cloud instances (e.g. AWS t3.xlarge) report less than 16 to sysconf due to
 # kernel/hypervisor reservation, so a strict >= 16 check misses them. 15 gives headroom.
 RAM_THRESHOLD_GB = 15
+# On CPU the binding constraint is arithmetic throughput, not capacity: a 16GB four-vCPU host
+# holds qwen3:4b comfortably and still generates at 3 tok/s. Require real cores for that tier.
+CPU_CORE_THRESHOLD = 16
+CPU_RAM_THRESHOLD_GB = 30
 
 
 def _run(cmd, **kwargs):
@@ -106,43 +142,170 @@ def detect_ram_gb():
     return None
 
 
-def detect_gpu_vram_mb():
+def detect_cpu_cores():
+    return os.cpu_count()
+
+
+def detect_gpus():
+    """Every CUDA GPU nvidia-smi can see, as {name, vram_mb, compute_capability}.
+
+    Empty list means no usable GPU, whether because there is none, the driver is missing, or
+    nvidia-smi failed. Callers treat all three the same way: use the CPU tier.
+    """
     if shutil.which("nvidia-smi") is None:
-        return None
+        return []
     try:
         result = subprocess.run(
-            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=5,
+            ["nvidia-smi", "--query-gpu=name,memory.total,compute_cap",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0 or not result.stdout.strip():
-            return None
-        return int(result.stdout.strip().splitlines()[0])
+            return []
     except Exception:
-        return None
+        return []
+
+    gpus = []
+    for line in result.stdout.strip().splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) < 2:
+            continue
+        try:
+            vram = int(float(parts[1]))
+        except ValueError:
+            continue
+        # compute_cap is absent on drivers older than 510; unknown means "assume too old
+        # for SGLang" rather than "assume fine", so the fallback is the safe direction.
+        try:
+            cc = float(parts[2]) if len(parts) > 2 and parts[2] not in ("", "[N/A]") else None
+        except ValueError:
+            cc = None
+        gpus.append({"name": parts[0], "vram_mb": vram, "compute_capability": cc})
+    return gpus
 
 
-def detect_model_tier():
-    vram = detect_gpu_vram_mb()
+def docker_gpu_runtime_available():
+    """Whether Docker can actually hand a GPU to a container.
+
+    Distinct from "the host has a GPU": a machine can pass nvidia-smi on the host and still
+    have no nvidia container runtime installed, in which case the container silently gets no
+    device and runs a large tiered model on CPU. That failure is slow rather than loud, so it
+    is worth a separate check.
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "info", "--format", "{{json .Runtimes}}"],
+            capture_output=True, text=True, timeout=15,
+        )
+        return result.returncode == 0 and "nvidia" in result.stdout.lower()
+    except Exception:
+        return False
+
+
+def _pick(tiers, vram_mb):
+    for floor, model in tiers:
+        if vram_mb >= floor:
+            return model
+    return tiers[-1][1]
+
+
+def detect_plan():
+    """Decide engine and model from hardware. Pure inspection - changes nothing."""
+    gpus = detect_gpus()
     ram = detect_ram_gb()
+    cores = detect_cpu_cores()
+    warnings = []
 
-    if vram is not None and vram > GPU_VRAM_THRESHOLD_LARGE_MB:
-        return "qwen3:30b", f"GPU with {vram} MB VRAM (> {GPU_VRAM_THRESHOLD_LARGE_MB} MB)"
-    if vram is not None and vram >= GPU_VRAM_THRESHOLD_SMALL_MB:
-        return "qwen3:8b", f"GPU with {vram} MB VRAM ({GPU_VRAM_THRESHOLD_SMALL_MB}-{GPU_VRAM_THRESHOLD_LARGE_MB} MB)"
+    if gpus:
+        vram = min(g["vram_mb"] for g in gpus)
+        caps = [g["compute_capability"] for g in gpus]
+        worst_cap = None if any(c is None for c in caps) else min(caps)
+        names = ", ".join(sorted({g["name"] for g in gpus}))
+        runtime_ok = docker_gpu_runtime_available()
 
-    ram_desc = f"{ram:.1f} GB RAM" if ram is not None else "RAM undetermined, assuming the conservative tier"
-    if ram is not None and ram >= RAM_THRESHOLD_GB:
-        return "qwen3:4b", f"CPU only, {ram_desc} (>= {RAM_THRESHOLD_GB} GB)"
-    return "qwen3:1.7b", f"CPU only, {ram_desc}"
+        if not runtime_ok:
+            warnings.append(
+                "nvidia-smi sees a GPU but Docker has no nvidia runtime, so a container "
+                "would get no device and run on CPU. Install nvidia-container-toolkit, then "
+                "re-run. Falling back to the CPU tier for now."
+            )
+        elif worst_cap is None:
+            warnings.append(
+                "GPU compute capability could not be read (driver older than 510?). "
+                "Assuming it predates SGLang's requirement and using Ollama with GPU."
+            )
+
+        if runtime_ok:
+            if worst_cap is not None and worst_cap >= SGLANG_MIN_COMPUTE_CAPABILITY:
+                if len(gpus) > 1:
+                    warnings.append(
+                        f"{len(gpus)} GPUs present; this serves on one. Add --tp {len(gpus)} "
+                        "to the SGLang command to shard across them."
+                    )
+                return {
+                    "engine": "sglang",
+                    "model": _pick(SGLANG_TIERS, vram),
+                    "reason": f"{names}, {vram} MB VRAM, compute capability {worst_cap}",
+                    "warnings": warnings,
+                    "compose_files": ["-f", "docker-compose.sglang.yml"],
+                    "health_url": HEALTH_URL_SGLANG,
+                    "needs_pull": False,
+                }
+            cap_desc = "unknown" if worst_cap is None else str(worst_cap)
+            return {
+                "engine": "ollama+gpu",
+                "model": _pick(OLLAMA_GPU_TIERS, vram),
+                "reason": (f"{names}, {vram} MB VRAM, compute capability {cap_desc} "
+                           f"(below SGLang's {SGLANG_MIN_COMPUTE_CAPABILITY})"),
+                "warnings": warnings,
+                "compose_files": ["-f", "docker-compose.yml", "-f", "docker-compose.gpu.yml"],
+                "health_url": HEALTH_URL_OLLAMA,
+                "needs_pull": True,
+            }
+
+    ram_desc = f"{ram:.1f} GB RAM" if ram is not None else "RAM undetermined"
+    core_desc = f"{cores} logical cores" if cores else "core count undetermined"
+    big_enough = (ram is not None and ram >= CPU_RAM_THRESHOLD_GB
+                  and cores is not None and cores >= CPU_CORE_THRESHOLD)
+    if big_enough:
+        model, note = "qwen3:4b", f"CPU only, {core_desc}, {ram_desc}"
+    else:
+        model, note = "qwen3:1.7b", f"CPU only, {core_desc}, {ram_desc}"
+        if ram is not None and ram >= RAM_THRESHOLD_GB:
+            warnings.append(
+                "Host has memory for a larger model but not the cores to run it at "
+                "interactive speed; staying on the small tier. Measured on four vCPUs, "
+                "qwen3:4b generates at 3.0 tok/s."
+            )
+    return {
+        "engine": "ollama", "model": model, "reason": note, "warnings": warnings,
+        "compose_files": ["-f", "docker-compose.yml"],
+        "health_url": HEALTH_URL_OLLAMA, "needs_pull": True,
+    }
 
 
-def _ensure_model_in_env():
+def _ensure_model_in_env(plan):
+    """Write the tiered model into .env unless the operator pinned one themselves.
+
+    qwen3:4b is the placeholder shipped in .env.example, so it counts as "not chosen" and
+    gets overwritten; anything else is treated as a deliberate override and left alone. The
+    engine matters here too - an Ollama tag left over from a CPU deployment is meaningless
+    to SGLang, which wants a HuggingFace repo id.
+    """
     env_file = HERE / ".env"
     text = env_file.read_text(encoding="utf-8")
-    if "GEN_MODEL=" in text and "GEN_MODEL=qwen3:4b" not in text:
-        return  # operator already set something else; leave it alone
-    tier_model, reason = detect_model_tier()
-    print(f"Generation model tier: {tier_model} ({reason})")
+    existing = _read_env_model()
+    engine_mismatch = existing is not None and (
+        (plan["engine"] == "sglang" and "/" not in existing)
+        or (plan["engine"] != "sglang" and "/" in existing)
+    )
+    if existing and existing != "qwen3:4b" and not engine_mismatch:
+        print(f"GEN_MODEL={existing} already set; leaving it alone.")
+        return existing
+    if engine_mismatch:
+        print(f"GEN_MODEL={existing} does not match the {plan['engine']} engine; replacing it.")
+
+    tier_model = plan["model"]
     if "GEN_MODEL=" in text:
         lines = [f"GEN_MODEL={tier_model}" if line.startswith("GEN_MODEL=") else line
                  for line in text.splitlines()]
@@ -151,6 +314,14 @@ def _ensure_model_in_env():
         with env_file.open("a", encoding="utf-8") as f:
             f.write(f"\nGEN_MODEL={tier_model}\n")
     return tier_model
+
+
+def _print_plan(plan):
+    print(f"engine     : {plan['engine']}")
+    print(f"model      : {plan['model']}")
+    print(f"hardware   : {plan['reason']}")
+    for warning in plan["warnings"]:
+        print(f"WARNING    : {warning}")
 
 
 def _read_env_model():
@@ -166,13 +337,21 @@ def cmd_check(_args):
     print(f"docker      : {'OK' if ok_docker else 'FAIL'} - {msg_docker}")
     ok_env, msg_env = _env_ready()
     print(f".env        : {'OK' if ok_env else 'FAIL'} - {msg_env}")
+    gpus = detect_gpus()
+    if not gpus:
+        print("gpu         : none detected, CPU tier")
+    else:
+        runtime = "yes" if docker_gpu_runtime_available() else "NO - install nvidia-container-toolkit"
+        for gpu in gpus:
+            cap = gpu["compute_capability"]
+            print(f"gpu         : {gpu['name']}, {gpu['vram_mb']} MB, "
+                  f"compute capability {cap if cap is not None else 'unknown'}")
+        print(f"docker gpu  : {runtime}")
     return 0 if (ok_docker and ok_env) else 1
 
 
 def cmd_tier(_args):
-    tier_model, reason = detect_model_tier()
-    print(f"model tier : {tier_model}")
-    print(f"reason     : {reason}")
+    _print_plan(detect_plan())
     return 0
 
 
@@ -186,45 +365,59 @@ def cmd_up(_args):
         print(f"Cannot start: {msg_env}")
         return 1
 
-    _ensure_model_in_env()
-    model = _read_env_model() or "qwen3:4b"
+    plan = detect_plan()
+    _print_plan(plan)
+    model = _ensure_model_in_env(plan) or plan["model"]
+    compose = plan["compose_files"]
 
-    print(f"Starting {SERVICE_NAME}...")
-    result = _run(["docker", "compose", "up", "-d"])
+    print(f"Starting {SERVICE_NAME} on {plan['engine']}...")
+    # GEN_MODEL is interpolated into docker-compose.sglang.yml, so it has to be in this
+    # process's environment and not only in .env.
+    os.environ["GEN_MODEL"] = model
+    result = _run(["docker", "compose"] + compose + ["up", "-d"])
     if result.returncode != 0:
         return result.returncode
 
-    print("Waiting for the API to come up...", end="", flush=True)
-    for _ in range(60):
-        if _http_ok(HEALTH_URL):
+    # SGLang downloads weights from HuggingFace during startup, so first boot legitimately
+    # takes far longer than Ollama's, which serves immediately and pulls afterwards.
+    attempts = 300 if plan["engine"] == "sglang" else 60
+    print(f"Waiting for the API to come up (up to {attempts * 2}s)...", end="", flush=True)
+    for _ in range(attempts):
+        if _http_ok(plan["health_url"]):
             print(" ready.")
             break
         print(".", end="", flush=True)
         time.sleep(2)
     else:
         print()
-        print(f"Started, but the API did not come up within the timeout. Check: docker compose logs {SERVICE_NAME}")
+        print(f"Started, but the API did not come up within the timeout. Check: "
+              f"docker compose {' '.join(compose)} logs {SERVICE_NAME}")
         return 1
 
-    print(f"Pulling {model} (this can take a while on first run)...")
-    pull = _run(["docker", "compose", "exec", "-T", SERVICE_NAME, "ollama", "pull", model])
-    if pull.returncode != 0:
-        print(f"Model pull failed. The service is up, but {model} is not available yet; "
-              f"retry manually with: docker compose exec {SERVICE_NAME} ollama pull {model}")
-        return pull.returncode
-    print(f"{model} ready. Point the application at GEN_PROVIDER=local, "
+    if plan["needs_pull"]:
+        print(f"Pulling {model} (this can take a while on first run)...")
+        pull = _run(["docker", "compose"] + compose + ["exec", "-T", SERVICE_NAME, "ollama", "pull", model])
+        if pull.returncode != 0:
+            print(f"Model pull failed. The service is up, but {model} is not available yet; "
+                  f"retry manually with: docker compose {' '.join(compose)} exec "
+                  f"{SERVICE_NAME} ollama pull {model}")
+            return pull.returncode
+
+    print(f"{model} ready on {plan['engine']}. Point the application at GEN_PROVIDER=local, "
           f"LOCAL_GEN_URL=http://<this-host>:11434/v1, LOCAL_GEN_MODEL={model}")
     return 0
 
 
 def cmd_down(_args):
-    return _run(["docker", "compose", "down"]).returncode
+    return _run(["docker", "compose"] + detect_plan()["compose_files"] + ["down"]).returncode
 
 
 def cmd_status(_args):
-    up = _http_ok(HEALTH_URL)
-    print(f"{SERVICE_NAME}: {'up' if up else 'down or unreachable'} ({HEALTH_URL})")
-    _run(["docker", "compose", "ps"])
+    plan = detect_plan()
+    up = _http_ok(plan["health_url"])
+    print(f"{SERVICE_NAME}: {'up' if up else 'down or unreachable'} "
+          f"({plan['health_url']}, engine {plan['engine']})")
+    _run(["docker", "compose"] + plan["compose_files"] + ["ps"])
     return 0 if up else 1
 
 
