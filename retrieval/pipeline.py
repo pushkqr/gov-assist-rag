@@ -7,7 +7,6 @@ import concurrent.futures
 from typing import Any, Dict, List, Optional, Callable
 
 from google import genai
-from google.genai import types
 from cerebras.cloud.sdk import Cerebras
 
 from core.log_config import get_logger
@@ -270,14 +269,14 @@ def run_retrieval(
         if _local_gen:
             _local_stream = local_generate_stream(system_prompt, user_prompt)
             # Pull the first chunk eagerly so a refused connection or an unknown model name
-            # raises here and falls through to the Gemini fallback, instead of surfacing as a
-            # silently empty answer once the UI is already iterating the generator.
+            # raises here and is reported as a failure, instead of surfacing as a silently
+            # empty answer once the UI is already iterating the generator.
             _first = next(_local_stream, None)
             stream = itertools.chain([_first], _local_stream) if _first is not None else iter(())
         else:
             # Cerebras limits are per-minute, so retrying a 429 a few seconds later just fails
-            # again while burning the latency budget. Disable SDK retries and let the Gemini
-            # fallback below take over immediately instead.
+            # again while burning the latency budget. Disable SDK retries and surface the
+            # failure immediately instead.
             _gen_client = cerebras_client
             try:
                 _gen_client = cerebras_client.with_options(max_retries=0)
@@ -295,26 +294,37 @@ def run_retrieval(
                 temperature=0.0
             )
     except Exception as exc:
+        # Generation fails closed, in both modes.
+        #
+        # This used to fall back to gemini-2.5-flash. In sovereign mode that silently undid the
+        # only guarantee the mode exists to make: the officer's question and the retrieved
+        # document text left the network, and the answer came back looking normal, so nobody
+        # could tell it had happened. A guarantee that quietly degrades is not a guarantee.
+        #
+        # It is also the last proprietary model that could produce an answer, so removing it is
+        # what makes "every model that can answer is open weight" true rather than nearly true.
+        #
+        # The cost is honest: a Cerebras rate-limit now surfaces as an error instead of a slower
+        # answer from elsewhere. Per-minute limits mean an immediate retry fails again anyway,
+        # so telling the officer to try shortly beats spending their latency budget pretending.
         _which = "Local generation" if _local_gen else "Cerebras LLM"
-        logger.error(f"{_which} failed ({exc}). Falling back to Gemini...")
-        try:
-            gemini_prompt = f"System Instructions:\n{system_prompt}\n\n{user_prompt}"
-            
-            stream = gemini_client.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=gemini_prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.0
-                )
+        logger.error(f"{_which} failed ({exc}). Failing closed, no third-party fallback.")
+        if _local_gen:
+            officer_message = (
+                "The answer service on this network is not responding, so no answer was "
+                "generated. Nothing was sent outside the network. Please try again shortly."
             )
-        except Exception as gemini_exc:
-            logger.error(f"Gemini fallback also failed: {gemini_exc}")
-            return {
-                "status": "error",
-                "response_text": f"Generation failed: Cerebras({exc}) & Gemini({gemini_exc})",
-                "answer_stream": StreamingResponse(f"Generation failed: {exc}"),
-                "evidence": evidence,
-            }
+        else:
+            officer_message = (
+                "The answer service is temporarily unavailable, so no answer was generated. "
+                "Please try again in a minute."
+            )
+        return {
+            "status": "error",
+            "response_text": f"{_which} failed: {exc}",
+            "answer_stream": StreamingResponse(officer_message),
+            "evidence": evidence,
+        }
 
     # Dedup evidence for frontend
     unique_evidence = []
