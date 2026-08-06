@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import hashlib
+import os
 import secrets
 from datetime import datetime, timezone
 from typing import Optional
@@ -107,19 +108,25 @@ def init_db():
     if "citations" not in existing_ql:
         c.execute("ALTER TABLE query_log ADD COLUMN citations TEXT")
 
-    seed_tokens = [
-        ("OFFICER-TOKEN-1", "Officer 1"),
-        ("OFFICER-TOKEN-2", "Officer 2")
-    ]
+    # These are fixed, publicly-known strings in a public repository, and /api/login is an
+    # unauthenticated route, so anyone who reads the source can sign in as an officer. They
+    # are also re-inserted on every init_db() call, which means revoking one in the admin
+    # panel silently un-revokes it at the next restart. Opt in explicitly for local work;
+    # a deployment leaves this unset and issues real tokens from the admin panel.
+    if os.environ.get("MIMIR_SEED_DEMO_TOKENS", "").strip().lower() in ("1", "true", "yes"):
+        seed_tokens = [
+            ("OFFICER-TOKEN-1", "Officer 1"),
+            ("OFFICER-TOKEN-2", "Officer 2")
+        ]
 
-    for raw_token, label in seed_tokens:
-        t_hash = hash_token(raw_token)
-        c.execute("SELECT token_hash FROM tokens WHERE token_hash=?", (t_hash,))
-        if not c.fetchone():
-            c.execute(
-                "INSERT INTO tokens (token_hash, label, created_at) VALUES (?, ?, ?)",
-                (t_hash, label, _now()),
-            )
+        for raw_token, label in seed_tokens:
+            t_hash = hash_token(raw_token)
+            c.execute("SELECT token_hash FROM tokens WHERE token_hash=?", (t_hash,))
+            if not c.fetchone():
+                c.execute(
+                    "INSERT INTO tokens (token_hash, label, created_at) VALUES (?, ?, ?)",
+                    (t_hash, label, _now()),
+                )
 
     conn.commit()
     conn.close()
