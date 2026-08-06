@@ -73,6 +73,10 @@ scratch/*
 !scratch/regress.py
 # Phase 3 ingestion script; documents how GovDocsV2 was populated.
 !scratch/ingest_department.py
+# Pre-flight probe. It reads LOCAL_EMBED_URL/LOCAL_RERANK_URL/TRANSLATION_SERVICE_URL, which
+# in a distributed deployment are private addresses, so it has to run on the application host
+# rather than a laptop. Untracked, it existed only on the machine it could not be run from.
+!scratch/preflight.py
 
 # Testing and Logs
 *.log
