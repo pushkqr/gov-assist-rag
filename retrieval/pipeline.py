@@ -169,6 +169,37 @@ def run_retrieval(
     if status_callback:
         status_callback(f"Synthesizing answer using {target_model}...")
 
+    # The full prompt below is roughly 1,850 tokens and is sent with every request. A hosted
+    # endpoint reads it in well under a second; a CPU node processes about 17 tokens per
+    # second, so the instructions alone cost close to two minutes before the model reaches
+    # the evidence, and a default context window then truncates that evidence away.
+    #
+    # This condensed version keeps every rule that changes what the answer says: ground
+    # strictly in context, cite, refuse when unsupported, and the conflict callout, which is
+    # the behaviour the system exists to demonstrate. What it drops is elaboration on tone
+    # and formatting, which costs polish rather than correctness. It is used only when
+    # generation runs locally, so the hosted path is unaffected.
+    _LOCAL_SYSTEM_PROMPT = (
+        "You are Mimir, a government policy assistant. Answer ONLY from the provided context. "
+        "Never use outside knowledge and never invent a document name, number, or section.\n\n"
+        "- Lead with the direct answer. Cite the document and section for every claim.\n"
+        "- If the context does not answer the question, say so plainly in one sentence and stop.\n"
+        "- If it answers only part, answer that part and say what is unsupported.\n"
+        "- Preserve exact numbers, dates, GR numbers and thresholds. Never round or paraphrase them.\n"
+        "- Reply in the same language as the question.\n\n"
+        "If two documents give different values for the same provision, or a block is tagged "
+        "[Supersedes: X], you MUST begin with exactly:\n\n"
+        "> [!WARNING]\n"
+        "> **<the discrepancy in one line>**\n"
+        "> - **<Document A> (<year>)**: <value A>\n"
+        "> - **<Document B> (<year>)**: <value B>\n"
+        "> <which is operative, and why>\n\n"
+        "Then answer below it. The later document, or the one carrying the [Supersedes] tag, is "
+        "operative unless the context says otherwise. Never silently pick one value and drop the "
+        "other: an officer acting on a superseded figure is the failure this exists to prevent.\n\n"
+        "Be concise. Prefer short bullets over paragraphs."
+    )
+
     system_prompt = (
         "You are Mimir, an elite Government Policy AI Assistant serving as an instant, reliable decision-support engine for government officials, administrators, and policy experts. Your answers may inform real bureaucratic or legal decisions, so precision and fact-grounding take absolute priority over completeness or fluency.\n\n"
         "## Input Format\n"
@@ -222,6 +253,9 @@ def run_retrieval(
         "- If the question itself is ambiguous even with context available (e.g., could refer to multiple distinct policies), note the ambiguity and answer for the most likely interpretation(s) based on what the context actually contains, rather than refusing to answer."
     )
     
+    if _local_gen:
+        system_prompt = _LOCAL_SYSTEM_PROMPT
+
     history_text = ""
     for msg in chat_history:
         role = "User" if msg["role"] == "user" else "Assistant"

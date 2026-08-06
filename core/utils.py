@@ -328,7 +328,38 @@ def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float =
         "temperature": 0.0,
     }
 
-    logger.info(f"Generating via self-hosted model {model} at {base_url}")
+    # A CPU inference node is bounded by two rates, and both were measured here rather than
+    # assumed: prompt processing at ~17 tok/s and generation at ~3 tok/s for a 4B model on
+    # four vCPUs. Left unbounded, one answer takes minutes, and almost all of that is spent
+    # before a single word appears.
+    #
+    # num_predict caps how long the answer can run. num_ctx has to be large enough to hold
+    # the prompt, because a server that silently truncates to its default window drops
+    # retrieved evidence and answers from what is left, which looks like a retrieval failure
+    # rather than a configuration one.
+    #
+    # Both are passed under "options" for Ollama and mirrored to max_tokens, which is what
+    # every other OpenAI-compatible server reads. A server that understands neither is
+    # unaffected.
+    max_tokens = os.getenv("LOCAL_GEN_MAX_TOKENS", "").strip()
+    num_ctx = os.getenv("LOCAL_GEN_NUM_CTX", "").strip()
+    num_thread = os.getenv("LOCAL_GEN_NUM_THREAD", "").strip()
+
+    options = {}
+    if max_tokens.isdigit():
+        payload["max_tokens"] = int(max_tokens)
+        options["num_predict"] = int(max_tokens)
+    if num_ctx.isdigit():
+        options["num_ctx"] = int(num_ctx)
+    # Ollama defaults to physical cores; on a hyperthreaded node letting it use every logical
+    # core measured about 25% faster generation. It does not change prompt processing.
+    if num_thread.isdigit():
+        options["num_thread"] = int(num_thread)
+    if options:
+        payload["options"] = options
+
+    logger.info(f"Generating via self-hosted model {model} at {base_url}"
+                + (f" (options: {options})" if options else ""))
     response = requests.post(
         f"{base_url}/chat/completions", json=payload, headers=headers,
         stream=True, timeout=timeout,
