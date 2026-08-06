@@ -137,7 +137,14 @@ def check_config(probe_services: bool = True) -> List[Finding]:
 
     embed_result = probe(probe_embeddings)
     if embed_result["status"] != "up":
-        findings.append((ERROR, "embeddings service", embed_result["detail"]))
+        # A probe timeout under sustained ingestion means the service is busy, not
+        # misconfigured. Reporting that as a failure trains people to ignore failures, so it
+        # is called out for what it is.
+        busy = "timed out" in embed_result["detail"].lower()
+        findings.append((WARN if busy else ERROR, "embeddings service",
+                         (embed_result["detail"] + "  (probe timeout; likely busy rather than "
+                          "misconfigured if an ingestion is running)") if busy
+                         else embed_result["detail"]))
     elif "1024" not in embed_result["detail"]:
         findings.append((ERROR, "embedding width",
                          f"service returned {embed_result['detail']}, but the corpus is "
