@@ -92,7 +92,11 @@ def run_orgpedia_ingestion(
                 weaviate_collection = weaviate_client.collections.get(collection_name)
                 with weaviate_collection.batch.dynamic() as batch:
                     for record in processed_records:
+                        # Passing the id makes a re-ingest replace the chunk in place.
+                        # Without it Weaviate assigns a random one and a second run writes a
+                        # parallel copy of the whole document.
                         batch.add_object(
+                            uuid=record["id"],
                             properties=record["metadata"],
                             vector=record["vector"]["dense"]
                         )

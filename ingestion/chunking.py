@@ -1,7 +1,7 @@
 import os
 import re
 import uuid
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from google import genai
 from google.genai import types
@@ -12,6 +12,23 @@ import core.deployment as deployment
 import requests
 
 logger = get_logger(__name__)
+
+
+# Fixed namespace for chunk ids. It must never change: the ids of every chunk already in
+# the corpus are derived from it, and a new namespace would silently make re-ingestion
+# insert duplicates instead of updating in place.
+_CHUNK_NAMESPACE = uuid.UUID("6f2b9c1e-4a7d-5e30-9b8a-1d0c3e5f7a92")
+
+
+def _chunk_uuid(doc_key: str, parent_index: int, child_index: Optional[int] = None) -> str:
+    """Stable id for a parent section or one of its child chunks.
+
+    Derived from the source document and the chunk's position within it rather than
+    randomly, so ingesting the same file twice produces the same ids and the second run
+    updates the existing objects instead of writing a parallel copy of the document.
+    """
+    suffix = f":child:{child_index}" if child_index is not None else ""
+    return str(uuid.uuid5(_CHUNK_NAMESPACE, f"{doc_key}:parent:{parent_index}{suffix}"))
 
 
 class PartialEmbeddingError(RuntimeError):
@@ -132,10 +149,21 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
 
     model_name = os.getenv("EMBED_MODEL_NAME", "text-embedding-004")
 
-    for parent_doc in parent_docs:
+    # Identity is derived from the document and the chunk's position within it, never
+    # randomly, so re-ingesting the same file reproduces the same ids. That makes a re-run an
+    # update of the existing chunks rather than a second copy of them, and gives every chunk a
+    # stable handle that survives re-ingestion for citation and debugging.
+    # Both splitters are deterministic for the same input, so the indices below are stable.
+    doc_key = (
+        global_metadata.get("source_filename")
+        or global_metadata.get("doc_number")
+        or "unknown-document"
+    )
+
+    for parent_index, parent_doc in enumerate(parent_docs):
         parent_context = parent_doc.page_content
         parent_metadata = parent_doc.metadata
-        parent_id = str(uuid.uuid4())
+        parent_id = _chunk_uuid(doc_key, parent_index)
 
         hierarchy_parts = [parent_metadata[k] for k in ["Document_Part", "Header_1", "Header_2", "Header_3"] if k in parent_metadata]
         hierarchy_context = " > ".join(hierarchy_parts)
@@ -256,6 +284,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
 
         for i, child_text in enumerate(child_texts):
             pending_chunks.append({
+                "id": _chunk_uuid(doc_key, parent_index, i),
                 "enriched_text": enriched_child_texts[i],
                 "child_text": child_text,
                 "translated_text": translated_texts[i],
@@ -290,7 +319,7 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
 
         database_payload.append(
             {
-                "id": str(uuid.uuid4()),
+                "id": chunk["id"],
                 "vector": {"dense": dense_vector},
                 "metadata": payload_metadata,
                 "enriched_text_used_for_embedding": chunk["enriched_text"],

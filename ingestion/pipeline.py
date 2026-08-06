@@ -83,7 +83,10 @@ def run_ingestion(
                 weaviate_collection = weaviate_client.collections.get(collection_name)
                 with weaviate_collection.batch.dynamic() as batch:
                     for record in processed_records:
+                        # See orgpedia_pipeline: the id is what makes a re-ingest an update
+                        # rather than a duplicate.
                         batch.add_object(
+                            uuid=record["id"],
                             properties=record["metadata"],
                             vector=record["vector"]["dense"]
                         )
