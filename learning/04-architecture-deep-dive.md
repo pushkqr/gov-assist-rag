@@ -68,7 +68,7 @@ The fix is to gate the alias block on a GR *code* pattern rather than the phrase
 
 ## 2. Self-Hosted Embeddings and Reranking
 
-The embedding model and the cross-encoder reranker share one droplet behind [Infinity](https://github.com/michaelfeil/infinity), which exposes an OpenAI-compatible API.
+The embedding model and the cross-encoder reranker share one node behind [Infinity](https://github.com/michaelfeil/infinity), which exposes an OpenAI-compatible API.
 
 - **BGE-M3** (BAAI), multilingual, 1024-dimensional. Every ingestion and query embedding routes here.
 - **BGE-reranker-v2-m3**, a cross-encoder that scores query and candidate jointly.
@@ -128,13 +128,15 @@ This prevents evidence pile-on: five chunks from one document repeating a detail
 
 Officers query in Marathi, Hindi, and English. The corpus is indexed in English.
 
-**At query time:** Devanagari input is detected and sent to a self-hosted IndicTrans2 service (AI4Bharat / IIT Madras) on its own droplet, returning English before retrieval.
+**At query time:** Devanagari input is detected and sent to a self-hosted IndicTrans2 service (AI4Bharat / IIT Madras) on its own node, returning English before retrieval. This one runs the distilled 200M model, where a query is short and latency is what the officer feels.
 
-**At ingestion time:** Marathi source text is batch-translated through GCP Cloud Translation v3 and stored alongside the original, so chunks carry both.
+**At ingestion time:** a second instance of the same service runs the full 1B model in `float16`, which halves its weights to roughly 2GB so it fits on a CPU node. A document chunk is longer than a query and is translated once and stored, so accuracy on legal phrasing is worth more than speed. In `hybrid` mode this step can instead use GCP Cloud Translation v3.
+
+Splitting one service into two instances with different models, sized to opposite priorities, costs nothing architecturally: they speak the same contract, and `INGEST_TRANSLATION_SERVICE_URL` decides which one ingestion talks to.
 
 Translating at query time rather than searching Marathi directly is a deliberate choice about hybrid search. BM25 is purely lexical, so a Devanagari query against English text shares no tokens and that half of the search returns nothing. BGE-M3 is multilingual and would partly cope, but translating keeps **both** halves working in every language, against one index rather than parallel ones.
 
-**Operational note:** this was the system's most fragile component. It deadlocked silently under RAM pressure on an undersized droplet, hanging on every Indic query with no error output. `docker stats` showing near-zero CPU during the hang is what proved deadlock rather than slowness.
+**Operational note:** this was the system's most fragile component. It deadlocked silently under RAM pressure on an undersized node, hanging on every Indic query with no error output. `docker stats` showing near-zero CPU during the hang is what proved deadlock rather than slowness.
 
 ---
 
@@ -275,7 +277,7 @@ The same failure mode recurred on first AWS deployment, from the opposite direct
 |---|---|---|
 | Hybrid over dense-only | Exact identifier lookups work | Extra latency per query |
 | Dynamic alpha | Fixed a failure class | Regex heuristic, not learned |
-| Self-hosted embeddings | No quota ceiling, no per-query cost | A droplet to operate |
+| Self-hosted embeddings | No quota ceiling, no per-query cost | A node to operate, and its throughput becomes yours to size |
 | Cross-encoder reranking | Better ordering into the model | Input length is a latency budget |
 | Deterministic expansion | No token cost, no added latency | Covers only anticipated vocabulary |
 | Two generation models | No single point of failure | Two integrations to maintain |

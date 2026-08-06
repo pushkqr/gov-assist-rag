@@ -69,7 +69,23 @@ starting anything.
 | Embeddings | **BAAI/bge-m3, always** | — |
 | Reranker (in `embeddings/`) | | CPU: `bge-reranker-base` &middot; GPU 6GB+: `bge-reranker-v2-m3` |
 | Translation | | CPU: `indictrans2-dist-200M` &middot; GPU 6GB+: `indictrans2-1B` |
-| Generation | | < 16GB RAM: `qwen3:1.7b` &middot; 16GB+ RAM: `qwen3:4b` &middot; GPU 8-16GB: `qwen3:8b` &middot; GPU 16GB+: `qwen3:30b` |
+| Generation | | < 15GB RAM: `qwen3:1.7b` &middot; 15GB+ RAM: `qwen3:4b` &middot; GPU 8-16GB: `qwen3:8b` &middot; GPU 16GB+: `qwen3:30b` |
+
+The generation RAM threshold is 15GB rather than 16 on purpose. A nominally-16GB cloud
+instance reports slightly less than that to the operating system once the hypervisor and
+kernel have taken their share, so a strict `>= 16` test silently drops such a machine to the
+smallest tier. That failure is invisible: the service starts, serves, and answers with a
+weaker model than intended.
+
+The translation tier above describes what hardware detection picks on its own. It is not the
+ceiling: the 1B model runs on a CPU node in `float16`, which halves its weights to roughly
+2GB, and the reference deployment runs exactly that for ingestion. Set `INDICTRANS_MODEL`,
+`TRANSLATE_TORCH_DTYPE=float16` and a `TRANSLATE_MEM_LIMIT` large enough to hold it. Query
+translation stays on the 200M model, where latency matters more than accuracy; ingestion uses
+the 1B, where the reverse is true.
+
+Both IndicTrans2 checkpoints are **gated on HuggingFace**. The service needs `HF_TOKEN` set to
+an account that has been granted access, or it fails at model download.
 
 **The embedding model is pinned and never selected by hardware.** Every vector already in the
 corpus is 1024-dimensional. Swapping the model does not degrade quality — it makes the entire
@@ -113,17 +129,51 @@ the same `core/health.py` probes) was verified against the live remote services 
 deployment currently uses in hybrid mode — all six reachable, correct latencies, correct
 self-hosted/third-party split.
 
-**Written and reviewed, not yet run with real containers.** Nothing here has pulled an actual
-image or built a container, because Docker Desktop was not running in this environment. The
-Weaviate and Infinity compose files are configured to match the working remote deployment;
-the translation service implements the exact request/response contract
-`retrieval/search.py` already calls. Two things to check on first real run, both
-version-sensitive rather than design issues:
+**Now run with real containers, on seven cloud instances.** The whole stack has since been
+deployed one service per machine, reached only over private addressing. Every service builds,
+starts and serves. Both flagged risks are resolved, and one of them was real:
 
-- Infinity's CLI flags. `v2 --model-id` is correct for current versions; confirm against the
-  tag you pull.
-- `IndicTransToolkit` install. It occasionally needs building from source depending on the
-  Python and PyTorch combination.
+- **Infinity's CLI flags** were correct as written. No change needed.
+- **`IndicTransToolkit`** failed exactly as predicted, and the cause is worth recording.
+  `transformers` was unpinned, so a fresh build pulled 5.x, which removed
+  `transformers.tokenization_utils.PreTrainedTokenizerBase`. The toolkit's collator imports
+  that symbol at class-definition time, so the service crash-looped on startup with an
+  `ImportError` before serving a single request. Pinned to `transformers==4.46.3`, verified by
+  importing the toolkit in a throwaway container before trusting it.
+
+Three further findings from that first real deployment, none of them design problems:
+
+- **Both IndicTrans2 checkpoints are gated on HuggingFace.** They now require an account that
+  has been granted access, so the service needs `HF_TOKEN` set or it fails at model download
+  with a 401. Accepting a gated model's terms is a manual step that cannot be scripted.
+- **Infinity's health check needs a generous timeout on CPU.** Startup runs a warmup benchmark
+  that can take several minutes on a 2-vCPU node, during which the service is up but not yet
+  answering. `deploy.py up` reporting a timeout there does not mean the service failed.
+- **Batch size and timeout are one coupled decision, not two.** See the note below.
+
+## Embedding throughput on CPU
+
+Worth knowing before sizing an ingestion run. Measured on a 2-vCPU node with BGE-M3:
+
+| Work | Time |
+|---|---|
+| One ~500-token passage | 3.2s |
+| A 24-passage batch of the same | 81s |
+
+Throughput scales with total token count, and Infinity's own startup benchmark spans two
+orders of magnitude across passage lengths (25 embeddings/sec at 2 tokens, 0.19/sec at 513).
+So the application's default `EMBED_BATCH_SIZE=64` against `LOCAL_EMBED_BATCH_TIMEOUT_S=60`
+cannot succeed for long passages: that batch needs roughly 200 seconds.
+
+The failure is selective, which is what makes it hard to spot. Documents with short passages
+sail through; the ones that time out are the largest documents, exactly the ones most worth
+indexing. On CPU, prefer a smaller batch with a much longer timeout (16 and 300s is a
+reasonable starting point) and size both against your own corpus rather than the defaults.
+
+A sustained run also wants watching for memory growth in the embedding container. One run saw
+it climb from roughly 3.1GB to 5.8GB over seven hours with throughput collapsing alongside it,
+and nothing logged an error: the only symptom was work getting slower. A restart cleared it
+immediately.
 
 ## Why generation was the last piece
 

@@ -64,7 +64,7 @@ else:
 
 The original design used Google's `gemini-embedding-001` (via Vertex AI). We migrated to **BGE-M3** (BAAI) for two reasons:
 
-1. **No quota limits.** At scale (500+ orgpedia GRs + 33 PDFs), Vertex AI embedding quotas throttled ingestion to a crawl. BGE-M3 runs on a dedicated Infinity server — no rate limits, no per-call cost at runtime.
+1. **No quota limits.** Vertex AI embedding quotas throttled ingestion to a crawl even on a few hundred documents, and the corpus has since grown into the thousands. BGE-M3 runs on a dedicated Infinity server: no rate limits, no per-call cost at runtime. The cost moves rather than disappearing, and on a CPU node it is throughput. Passage length dominates it, so batch size and request timeout have to be sized together against your own corpus.
 2. **Multilingual by design.** BGE-M3 is explicitly trained on multilingual corpora including Indic languages. This means translated Marathi text embeds more faithfully in the same space as English queries.
 
 The tradeoff: BGE-M3 produces 1024-d vectors vs. Gemini's 3072-d. In practice, for a focused government document corpus this is more than sufficient.

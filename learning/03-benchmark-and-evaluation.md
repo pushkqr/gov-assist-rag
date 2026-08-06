@@ -58,10 +58,12 @@ A case counts as a **pass** if `judge_score >= 3.0`, OR if `judge_score >= 2.0` 
 
 The overall run is graded A–D from `average_judge_score` and `average_term_score` (see `print_benchmark_report` in `benchmark/runner.py`), separate from the per-case pass/fail rate.
 
-### Current Results (100-case benchmark)
+### Results (100-case benchmark, 533-document corpus)
 
-As of the latest run: **88/100 cases passing** (`average_judge_score = 4.13`, `average_term_score = 0.653`), up from an 83/100 baseline. The improvement came from two fixes, not from touching the benchmark or ground-truth data:
-- Root-caused and fixed a deadlocked translation microservice (undersized RAM on the droplet caused silent hangs on Marathi/Hindi queries).
+> **These figures were measured against a 533-document corpus and are not a current score.** The corpus has since grown by roughly an order of magnitude, and a larger corpus changes retrieval difficulty in both directions: more documents that could answer a question, and more near-duplicates to confuse it. The numbers below show the harness works and record what the two fixes bought. They do not transfer, and re-running is the only way to know.
+
+**88/100 cases passing** (`average_judge_score = 4.13`, `average_term_score = 0.653`), up from an 83/100 baseline. The improvement came from two fixes, not from touching the benchmark or ground-truth data:
+- Root-caused and fixed a deadlocked translation microservice (undersized RAM on that node caused silent hangs on Marathi/Hindi queries).
 - Wired in previously-dead retrieval helpers in `retrieval/search.py` — deterministic BM25 alias/keyword expansion (`build_fast_search_query`), compact document-anchored reranker input (`build_rerank_text`), and per-document result diversification (`diversify_results`) — none of which were actually being called before.
 
 The remaining ~12% of failures share one dominant pattern: the correct document is retrieved, but the model states a wrong specific fact (a date or GR number) belonging to a near-duplicate document about a different person or case. This is a generation-side entity-attribution problem, not a retrieval failure — worth targeted prompt work in a future pass, but out of scope for the current fix cycle.
@@ -70,7 +72,7 @@ The remaining ~12% of failures share one dominant pattern: the correct document 
 
 ## Generating a Full-Corpus Benchmark Dataset
 
-For the 100-question evaluation against the full corpus (33 PDFs + ~500 orgpedia GRs), a document-level LLM generator is provided:
+A document-level LLM generator builds the evaluation set:
 
 ```bash
 python scratch/generate_benchmark_full.py \

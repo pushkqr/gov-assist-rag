@@ -60,4 +60,4 @@ flowchart TD
 
 - **It's multilingual by design.** Maharashtra government documents are in Marathi. Officers think in Marathi. The system handles this natively without requiring officers to translate their own questions.
 - **It's honest.** We don't claim zero hallucinations through magic. We achieve it through strict retrieval-grounded prompting and a benchmark suite that catches regressions quantitatively.
-- **It's self-sufficient.** Embeddings and translation run on dedicated self-hosted droplets — no cloud quota limits, no per-query embedding cost at runtime.
+- **It's self-sufficient.** Embeddings, reranking, translation, document parsing and generation all run on machines the department controls. No cloud quota limits, no per-query cost at runtime, and in sovereign mode no query text leaves the network at all. Every model in that path is open-weight, so moving on-premise is a configuration change rather than a rewrite.
