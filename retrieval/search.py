@@ -409,10 +409,16 @@ def execute_search_tool(
         try:
             import os
             url = os.environ.get("TRANSLATION_SERVICE_URL", "http://localhost:8000/translate")
+            # The service answers in about 2s, so a 5s ceiling left almost no margin and was
+            # observed timing out on a healthy instance (load 0.00, 1.9s when measured
+            # directly a minute later). On timeout this falls through to returning the
+            # original Marathi, which searches the English corpus with Devanagari text and
+            # degrades the answer without failing - so a tight timeout here surfaces as a bad
+            # answer rather than an error.
             response = requests.post(
                 url,
                 json={"text": text, "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"},
-                timeout=5.0
+                timeout=float(os.getenv("TRANSLATION_TIMEOUT_S", "15")),
             )
             response.raise_for_status()
             return response.json().get("translated_text", text)
