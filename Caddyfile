@@ -1,3 +1,11 @@
 :80, mimir.pushkqr.app {
-    reverse_proxy mimir:8000
+    reverse_proxy mimir:8000 {
+        # Caddy appends the peer address to any X-Forwarded-For the client sent, and the
+        # app's network gate reads the first entry. A client sending
+        # "X-Forwarded-For: 10.0.0.1" therefore presented an address inside the default
+        # private allowlist and walked through the geofence. Caddy is the edge here, so
+        # {remote_host} is the real client: overwrite rather than append, and the header
+        # stops being client-controlled.
+        header_up X-Forwarded-For {remote_host}
+    }
 }
