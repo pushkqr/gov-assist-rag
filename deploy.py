@@ -18,7 +18,12 @@ in front of a department that just handed over a server.
     python deploy.py up --only weaviate  # just one service
     python deploy.py down                # tear everything down, reverse order
     python deploy.py status              # live reachability, same probes as the admin panel
+    python deploy.py config              # required values, values that must agree, what services report
     python deploy.py logs weaviate       # passthrough to that service's container logs
+
+`check` asks whether services can start, `status` whether they are reachable, and `config`
+whether what they were told is coherent. A stack can pass the first two and still be
+misconfigured in ways that only appear under real traffic.
 """
 
 import argparse
@@ -191,6 +196,44 @@ def cmd_status(_args):
     return 0 if all_up else 1
 
 
+def cmd_config(args):
+    """Check the configuration this process actually holds, not what a file claims.
+
+    Separate from `check`, which asks whether services can start, and from `status`, which
+    asks whether they are reachable. A stack can pass both of those and still be misconfigured
+    in ways that only surface on real traffic.
+    """
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        from core.config_check import check_config, ERROR, WARN, OK
+    except ImportError as exc:
+        print(f"Could not import this repo's dependencies ({exc}). "
+              f"Run this from an environment with requirements.txt installed.")
+        return 1
+
+    findings = check_config(probe_services=not args.offline)
+
+    marker = {ERROR: "FAIL", WARN: "WARN", OK: "ok  "}
+    errors = warnings = 0
+    for level, subject, detail in findings:
+        if level == ERROR:
+            errors += 1
+        elif level == WARN:
+            warnings += 1
+        if level == OK and not args.verbose:
+            continue
+        print(f"  [{marker[level]}] {subject:<28} {detail}")
+
+    checked = len(findings)
+    if not args.verbose and errors == 0 and warnings == 0:
+        print(f"  all {checked} checks passed")
+    print(f"\n{checked} checks, {errors} failing, {warnings} warning"
+          f"{'' if warnings == 1 else 's'}"
+          f"{'' if args.verbose else '  (--verbose to list the ones that passed)'}")
+    return 1 if errors else 0
+
+
 def cmd_logs(args):
     if args.name not in SERVICE_ORDER + OPTIONAL_SERVICES:
         print(f"Unknown service: {args.name}. Known: {', '.join(SERVICE_ORDER + OPTIONAL_SERVICES)}")
@@ -221,11 +264,16 @@ def main():
 
     sub.add_parser("status", help="Live reachability of every component, same probes as the admin panel.")
 
+    config_parser = sub.add_parser("config", help="Validate configuration: required values, values that must agree, and what the services actually report.")
+    config_parser.add_argument("--offline", action="store_true", help="Skip the service probes and check local configuration only.")
+    config_parser.add_argument("--verbose", action="store_true", help="List the checks that passed as well as the ones that did not.")
+
     logs_parser = sub.add_parser("logs", help="Follow one service's container logs.")
     logs_parser.add_argument("name", choices=SERVICE_ORDER + OPTIONAL_SERVICES)
 
     args = parser.parse_args()
-    handlers = {"check": cmd_check, "up": cmd_up, "down": cmd_down, "status": cmd_status, "logs": cmd_logs}
+    handlers = {"check": cmd_check, "up": cmd_up, "down": cmd_down, "status": cmd_status,
+                "config": cmd_config, "logs": cmd_logs}
     sys.exit(handlers[args.command](args))
 
 
