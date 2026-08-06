@@ -96,8 +96,18 @@ def check_q3(text: str) -> tuple:
 def check_q4(text: str) -> tuple:
     if not text.strip():
         return False, "empty answer"
-    refusal_phrases = ["not available", "do not contain", "does not contain", "not contain any information"]
-    has_refusal_language = any(p in text.lower() for p in refusal_phrases)
+    # Matched as a pattern rather than a fixed phrase list. The original list held four exact
+    # strings and reported a correct refusal as a regression: the self-hosted model answered
+    # "the context does not provide any information regarding the pension amount", which is
+    # precisely the wanted behaviour and matched none of them. What is being asserted is
+    # "declines and names nothing", so any negated contain/provide/include/mention/specify
+    # counts, and the currency check below still catches an invented figure.
+    has_refusal_language = re.search(
+        r"(do(es)?\s+not\s+(contain|provide|include|mention|specify|state)"
+        r"|not\s+(available|provided|contained|specified|mentioned)"
+        r"|no\s+information)",
+        text, re.IGNORECASE,
+    ) is not None
     if not has_refusal_language:
         return False, "no refusal language detected"
     if not _no_currency_amount(text):
