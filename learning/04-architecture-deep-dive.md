@@ -1,6 +1,6 @@
 # 04 — Architecture Deep Dive
 
-**In one line:** Mimir is a production RAG engine for government policy documents, built on hybrid retrieval, self-hosted open-weight models, and a measured evaluation harness. It passes 88 of 100 benchmark cases inside a sub-10-second latency budget.
+**In one line:** Mimir is a production RAG engine for government policy documents, built on hybrid retrieval, self-hosted open-weight models, and a measured evaluation harness.
 
 Every figure and code reference here is taken from the source. Where something is unmeasured, it says so.
 
@@ -10,11 +10,13 @@ Every figure and code reference here is taken from the source. Where something i
 
 | | |
 |---|---|
-| Corpus | 533 documents (33 PDFs, 500 Orgpedia GRs), 10,194 indexed chunks |
-| Accuracy | 88/100 benchmark pass rate, judge average 4.13/5, term average 0.653 |
+| Corpus | Scaling to 4,730 department documents. The measured figures below were taken on an earlier 533-document corpus (10,194 chunks) |
+| Accuracy | 88/100 pass rate, judge average 4.13/5, term average 0.653, **on that 533-document corpus** |
 | Latency | 3 to 8 seconds end to end |
-| Infrastructure | 3 droplets, roughly $10 to $20/month |
+| Infrastructure | 7 instances in one VPC, one per service |
 | Languages | English, Marathi, Hindi |
+
+The accuracy figure is deliberately qualified. It demonstrates the harness works and reflects the retrieval design; it is not a current score for a corpus roughly nine times larger, and quoting it as one would be dishonest. Re-running the benchmark after a corpus change is the only way to know.
 
 ---
 
@@ -89,6 +91,22 @@ That conclusion was wrong. Spot-checking real queries showed a large qualitative
 Both answers contain many of the same terms, so term overlap scored them identically. The difference is precision, which only the LLM judge half of the harness detects.
 
 The lesson generalizes past this system: **a cheap proxy metric can report "no regression" for a change that noticeably degrades output.** The dual-grader design exists for exactly this, and using half of it produced a confidently wrong answer. Reranking stays enabled; the toggle remains for deployments that would rather have 2s responses than maximum precision.
+
+### Batch Size Is a Timeout Budget
+
+Ingestion embeds in batches of `EMBED_BATCH_SIZE` (default 64) against `LOCAL_EMBED_BATCH_TIMEOUT_S` (default 60s). At department scale that batching is what turns roughly 90,000 sequential round trips into about 1,400 calls.
+
+Those two defaults are not independently safe. Measured on a CPU-only 2-vCPU embedding node, one ~500-token passage takes **3.2 seconds** to embed, and Infinity's own startup benchmark reports 0.19 embeddings/sec at 513 tokens against 25/sec at 2 tokens. Throughput is dominated by passage length, and it varies by two orders of magnitude across a real corpus.
+
+So a 64-item batch of long passages needs roughly 200 seconds against a 60-second timeout. It cannot succeed. Short-passage documents complete comfortably, which is what makes this hard to see: the failure selects for the largest documents, exactly the ones most worth indexing. In one run, nine documents holding 1,594 chunks failed this way while a thousand smaller ones passed.
+
+**The general lesson:** when a batch endpoint's cost scales with item size rather than item count, batch size and timeout are a single coupled decision. Sizing them separately produces a configuration that works on your test data and fails on your real data.
+
+### A Memory Leak Looks Like a Slowdown
+
+The same deployment showed a second, independent failure. Over seven hours of sustained ingestion, the embedding container grew from roughly 3.1 GB to 5.8 GB while available host memory fell from 4.3 GB to 2.1 GB. Throughput degraded with it, until even single-item requests exceeded a 10-second timeout. Restarting the container returned it to 1.9 GB and restored latency immediately.
+
+Nothing crashed and nothing logged an error. The only visible symptom was work getting slower, and progress had already fallen from hundreds of documents per interval to roughly one. **A steadily rising memory floor under constant load is the signal; the timeouts are a lagging indicator.** Long ingestion runs against a self-hosted inference service want either periodic restarts or a memory ceiling that fails loudly instead of degrading quietly.
 
 ### The Latency Regression
 
@@ -174,13 +192,25 @@ Deploying inside a department means setting that variable to the department's ra
 
 No passwords. Officers hold generated tokens; only SHA-256 hashes are stored ([db.py](../db.py)). Comparison uses `hmac.compare_digest` to avoid timing leaks. An admin API and console handle provisioning, renaming, and revocation.
 
+### The Access Log
+
+Token identity is only half of accountability; the other half is knowing what was done with it. `record_audit` appends an entry for logins, denied attempts, token issuance and revocation, uploads, promotions, and feedback, each carrying actor, client address, and timestamp. The admin console reads it directly.
+
+Two details matter more than the feature itself. Auditing never raises: a failure to record must not break the request that triggered it. And the actor is stored as a truncated hash of the token rather than the token, so the log identifies who acted without becoming a second place the credential lives.
+
+### Upload Quarantine
+
+An administrator uploading a document does not write to the live corpus. Uploads land in a separate quarantine collection and enter the corpus only on explicit promotion. This is the answer to "what stops someone adding a fabricated circular": nothing enters retrieval without a second, recorded decision.
+
 ### Known Gaps
 
 Stated plainly, because pretending otherwise is worse:
 
 - **No per-document authorization.** Every authenticated officer sees the whole corpus. Acceptable while the corpus is published material; a prerequisite before anything confidential is indexed.
-- **Admin routes bypass the subnet gate**, self-checking the admin token instead. Defensible, but inconsistent with the zero-trust posture elsewhere.
-- **Audit logging is informal.** Conversations persist per token, but there is no compliance-grade audit trail.
+- **The officer token is bearer-only.** Anyone holding it is that officer. There is no second factor and no binding to a device.
+- **Quarantine checks provenance, not content.** Promotion records who promoted what. It does not verify that the document is authentic.
+
+Two gaps listed in earlier revisions have since been closed. Admin routes no longer bypass the subnet gate: the network check now runs for `/api/admin/*` as well, since exempting them left a hole in a posture that claimed to be zero-trust. And audit logging is no longer informal, as described above.
 
 ---
 
@@ -207,19 +237,35 @@ An attempted prompt-level fix scored 87/100, worse than baseline, and was revert
 
 ## 8. Deployment
 
-| Droplet | Runs |
-|---|---|
-| Application | FastAPI backend, Docker, Caddy TLS reverse proxy |
-| Inference | BGE-M3 and BGE-reranker-v2-m3 via Infinity |
-| Translation | IndicTrans2 |
+Every service is its own directory under `microservices/`, each carrying a `deploy.py` that uses only the standard library. That constraint is the point: a directory can be copied to a machine that has never seen this repository and still deploy itself. The root `deploy.py` orchestrates the full stack but never reimplements any service's startup logic, shelling out to those same scripts instead. Two entry points, one code path. If the orchestrator carried its own copy, the two would drift, and the remote-node path is the one that breaks silently, precisely when a department has just handed over a server.
 
-Weaviate runs remotely. Total infrastructure is roughly $10 to $20/month. Cerebras is on a free tier and GCP on startup credits, so that is a pilot figure, not a production one.
+The reference AWS deployment runs one service per instance in a single VPC:
+
+| Instance | Runs |
+|---|---|
+| Application | FastAPI, Caddy. The only instance with a public address |
+| Vector store | Weaviate |
+| Inference | BGE-M3 and the cross-encoder reranker via Infinity |
+| Generation | Ollama, model tier chosen from detected hardware |
+| Translation (query) | IndicTrans2 200M, sized for latency |
+| Translation (ingest) | IndicTrans2 1B in float16, sized for accuracy |
+| Document parsing | Docling OCR |
+
+Security groups admit traffic to each service from the application's group alone, so the six service instances have no route from the internet. Moving to an intranet deployment means removing the Elastic IP and the public ingress rule, which changes no application code.
+
+### Deployment Modes
+
+`DEPLOYMENT_MODE` sets defaults for four independent switches: generation, tier-2 PDF parsing, ingest structuring, and ingest translation. `sovereign` points all four at self-hosted services; `hybrid` allows third-party inference. Each remains individually overridable, and the admin console reports the configuration actually resolved at runtime rather than the one intended.
+
+One finding from building this is worth recording. `.env` carried `GEN_PROVIDER=cerebras` as a literal line. Because several entry points call `load_dotenv()` independently, that line would silently reassert itself and defeat sovereign mode, with no error and no symptom beyond queries quietly leaving the network. The fix was to comment out the four hybrid defaults, since the code already falls back to the same values when they are absent. **A configuration file that restates a default is a trap when more than one process reads it.**
 
 ### Secrets and Docker
 
 A production incident worth recording. `gcp-key.json` was being copied into the image by `COPY . .`. When the file did not exist at build time, Docker created an empty **directory** at that path and baked it into the layer. Once the real key appeared on the host, bind-mounting a file onto a path the image believed was a directory failed with a type mismatch, and every embedding call died with `Is a directory`.
 
 Two things fixed it: adding `gcp-key.json` to `.dockerignore`, and rebuilding with `--no-cache` to drop the poisoned layer. Secrets now arrive only as runtime bind mounts, which is also the correct security posture.
+
+The same failure mode recurred on first AWS deployment, from the opposite direction. `mimir_portal.db` is bind-mounted but matched by a `*.db` gitignore rule, so a fresh clone never contains it; Docker then created a directory at the host path, which could not mount onto the file the image did contain. **A bind mount whose host path does not exist yet is a directory waiting to happen.** The fix is to create the file before the container starts.
 
 ---
 
@@ -240,8 +286,10 @@ Two things fixed it: adding `gcp-key.json` to `.dockerignore`, and rebuilding wi
 
 ## Known Limitations
 
-- **Retrieval does not see conversation history.** Chat history reaches the generation prompt but not the search step, so a follow-up like "what is the number of this GR" is searched without its antecedent and retrieves broadly. Fixing this means rewriting the query from history before search.
 - **Chat history is unbounded.** It concatenates without a window and will eventually exceed the context limit.
 - **Entity attribution on near-duplicate documents**, the dominant remaining failure mode.
 - **Ingestion is manually triggered.** The pipeline is idempotent and ready for scheduling; the scheduler is not built.
 - **No per-document access control**, as noted above.
+- **A document that loses chunks is still recorded as complete.** If a passage fails to embed it is dropped rather than written with a bad vector, which is the right call for index integrity. But the file is still marked done in the state file, so a resume will not revisit it and the gap is invisible. Recovering means clearing those entries and deleting the document's chunks before re-ingesting, because objects are inserted with a random UUID rather than a deterministic one, so a re-run duplicates whatever succeeded the first time.
+
+An earlier revision listed "retrieval does not see conversation history" here. That is now handled: `contextualize_query` rewrites a follow-up against recent history before the search step, so "what is the number of this GR" carries its antecedent into retrieval. It costs one extra inference call against a rate-limited budget, which `CONTEXTUALIZE_FOLLOWUPS=false` trades back.

@@ -29,8 +29,9 @@ flowchart TD
     T -- "Already English" --> E["Embed query\n(BGE-M3 / Infinity)"]
     E -->|"Dense vector search (meaning)"| W[("Weaviate")]
     E -->|"BM25 search (keywords)"| W
-    W -->|"Alpha Fusion"| F["Top-K most relevant\ndocument chunks"]
-    F -->|"Context + query"| G["Cerebras / Gemini\nSynthesize answer"]
+    W -->|"Alpha Fusion"| F["Top-K candidate chunks"]
+    F -->|"Cross-encoder scores\nquery + chunk together"| R["Reranked, diversified\nevidence"]
+    R -->|"Context + query"| G["Generation\n(self-hosted by default)"]
     G -->|"Stream tokens (SSE)"| H["Officer sees cited,\ngrounded answer"]
 
     style A fill:#b5432f,color:#fff
@@ -47,7 +48,9 @@ flowchart TD
 
 3. **Hybrid Search (Dense + Sparse).** We embed the (now English) query using **BGE-M3** (a self-hosted multilingual embedding model) and fire off two searches in Weaviate simultaneously — a dense vector search (for meaning) and a BM25 keyword search (for exact GR numbers and terminology). Alpha Fusion merges them. See [01-hybrid-retrieval.md](01-hybrid-retrieval.md).
 
-4. **Generation.** The top retrieved chunks are injected into the generation prompt, which strictly instructs the model to use *only* the provided context. Fast responses are routed through **Cerebras**; complex queries fall back to **Gemini 2.5 Flash** via Vertex AI.
+4. **Reranking.** The first search compared query and chunk *separately*, since each was embedded on its own. A cross-encoder now reads them *together*, which is more accurate and much slower, so it runs only over the shortlist. Results are then capped per document, because five chunks from one circular repeating a detail read to the model as strong corroboration even when that circular is the wrong one.
+
+5. **Generation.** The retrieved chunks go into a prompt that instructs the model to answer *only* from what it was given, and to open with an explicit warning when two documents disagree on a figure. By default this runs on **Ollama** on the department's own hardware. `DEPLOYMENT_MODE=hybrid` swaps in **Cerebras** and **Gemini 2.5 Flash** where third-party inference is acceptable. Every model in the self-hosted path is open-weight, so nothing proprietary is load-bearing.
 
 5. **Benchmark Integrity.** How do we know this actually works? We run an automated harness across a curated set of hard policy questions — covering simple English, Marathi queries, complex synthesis, GR number lookups, and intentional "not found" cases — grading the system on both term-match and semantic accuracy. See [03-benchmark-and-evaluation.md](03-benchmark-and-evaluation.md).
 

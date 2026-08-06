@@ -13,6 +13,15 @@ import requests
 
 logger = get_logger(__name__)
 
+
+class PartialEmbeddingError(RuntimeError):
+    """Some passages of a document could not be embedded.
+
+    Callers must not record the document as ingested when this is raised. Embedding
+    failures are usually transient (a loaded embedding service timing out), so the
+    document is worth retrying on the next run.
+    """
+
 try:
     from google.cloud import translate_v3 as translate
 except ImportError:
@@ -289,6 +298,15 @@ def chunk_and_embed_circular(client: genai.Client, markdown_text: str, global_me
         )
 
     if skipped:
-        logger.warning(f"  -> {skipped} of {len(pending_chunks)} passages could not be embedded and were dropped.")
+        # All or nothing, deliberately. Returning the partial payload would insert most of
+        # the document and let the caller record it as ingested, so the missing passages
+        # become invisible: the state file stops any later run from revisiting the file, and
+        # nothing downstream can tell an incomplete document from a complete one. Failing the
+        # whole document instead leaves it unrecorded, so the next run picks it up again.
+        # Nothing has been written to the store at this point, so there is no partial state
+        # to unwind and a retry cannot duplicate what a previous attempt inserted.
+        raise PartialEmbeddingError(
+            f"{skipped} of {len(pending_chunks)} passages could not be embedded"
+        )
 
     return database_payload

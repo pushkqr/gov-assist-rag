@@ -3,7 +3,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 from google import genai
-from ingestion.chunking import chunk_and_embed_circular
+from ingestion.chunking import chunk_and_embed_circular, PartialEmbeddingError
 from ingestion.state import compute_file_hash, save_ingestion_state, should_skip_file
 from core.log_config import get_logger
 from ingestion.metadata import extract_document_metadata
@@ -81,21 +81,27 @@ def run_orgpedia_ingestion(
             "language": "en"
         }
 
-        # Chunk and embed using the English text directly
-        processed_records = chunk_and_embed_circular(client, target_md, global_metadata)
-        all_processed_records.extend(processed_records)
+        # Chunk and embed using the English text directly.
+        # save_ingestion_state stays inside the try: a document that failed partway through
+        # must not be recorded as done, or the next run skips it and the gap is permanent.
+        try:
+            processed_records = chunk_and_embed_circular(client, target_md, global_metadata)
+            all_processed_records.extend(processed_records)
 
+            if weaviate_client and processed_records:
+                weaviate_collection = weaviate_client.collections.get(collection_name)
+                with weaviate_collection.batch.dynamic() as batch:
+                    for record in processed_records:
+                        batch.add_object(
+                            properties=record["metadata"],
+                            vector=record["vector"]["dense"]
+                        )
+                logger.info(f"  -> Upserted {len(processed_records)} chunks for {filename} into Weaviate.")
 
-        if weaviate_client and processed_records:
-            weaviate_collection = weaviate_client.collections.get(collection_name)
-            with weaviate_collection.batch.dynamic() as batch:
-                for record in processed_records:
-                    batch.add_object(
-                        properties=record["metadata"],
-                        vector=record["vector"]["dense"]
-                    )
-            logger.info(f"  -> Upserted {len(processed_records)} chunks for {filename} into Weaviate.")
-
-        save_ingestion_state(target_file, file_hash, state_path, global_metadata)
+            save_ingestion_state(target_file, file_hash, state_path, global_metadata)
+        except PartialEmbeddingError as e:
+            logger.warning(f"  -> {filename} left for a later run: {e}")
+        except Exception as e:
+            logger.error(f"Failed to ingest {filename}: {e}")
 
     return all_processed_records

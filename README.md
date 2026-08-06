@@ -6,7 +6,7 @@
 
 Mimir is an **Extensible AI-powered Retrieval-Augmented Generation (RAG) Engine** designed as the foundational backend for deploying secure, citation-backed conversational interfaces across government intranets.
 
-Built for flexibility, Mimir separates the core AI retrieval logic from the frontend presentation layer. While the repository includes a reference implementation (an Officer Portal for the Higher & Technical Education Department, Government of Maharashtra), the engine itself is completely department-agnostic. By simply swapping the frontend stylesheet and connecting a different Weaviate collection, Mimir can instantly power dedicated portals for Finance, Health, Police, or Revenue — requiring zero backend code changes.
+Built for flexibility, Mimir separates the core AI retrieval logic from the frontend presentation layer. While the repository includes a reference implementation (an Officer Portal for the Higher & Technical Education Department, Government of Maharashtra), the engine itself is department-agnostic. Swapping the frontend stylesheet and pointing `CORPUS_COLLECTION` at a different Weaviate collection is enough to power a portal for Finance, Health, Police, or Revenue, with no backend code changes.
 
 Named after the Norse figure who guarded the Well of Wisdom, Mimir represents the institutional memory and secure intelligence infrastructure of the modern digital government.
 
@@ -14,159 +14,208 @@ Named after the Norse figure who guarded the Well of Wisdom, Mimir represents th
 
 ## Key Features & Capabilities
 
-- **Lightweight, High-Performance Architecture**:
-  - Entirely powered by **FastAPI** for lightning-fast backend endpoints.
-  - A zero-dependency Vanilla JS/CSS frontend with native **Dark Mode**, mobile-responsive layouts, and real-time streaming via **Server-Sent Events (SSE)**.
+- **Runs entirely on your own hardware.** `DEPLOYMENT_MODE=sovereign` puts generation, embeddings, reranking, translation, and OCR on machines you control. Every model in that path is open-weight, so an air-gapped deployment is a configuration change rather than a rewrite.
 
-- **Semi-Agentic RAG Pipeline**:
-  - **Hybrid Search**: Combines dense vector search with BM25 keyword search, merged natively in **Weaviate** using Alpha Fusion. Alpha weight is dynamically tuned — GR-number pattern queries go BM25-heavy; general queries use balanced fusion.
-  - **Self-Hosted Embeddings**: Uses **BGE-M3** (BAAI) served via **Infinity** on a dedicated droplet — eliminating cloud embedding quota constraints and reducing per-query embedding cost to zero.
-  - **Self-Hosted Cross-Encoder Reranking**: Fast mode (the default query path) reranks hybrid search candidates with a **BGE reranker** cross-encoder, also served via **Infinity** on the embedding droplet — no LLM call, no added token cost, sub-second-to-low-single-digit-second rerank latency.
-  - **Ultra-Low Latency Inference**: Routes agentic reasoning and tool-use through **Cerebras** for sub-2s response times, reserving **Google Gemini 2.5 Flash** (via Vertex AI) for complex generation and fallback translation.
+- **Semi-Agentic RAG Pipeline**
+  - **Hybrid Search**: dense vector search and BM25 keyword search, fused natively in **Weaviate**. The alpha weight is tuned per query, so GR-number lookups lean keyword-heavy while conceptual questions stay balanced.
+  - **Self-Hosted Embeddings**: **BGE-M3** (1024-dimensional, multilingual) served through **Infinity**. No cloud embedding quota, no per-query embedding cost.
+  - **Self-Hosted Cross-Encoder Reranking**: a **BGE reranker** scores query and candidate together on the same Infinity server. No LLM call, no token cost.
+  - **Swappable Generation**: **Ollama** serving Qwen3 on your own hardware, or **Cerebras** and **Gemini 2.5 Flash** when third-party inference is acceptable. One environment variable decides.
 
-- **Multilingual Support**:
-  - Queries in **Marathi** and **Hindi** (Devanagari script) are automatically detected and translated to English via a self-hosted **IndicTrans2** microservice before retrieval.
-  - Ingested Marathi/Hindi chunks are batch-translated using **GCP Cloud Translation v3** and stored alongside the original, enabling bilingual retrieval.
+- **Multilingual by design**
+  - Marathi and Hindi queries are detected and translated to English by a self-hosted **IndicTrans2** service before retrieval, so both halves of hybrid search keep working in every language against a single index.
+  - Ingestion uses the larger IndicTrans2 1B model, where accuracy on legal phrasing matters more than latency.
 
-- **Idempotent Document Ingestion Pipeline**:
-  - File-hash-based state tracking (`scratch/ingestion_state.json`) ensures re-ingestion runs are safe and never duplicate data.
-  - Handles standard PDFs and pre-translated `.en.txt` plaintext GRs from the Orgpedia corpus. PDF text extraction uses a 3-tier fallback chain — **PyMuPDF4LLM** (fast, local) → **Google Document AI OCR** → **Gemini Vision** — so scanned/image-only circulars that defeat the primary parser still get ingested.
-  - Semantic, boundary-aware chunking preserves tabular context — table rows isolated without their column headers are enriched with the nearest preceding header rows before embedding.
-  - Parent-child chunk hierarchy: parent sections provide retrieval context; child chunks are the actual embedded units.
+- **Conflict and supersession awareness.** When retrieved documents disagree on an amount, age, date, or threshold, the answer opens with an explicit warning callout naming both values and which one is operative. An officer acting on a superseded figure is the specific failure this system exists to prevent.
 
-- **Enterprise-Grade Security & Authentication**:
-  - **Zero-Trust Intranet Geofencing**: Middleware validates incoming requests against authorized government subnets (e.g., `10.0.0.0/8`). Public traffic is dropped at the perimeter.
-  - **Token-Based Identity**: A built-in SQLite token registry replaces passwords. Chat histories are securely mapped to hashed officer tokens.
-  - **Admin CRUD API**: Fully baked API for IT departments to provision, audit, and revoke officer tokens programmatically.
+- **Idempotent ingestion.** File-hash state tracking makes re-ingestion safe and non-duplicating. PDF extraction degrades through three tiers (PyMuPDF4LLM, then Docling or Document AI OCR, then Gemini Vision) so scanned circulars still get indexed. Chunking is table-aware and preserves a parent-child hierarchy.
 
-- **Cross-Device Persistent Sessions**:
-  - Chat histories persist in SQLite rather than browser storage. Officers can switch between desktop and mobile without losing conversation context.
+- **Security and auditability**
+  - **Intranet geofencing**: middleware validates the client address against `MIMIR_ALLOWED_SUBNETS` before authentication is even considered.
+  - **Token identity**: no passwords. Only SHA-256 hashes are stored, compared with `hmac.compare_digest`.
+  - **Access log**: logins, denials, token issuance and revocation, uploads, and feedback are recorded with actor, address, and timestamp, readable from the admin console.
+  - **Upload quarantine**: documents uploaded through the admin panel land in a quarantine collection and enter the live corpus only when an administrator promotes them.
+
+- **Operational visibility.** The admin console reports live component topology, effective configuration, query volume and refusal rate, latency percentiles, most-cited documents, and a ranked list of questions the corpus could not answer.
 
 ---
 
 ## Architecture
 
-### System Flow
+### Query flow
 
 ```mermaid
 sequenceDiagram
     participant User as Officer / Frontend
     participant API as FastAPI Backend
-    participant Trans as IndicTrans2 Microservice
-    participant Embed as BGE-M3 + Reranker / Infinity
-    participant DB as Weaviate (Hybrid Search)
-    participant LLM as Cerebras + Gemini
+    participant Trans as IndicTrans2
+    participant Embed as BGE-M3 + Reranker (Infinity)
+    participant DB as Weaviate
+    participant LLM as Generation (Ollama / Cerebras / Gemini)
 
-    User->>API: Submits query (English / Marathi / Hindi)
-    API->>Trans: Detect & translate Indic script to English
+    User->>API: Query (English / Marathi / Hindi)
+    API->>API: Geofence + token check
+    API->>Trans: Translate if Devanagari
     Trans-->>API: English query
     API->>Embed: Embed query (BGE-M3)
     Embed-->>API: 1024-d dense vector
-    API->>DB: Hybrid search (dense vector + BM25, Alpha Fusion)
-    DB-->>API: Top-K relevant chunks with scores
-    API->>Embed: Rerank top-K candidates (cross-encoder)
-    Embed-->>API: Reranked chunks
-    API->>LLM: Generate answer with retrieved context
-    LLM-->>API: Stream answer tokens (SSE)
-    API-->>User: Streamed response + confidence-scored citations
+    API->>DB: Hybrid search (dense + BM25, tuned alpha)
+    DB-->>API: Candidate chunks
+    API->>Embed: Rerank candidates (cross-encoder)
+    Embed-->>API: Ordered, diversified evidence
+    API->>LLM: Generate strictly from retrieved context
+    LLM-->>API: Streamed tokens
+    API-->>User: Cited answer + conflict warnings
 ```
 
-### Component Architecture
+### Deployment topology
+
+Each service is independently deployable. The reference AWS deployment runs one per instance inside a single VPC, where only the application instance has a public address and every service is reached over private addressing.
 
 ```mermaid
-graph TD
-    subgraph Frontend
-        UI[Vanilla JS/CSS UI]
-    end
+graph LR
+    Net(["Public internet"]) -->|"80 / 443 only"| App
 
-    subgraph Backend [FastAPI Server]
-        API[Core Endpoints]
-        Auth[Zero-Trust Middleware]
-        Ingest[Ingestion Pipeline]
-        Ret[Retrieval Pipeline]
-    end
+    subgraph VPC["VPC (private addressing)"]
+        App["Main application<br/>FastAPI + Caddy"]
+        W[("Weaviate<br/>vector store")]
+        E["Infinity<br/>BGE-M3 + reranker"]
+        G["Ollama<br/>generation"]
+        Tq["IndicTrans2 200M<br/>query translation"]
+        Ti["IndicTrans2 1B<br/>ingest translation"]
+        D["Docling<br/>PDF OCR"]
+        S[("SQLite<br/>tokens, history, audit")]
 
-    subgraph Self-Hosted Microservices
-        BGE[BGE-M3 + Reranker via Infinity\nEmbedding Droplet]
-        IT2[IndicTrans2\nTranslation Microservice]
+        App --- S
+        App --> W
+        App --> E
+        App --> G
+        App --> Tq
+        App --> Ti
+        App --> D
     end
-
-    subgraph Data
-        Weaviate[(Weaviate\nVector DB)]
-        SQLite[(SQLite\nTokens & History)]
-        State[ingestion_state.json\nFile Hash Tracker]
-    end
-
-    subgraph Cloud APIs
-        Gemini[Google Vertex AI\nGemini 2.5 Flash]
-        Cerebras[Cerebras\nFast Inference]
-        GCPTrans[GCP Cloud Translation v3\nIngestion-time batch translate]
-    end
-
-    UI <-->|HTTP / SSE| Auth
-    Auth --> API
-    API --> Ret
-    API --> Ingest
-    API <--> SQLite
-    Ret --> BGE
-    Ingest --> BGE
-    Ret <--> IT2
-    Ingest <--> GCPTrans
-    Ret <-->|Hybrid Search| Weaviate
-    Ingest -->|Chunk & Upsert| Weaviate
-    Ingest <--> State
-    Ret --> Cerebras
-    Ret --> Gemini
 ```
 
-### Directory Tree
+---
+
+## Deployment modes
+
+`DEPLOYMENT_MODE` sets the default for four independent provider switches. Each can still be overridden individually.
+
+| Switch | `sovereign` | `hybrid` |
+|---|---|---|
+| `GEN_PROVIDER` | `local` (Ollama) | `cerebras` |
+| `PDF_PARSE_TIER2_PROVIDER` | `docling` | `docai` |
+| `INGEST_STRUCTURE_PROVIDER` | `local` | `gemini` |
+| `INGEST_TRANSLATE_PROVIDER` | `indictrans2` | `gcp` |
+
+In `sovereign` mode no query text leaves the network at inference time. Set the mode once; the admin console's Deployment panel shows the effective configuration actually in force, resolved at runtime rather than assumed.
+
+---
+
+## Deploying
+
+### The deployment CLI
+
+`deploy.py` at the repository root orchestrates the whole stack on one machine:
+
+```bash
+python deploy.py check               # hardware report and per-service readiness
+python deploy.py up                  # bring every service up in order, then the app
+python deploy.py up --only weaviate  # just one service
+python deploy.py status              # live reachability, same probes as the admin panel
+python deploy.py logs weaviate       # follow one service's container logs
+python deploy.py down                # tear everything down, reverse order
+```
+
+It never reimplements a service's startup logic. It shells out to the same `deploy.py` each service directory carries, so the single-machine path and the distributed path cannot drift.
+
+### Distributing services across machines
+
+Every directory under `microservices/` is standalone and stdlib-only. Copy one to a machine that has never seen this repository and it will still deploy:
+
+```bash
+scp -r microservices/embeddings/ user@node:~/mimir-embeddings/
+ssh user@node 'cd ~/mimir-embeddings && cp .env.example .env && python3 deploy.py up'
+```
+
+| Service | Port | Runs |
+|---|---|---|
+| `microservices/weaviate` | 8080, 50051 | Weaviate vector store |
+| `microservices/embeddings` | 7997 | BGE-M3 and the cross-encoder reranker via Infinity |
+| `microservices/translation` | 8001 | IndicTrans2 (200M for queries, 1B for ingestion) |
+| `microservices/generation` | 11434 | Ollama, model tier chosen from detected hardware |
+| `microservices/docling` | 8002 | Docling PDF OCR |
+
+The generation service picks its model from available memory and VRAM (`python deploy.py tier` reports the choice). The embedding model is deliberately **not** configurable: every stored vector is 1024-dimensional, and changing the model makes the existing index unreadable without a full re-ingest.
+
+### Reference AWS deployment
+
+A CloudFormation template provisions the full topology: one instance per service in a single VPC, security groups that admit traffic only from the application instance, and an Elastic IP on the application alone.
+
+```bash
+aws cloudformation create-stack \
+  --stack-name mimir-rag-stack \
+  --template-body file://mimir-aws-stack.yaml \
+  --parameters file://params.json \
+  --region ap-south-1
+```
+
+The template takes the officer and admin tokens, the Weaviate and Infinity keys, and a HuggingFace token as `NoEcho` parameters. The HuggingFace token is required: both IndicTrans2 checkpoints are gated and need an account that has been granted access.
+
+---
+
+## Directory tree
 
 ```text
 mimir/
-├── main.py                             # CLI entry point (Ingestion, Retrieval, Benchmark)
-├── app.py                              # FastAPI server, Zero-Trust gateway, SSE endpoints
-├── db.py                               # SQLite token registry & chat history manager
-├── requirements.txt                    # Python dependencies
+├── app.py                          # FastAPI server, geofence + auth gate, SSE endpoints, admin API
+├── main.py                         # CLI entry point (ingestion, retrieval, benchmark)
+├── db.py                           # SQLite: tokens, history, audit log, feedback, query log
+├── deploy.py                       # Stack orchestrator (delegates to each service's own deploy.py)
+├── mimir-aws-stack.yaml            # CloudFormation: one instance per service in one VPC
 │
-├── templates/                          # Frontend UI (Vanilla HTML/JS/CSS)
-│   ├── landing.html                    # Public-facing landing page
-│   ├── login.html                      # Officer login gateway
-│   ├── portal.html                     # Authenticated officer chat interface
-│   └── app.html                        # Base chat interface
+├── core/
+│   ├── utils.py                    # API clients, retry/throttle, batched embedding
+│   ├── embedding.py                # Embedding routing
+│   ├── schema.py                   # Weaviate collection schema
+│   ├── deployment.py               # DEPLOYMENT_MODE resolution for the four provider switches
+│   ├── health.py                   # Shared probes, used by both the admin panel and deploy.py
+│   ├── outcome.py                  # Classifies each answer as answered or refused
+│   └── log_config.py               # Structured logging
 │
-├── core/                               # Shared core infrastructure
-│   ├── utils.py                        # API clients, retry/throttle decorators, embed routing
-│   └── log_config.py                   # Centralized structured logging
+├── ingestion/
+│   ├── pipeline.py                 # PDF ingestion orchestrator
+│   ├── orgpedia_pipeline.py        # Orgpedia .en.txt GR ingestion
+│   ├── chunking.py                 # Table-aware parent-child chunking, translation, embedding
+│   ├── parsers.py                  # Three-tier PDF extraction
+│   ├── metadata.py                 # GR metadata extraction
+│   └── state.py                    # File-hash tracking for idempotent re-runs
 │
-├── ingestion/                          # Ingestion pipeline
-│   ├── pipeline.py                     # PDF ingestion orchestrator (hash-skip, upsert)
-│   ├── orgpedia_pipeline.py            # Orgpedia .en.txt GR ingestion orchestrator
-│   ├── chunking.py                     # Semantic parent-child chunking, translation & embedding
-│   ├── parsers.py                      # PyMuPDF4LLM → Markdown parser
-│   ├── metadata.py                     # LLM-based GR metadata extraction
-│   └── state.py                        # File hash tracking & ingestion state
+├── retrieval/
+│   ├── pipeline.py                 # Retrieval orchestration and streaming synthesis
+│   ├── search.py                   # Hybrid search, alpha tuning, reranking, diversification
+│   ├── query.py                    # Follow-up contextualization and query expansion
+│   ├── graph.py                    # Citation lineage graph between documents
+│   └── support.py                  # Shared retrieval helpers
 │
-├── retrieval/                          # Retrieval & generation pipeline
-│   ├── pipeline.py                     # Agentic loop orchestrator & SSE streaming
-│   ├── search.py                       # Hybrid search, alpha tuning, reranking, evidence
-│   └── query.py                        # Query contextualization & multi-query expansion
+├── microservices/                  # Each standalone and independently deployable
+│   ├── weaviate/    embeddings/    translation/    generation/    docling/
+│   └── (each: deploy.py + docker-compose.yml + .env.example)
 │
-├── benchmark/                          # Corpus evaluation & benchmark harness
-│   ├── benchmark.json                  # Ground-truth evaluation dataset (multi-category)
-│   └── runner.py                       # Benchmark execution & LLM-judge scoring
+├── benchmark/
+│   ├── runner.py                   # Benchmark execution and dual grading
+│   └── evaluation.py               # Term scorer and LLM judge
 │
-├── scratch/                            # Dev scripts & persisted state
-│   ├── ingestion_state.json            # File hash & incremental ingestion state tracker
-│   ├── generate_benchmark_full.py      # Document-level LLM benchmark generator (full corpus)
-│   └── mimir_cache.json                # Persistent query cache
+├── tests/                          # stdlib unittest suite
 │
-├── data/                               # Weaviate deployment
-│   └── docker-compose.yml              # Weaviate standalone compose file
+├── scratch/
+│   ├── regress.py                  # Content-asserting regression suite over the demo queries
+│   ├── ingest_department.py        # Full-department bulk ingestion
+│   ├── status_check.py             # Live component status
+│   └── loadtest.py                 # Retrieval latency against corpus size
 │
-└── docs/                               # Source documents for ingestion
-    ├── *.pdf                           # Standard government PDF circulars & acts
-    └── orgpedia_mahGRs/
-        └── *.pdf.en.txt                # Pre-translated Orgpedia Maharashtra GR plaintext files
+└── templates/                      # Vanilla HTML/JS/CSS frontend
 ```
 
 ---
@@ -178,170 +227,139 @@ mimir/
 | Dependency | Purpose |
 |---|---|
 | Python 3.10+ | Core runtime |
-| Google Cloud Project (Vertex AI) | Gemini 2.5 Flash generation + GCP Translation |
-| Cerebras API Key | Fast agentic inference |
-| Weaviate instance | Vector store (local via Docker or remote droplet) |
-| BGE-M3 / Infinity server | Self-hosted embedding microservice |
-| IndicTrans2 microservice | Marathi/Hindi → English query translation |
+| Docker | Every service ships as a compose file |
+| HuggingFace account with IndicTrans2 access | Both translation checkpoints are gated |
+| Google Cloud project | Only for `hybrid` mode (Gemini, Document AI, Cloud Translation) |
+| Cerebras API key | Only for `hybrid` mode generation |
 
-### 1. Clone & Install
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/pushkqr/mimir.git
 cd mimir
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Deploy Weaviate
+### 2. Configure
 
-Weaviate runs as a standalone service. Use the provided compose file:
-
-```bash
-cd data
-docker-compose up -d
-cd ..
-```
-
-Or point `WEAVIATE_URL` to an existing remote instance.
-
-### 3. Configure Environment
-
-Copy `.env.example` to `.env` and fill in your values:
+Copy `.env.example` to `.env` and fill it in. The essentials:
 
 ```env
-# Google Cloud (Vertex AI)
-GOOGLE_CLOUD_PROJECT=your-gcp-project-id
-GOOGLE_CLOUD_LOCATION=asia-south1
-USE_VERTEX_AI=True
+# Deployment posture. Sets defaults for the four provider switches above.
+DEPLOYMENT_MODE=sovereign
 
-# Inference
-CEREBRAS_API_KEY=your_cerebras_api_key
-GEN_MODEL_NAME=gemini-2.5-flash
-
-# Self-hosted Embedding Microservice (BGE-M3 via Infinity)
-LOCAL_EMBED_URL=http://<YOUR_EMBED_DROPLET_IP>:7997/embeddings
-LOCAL_EMBED_API_KEY=your_embed_api_key          # if secured
-USE_AISTUDIO_FOR_EMBEDDINGS=False
-
-# Self-hosted Cross-Encoder Reranking (BGE reranker, same Infinity server)
-LOCAL_RERANK_URL=http://<YOUR_EMBED_DROPLET_IP>:7997/rerank
-LOCAL_RERANK_API_KEY=your_rerank_api_key        # if secured
-LOCAL_RERANK_MODEL_NAME=BAAI/bge-reranker-base  # must match whatever model Infinity actually loaded
-
-# Fast-mode retrieval tuning (candidate pool size vs. rerank pool size)
-FAST_MODE_CANDIDATE_LIMIT=20
-FAST_MODE_RERANK_LIMIT=12
-
-# Translation Microservice (IndicTrans2)
-TRANSLATION_SERVICE_URL=http://<YOUR_TRANS_DROPLET_IP>:8000/translate
-
-# Weaviate
-WEAVIATE_URL=http://<YOUR_WEAVIATE_IP>
+# Vector store
+WEAVIATE_URL=http://<weaviate-host>
 WEAVIATE_GRPC_PORT=50051
-WEAVIATE_API_KEY=your_weaviate_api_key
+WEAVIATE_API_KEY=...
+CORPUS_COLLECTION=GovDocsV2
+
+# Embeddings and reranking (one Infinity server serves both)
+LOCAL_EMBED_URL=http://<embed-host>:7997/embeddings
+LOCAL_RERANK_URL=http://<embed-host>:7997/rerank
+LOCAL_EMBED_API_KEY=...
+LOCAL_EMBED_MODEL_NAME=BAAI/bge-m3
+LOCAL_RERANK_MODEL_NAME=BAAI/bge-reranker-base
+EMBED_BATCH_SIZE=64
+LOCAL_EMBED_BATCH_TIMEOUT_S=60
+
+# Generation (sovereign)
+LOCAL_GEN_URL=http://<generation-host>:11434/v1
+LOCAL_GEN_MODEL=qwen3:4b
+
+# Translation. The ingestion service points at the larger 1B model.
+TRANSLATION_SERVICE_URL=http://<translation-host>:8001/translate
+INGEST_TRANSLATION_SERVICE_URL=http://<ingest-translation-host>:8001/translate
 
 # Security
-MIMIR_AUTH_TOKEN=your_secure_officer_password
-MIMIR_ADMIN_TOKEN=your_secure_admin_token
-# Comma-separated CIDRs. Use 0.0.0.0/0 to allow all (demo mode).
-MIMIR_ALLOWED_SUBNETS=10.0.0.0/8
+MIMIR_AUTH_TOKEN=...
+MIMIR_ADMIN_TOKEN=...
+MIMIR_ALLOWED_SUBNETS=10.0.0.0/8        # 0.0.0.0/0 only for a public demo
+```
+
+`EMBED_BATCH_SIZE` and `LOCAL_EMBED_BATCH_TIMEOUT_S` are worth tuning to your hardware. On a CPU-only embedding node, long passages embed slowly enough that a large batch can exceed the timeout; smaller batches with a longer timeout are the safer combination.
+
+> **Officer tokens.** A deployment issues them from the admin console. `MIMIR_SEED_DEMO_TOKENS=true` seeds two fixed development tokens whose values are public in this source, so never set it on anything reachable from outside your machine.
+
+### 3. Bring the stack up
+
+```bash
+python deploy.py check
+python deploy.py up
+python deploy.py status
 ```
 
 ---
 
 ## Usage
 
-### Start the Web Application
+### Run the application
 
 ```bash
-python app.py
-# or
 uvicorn app:app --reload
 ```
 
-Navigate to `http://localhost:8000` for the landing page, `http://localhost:8000/portal` for the officer chat interface, or `http://localhost:8000/admin` for the admin console.
+`/` is the landing page, `/portal` the officer interface, `/admin` the administrator console.
 
-### Ingest Documents
+### Ingest documents
 
-Place PDFs in `docs/` and Orgpedia plaintext GRs in `docs/orgpedia_mahGRs/`. Then set flags in `main.py`:
+Place PDFs in `docs/` and Orgpedia plaintext GRs alongside them, then set the flags in `main.py`:
 
 ```python
-RUN_INGESTION = True     # Ingest/re-index PDFs
-RUN_RETRIEVAL = False    # Interactive CLI chat
-RUN_BENCHMARK = False    # Run benchmark evaluation
+RUN_INGESTION = True
+RUN_RETRIEVAL = False
+RUN_BENCHMARK = False
 ```
 
 ```bash
 python main.py
 ```
 
-Ingestion is **idempotent** — re-running with unchanged files is a no-op (files are skipped based on SHA-256 hash). To force re-ingestion, pass `force_reingest=True` or delete `scratch/ingestion_state.json`.
-
-### Run Benchmark
+For a full department corpus, use the bulk path, which tracks state separately and can resume:
 
 ```bash
-# Set RUN_BENCHMARK = True in main.py, then:
-python main.py
-
-# Or run standalone:
-python benchmark/runner.py
+python -m scratch.ingest_department --full
 ```
 
-### Generate a Full Corpus Benchmark Dataset
+Ingestion is idempotent. Re-running with unchanged files is a no-op, since files are skipped on SHA-256 hash.
 
-For generating new benchmark questions from the full corpus (document-level LLM generation, not chunk-level):
+### Administrator console
 
-```bash
-python scratch/generate_benchmark_full.py \
-  --out benchmark/benchmark_100.json \
-  --max-doc-chars 15000 \
-  --resume
-```
-
-Large documents (> `--max-doc-chars` characters) are skipped automatically. Use `--resume` to continue interrupted runs incrementally.
+`/admin` covers token provisioning and revocation, the access log, upload quarantine and promotion, live component topology and effective configuration, query analytics (volume, refusal rate, latency percentiles, most-cited documents), unanswered-question analysis, and officer feedback.
 
 ---
 
-## Self-Hosted Microservices
+## Testing
 
-Mimir decouples compute-heavy tasks into independent microservices to avoid cloud quota constraints and reduce per-query cost.
-
-### BGE-M3 Embedding (Infinity)
-
-Deploy on any GPU or CPU droplet:
+The regression suite is the one that currently carries weight. It runs the demo queries against a live stack and asserts on answer *content* rather than latency, so it catches quality regressions that a timing check would sail past:
 
 ```bash
-pip install infinity-emb[all]
-infinity_emb v2 --model-id BAAI/bge-m3 --port 7997
+python -m scratch.regress
 ```
 
-Set `LOCAL_EMBED_URL=http://<host>:7997/embeddings` in `.env`. The system automatically routes all embedding calls (ingestion + retrieval) through this endpoint.
-
-### BGE Reranker (Cross-Encoder)
-
-The same Infinity server can also serve a reranking model — no separate deployment needed:
+It respects the Cerebras rate limit by spacing queries. Lowering that spacing causes a silent fallback to Gemini, which changes both timing and wording and makes failures harder to read.
 
 ```bash
-infinity_emb v2 --model-id BAAI/bge-reranker-base --port 7997
+python -m unittest discover -s tests -v
 ```
 
-Set `LOCAL_RERANK_URL=http://<host>:7997/rerank` in `.env`. Fast-mode retrieval sends the hybrid search candidates here for cross-encoder reranking before generation. `LOCAL_RERANK_MODEL_NAME` must match whatever model the server actually has loaded — Infinity returns an HTTP 400 if it doesn't, so verify against the server's `/models` endpoint after deploying.
+> The `tests/` suite uses stdlib `unittest` and needs no extra dependency, but it has drifted behind the modules it covers and does not exercise the microservices split, deployment modes, or the admin API. Treat it as partial coverage, not a gate. Bringing it back in line is outstanding work.
 
-### IndicTrans2 Translation
+---
 
-Deploy the IndicTrans2 FastAPI microservice. On query, the system detects Devanagari script and translates to English before embedding:
+## Evaluation
 
+`benchmark/` holds a dual-graded harness. A deterministic scorer checks that required terms (GR numbers, dates, counts) actually appear, and an LLM judge scores factual accuracy against a human-verified answer. A case passes on `judge >= 3.0`, or `judge >= 2.0` with `term >= 0.5`.
+
+Term matching alone is too rigid and a judge alone is too lenient about missing specifics. Using only half of the pair once produced a confidently wrong conclusion about disabling reranking, which is why both halves are kept.
+
+```bash
+python benchmark/runner.py
 ```
-POST /translate
-{"text": "...", "src_lang": "mar_Deva", "tgt_lang": "eng_Latn"}
-```
 
-Set `TRANSLATION_SERVICE_URL=http://<host>:8000/translate` in `.env`.
+> The most recent published result, **88/100** with a judge average of 4.13, was measured against a 533-document corpus. It demonstrates that the harness works; it is not a current score for a larger corpus. Re-run the benchmark after any substantial change to corpus size.
 
 ---
 
