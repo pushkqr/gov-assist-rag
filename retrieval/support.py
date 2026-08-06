@@ -1,4 +1,7 @@
+import os
 from typing import Any, List
+
+import core.deployment as deployment
 
 
 def extract_response_text(response: Any) -> str:
@@ -21,6 +24,26 @@ def _is_mostly_indic(text: str) -> bool:
     return indic / max(len(text), 1) > 0.3
 
 
+def _block_char_cap() -> int:
+    """Per-block context cap, applied only when generation runs on local CPU.
+
+    Prompt processing on the self-hosted node runs at 40-53 tok/s and the rate decays as the
+    window grows (measured: 1024 tokens in 19s, 4971 in 135s), so context length is the
+    dominant term in sovereign latency, not thread count or the serving stack.
+
+    The cap is per block rather than on the joined string because trimming the tail would
+    drop whole documents, and a contradiction between two documents is only detectable when
+    both are still present - which is the behaviour the conflict callout exists to show.
+
+    Unset means unlimited, so the default is byte-for-byte the current output and the hosted
+    path never reads this at all.
+    """
+    if deployment.gen_provider() != "local":
+        return 0
+    raw = os.getenv("SOVEREIGN_CONTEXT_BLOCK_CHARS", "").strip()
+    return int(raw) if raw.isdigit() else 0
+
+
 def build_context_text(top_results: List[Any]) -> str:
     """Stitch unique parent contexts and child passages into a unified context block.
 
@@ -30,6 +53,7 @@ def build_context_text(top_results: List[Any]) -> str:
     """
     parent_blocks = {}
     standalone_chunks = []
+    char_cap = _block_char_cap()
 
     for result in top_results:
         payload = getattr(result, "payload", None) or {}
@@ -103,7 +127,7 @@ def build_context_text(top_results: List[Any]) -> str:
             meta += f"[Supersedes: {block['supersedes']}]\n"
         if block.get("references"):
             meta += f"[References: {block['references']}]\n"
-        formatted_sections.append(meta + ctx)
+        formatted_sections.append(meta + (ctx[:char_cap] if char_cap else ctx))
 
     seen_texts = {block["context"] for block in parent_blocks.values() if block.get("context")}
     for chunk in standalone_chunks:
@@ -123,7 +147,7 @@ def build_context_text(top_results: List[Any]) -> str:
             meta += f"[Supersedes: {chunk['supersedes']}]\n"
         if chunk.get("references"):
             meta += f"[References: {chunk['references']}]\n"
-        formatted_sections.append(meta + display_txt)
+        formatted_sections.append(meta + (display_txt[:char_cap] if char_cap else display_txt))
         seen_texts.add(display_txt)
 
     return "\n\n---\n\n".join(s for s in formatted_sections if s.strip())
