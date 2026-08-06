@@ -291,8 +291,16 @@ aws cloudformation create-stack \
   --region ap-south-1
 ```
 
-Tokens and keys are `NoEcho` parameters. Reaching a private instance goes through the
-application host:
+Every secret is a `NoEcho` parameter with no default, so the template itself carries nothing
+sensitive and is safe to keep in version control. `params.json` is the opposite: it holds the
+admin and officer tokens, both service keys, the HuggingFace token and a GCP service account
+key in plaintext. It is gitignored, along with `*.pem`, and must stay that way.
+
+`AdminCidrIp` has no default on purpose. It opens a shell on every instance in the stack, so
+CloudFormation refuses to deploy until you name a range rather than quietly accepting
+`0.0.0.0/0`.
+
+Reaching a private instance goes through the application host:
 
 ```bash
 ssh -i mimir-key.pem \

@@ -1,0 +1,1016 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Mimir RAG Engine - full distributed deployment on AWS.
+  6 EC2 instances, one per service, all in the same VPC.
+  Microservices communicate only over private IPs.
+  The main app instance is the only one with a public Elastic IP.
+
+# =============================================================
+# PARAMETERS
+# =============================================================
+Parameters:
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "EC2 key pair for SSH access to all instances."
+
+  AdminCidrIp:
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$'
+    ConstraintDescription: "Must be a CIDR block, e.g. 203.0.113.42/32"
+    Description: >
+      CIDR allowed to SSH into instances, e.g. 203.0.113.42/32 for a single address.
+      Deliberately has no default: this opens a shell on every instance in the stack,
+      and a default of 0.0.0.0/0 would mean anyone deploying without reading this
+      parameter gets SSH exposed to the internet. Supply your own address.
+      Use 0.0.0.0/0 only if you have decided to.
+
+  GitHubRepo:
+    Type: String
+    Default: "https://github.com/pushkqr/mimir.git"
+    Description: "Git repo to clone on every instance."
+
+  # -- Secrets --------------------------------------------------
+
+  WeaviateApiKey:
+    Type: String
+    NoEcho: true
+    Description: "Weaviate authentication key (WEAVIATE_API_KEY)."
+
+  InfinityApiKey:
+    Type: String
+    NoEcho: true
+    Description: "Infinity server API key (INFINITY_API_KEY / LOCAL_EMBED_API_KEY)."
+
+  MimirAuthToken:
+    Type: String
+    NoEcho: true
+    Description: "Officer portal access token (MIMIR_AUTH_TOKEN)."
+
+  MimirAdminToken:
+    Type: String
+    NoEcho: true
+    Description: "Admin API token (MIMIR_ADMIN_TOKEN)."
+
+  CerebrasApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: >
+      Cerebras API key for the agentic reasoning loop (optional in sovereign mode -
+      leave blank if running fully offline; the app falls back gracefully).
+
+  HfToken:
+    Type: String
+    NoEcho: true
+    Description: >
+      HuggingFace access token with approved access to the gated ai4bharat/indictrans2-*
+      repos. Required - both the query (200M) and ingest (1B) translation instances need it.
+
+  # -- GCP / Vertex AI ------------------------------------------
+
+  GcpProjectId:
+    Type: String
+    Description: "Google Cloud project ID for Vertex AI (Gemini) and GCP Translation."
+
+  GcpLocation:
+    Type: String
+    Default: "asia-south1"
+    Description: "GCP region for Vertex AI."
+
+  GcpServiceAccountKeyJson:
+    Type: String
+    NoEcho: true
+    Description: >
+      Full contents of the GCP service-account JSON key (same file mounted as
+      gcp-key.json in root docker-compose.yml). Paste the raw JSON as a single line
+      with internal newlines replaced by \n.
+
+  # -- Generation model -----------------------------------------
+
+  GenModel:
+    Type: String
+    Default: "qwen3:4b"
+    AllowedValues:
+      - "qwen3:1.7b"
+      - "qwen3:4b"
+      - "qwen3:8b"
+      - "qwen3:30b"
+    Description: >
+      Ollama model to pull on the generation instance.
+      t3.xlarge has 16 GB RAM -> qwen3:4b is the correct CPU tier
+      per microservices/generation/deploy.py tier table.
+      Only change if using a GPU instance type.
+
+  # -- Geofencing -----------------------------------------------
+
+  MimirAllowedSubnets:
+    Type: String
+    Default: "0.0.0.0/0"
+    Description: >
+      MIMIR_ALLOWED_SUBNETS - comma-separated CIDRs the app accepts.
+      0.0.0.0/0 for a public demo. In production use the VPC CIDR
+      (e.g. 172.31.0.0/16) to simulate intranet-only access at the
+      application layer (Security Groups already enforce this at network level).
+
+  # -- Domain (Caddyfile) ---------------------------------------
+
+  AppDomain:
+    Type: String
+    Default: "mimir.pushkqr.app"
+    Description: >
+      Your DNS A record hostname. Caddy serves :80 and this name.
+      Point the DNS A record to the MainAppEIP output after stack creation.
+
+  # -- AMI ------------------------------------------------------
+
+  UbuntuAmi:
+    Type: String
+    Default: "ami-0f5ee92e2d63afc18"
+    Description: >
+      Ubuntu 22.04 LTS x86_64 AMI ID. Default is ap-south-1 (Mumbai).
+      Look up the correct ID for your region in the EC2 console AMI catalog
+      or use: aws ec2 describe-images --owners 099720109477
+        --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+        --query "sort_by(Images,&CreationDate)[-1].ImageId"
+
+
+# =============================================================
+# RESOURCES
+# =============================================================
+Resources:
+
+  # -------------------------------------------------------------
+  # Security Groups
+  # -------------------------------------------------------------
+
+  # Main app: public-facing, receives HTTP/HTTPS from anywhere.
+  MainAppSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-main-app-sg
+      GroupDescription: "Main app: HTTP/HTTPS public, SSH restricted."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+          Description: "HTTP (Caddy reverse proxy)"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+          Description: "HTTPS (Caddy)"
+        # Port 8000 (FastAPI direct) is deliberately NOT exposed. Caddy already fronts the
+        # app on 80/443; opening 8000 would bypass the reverse proxy and put the raw
+        # application on the public internet. To debug, SSH in and curl localhost:8000.
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-main-app-sg
+
+  # Weaviate: only the main app can reach HTTP (8080) and gRPC (50051).
+  # core/utils.py:get_weaviate_client() connects to both ports on the same host.
+  WeaviateSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-weaviate-sg
+      GroupDescription: "Weaviate: inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "Weaviate HTTP from main app"
+        - IpProtocol: tcp
+          FromPort: 50051
+          ToPort: 50051
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "Weaviate gRPC from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-weaviate-sg
+
+  # Embeddings (Infinity :7997 serves both /embeddings and /rerank).
+  EmbedSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-embed-sg
+      GroupDescription: "Infinity embeddings+reranker: inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 7997
+          ToPort: 7997
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "Infinity from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-embed-sg
+
+  # Translation / query-time (IndicTrans2-200M, host port 8001 -> container 8000).
+  # Low-latency, fits in t3.small (2 GB). 256-token limit is fine for short queries.
+  TranslationSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-translation-sg
+      GroupDescription: "IndicTrans2-200M (query): inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8001
+          ToPort: 8001
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "IndicTrans2-200M from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-translation-sg
+
+  # Ingest-time translation (IndicTrans2-1B, host port 8001 -> container 8000).
+  # t3.large (8 GB) + float16 -> ~3 GB footprint. Higher token limit (512) for document chunks.
+  IngestTranslationSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-ingest-translation-sg
+      GroupDescription: "IndicTrans2-1B (ingestion): inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8001
+          ToPort: 8001
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "IndicTrans2-1B from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-ingest-translation-sg
+
+  # Generation (Ollama :11434).
+  GenerationSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-generation-sg
+      GroupDescription: "Ollama generation: inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 11434
+          ToPort: 11434
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "Ollama from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-generation-sg
+
+  # Docling (host port 8002 -> container 8000).
+  DoclingSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mimir-docling-sg
+      GroupDescription: "Docling PDF parser: inbound only from main app + SSH."
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8002
+          ToPort: 8002
+          SourceSecurityGroupId: !GetAtt MainAppSG.GroupId
+          Description: "Docling from main app"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminCidrIp
+          Description: "SSH"
+      Tags:
+        - Key: Name
+          Value: mimir-docling-sg
+
+
+  # -------------------------------------------------------------
+  # Microservice Instances
+  # -------------------------------------------------------------
+  # Pattern for every microservice:
+  #   1. Install Docker (official apt method for Ubuntu 22.04)
+  #   2. Clone full repo (needed for docling build context; harmless for others)
+  #   3. cd into microservices/<service>/
+  #   4. Write .env
+  #   5. Patch docker-compose.yml: 127.0.0.1 -> 0.0.0.0
+  #      The compose files bind to loopback by default (correct for single-machine
+  #      deployments). On AWS each service is on its own instance, so we open the
+  #      bind address. Security Groups enforce the network-layer perimeter instead.
+  #   6. python3 deploy.py up
+  #      (|| true so a slow model download doesn't abort the UserData script;
+  #       check /var/log/mimir-setup.log on the instance to confirm success)
+
+  WeaviateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      CreditSpecification:
+        CPUCredits: unlimited   # Prevents t3 CPU throttle under sustained ingestion/query load
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref WeaviateSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+            Iops: 6000         # gp3 default is 3000; 6000 is free up to provisioned limit
+      Tags:
+        - Key: Name
+          Value: mimir-weaviate
+        - Key: MimirRole
+          Value: weaviate
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/weaviate
+          cp .env.example .env
+          # Replace the placeholder key with the real one
+          sed -i "s|change-me-to-a-long-random-string|${WeaviateApiKey}|g" .env
+
+          # Open bind address so intra-VPC traffic is accepted
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/weaviate && python3 deploy.py up || true'
+          echo "WEAVIATE SETUP COMPLETE"
+
+  EmbedInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref EmbedSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30   # BGE-M3 (~570 MB) + bge-reranker-base (~278 MB) + image
+            VolumeType: gp3
+            DeleteOnTermination: true
+            Iops: 4000
+      Tags:
+        - Key: Name
+          Value: mimir-embeddings
+        - Key: MimirRole
+          Value: embeddings
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/embeddings
+          # Write .env directly; deploy.py check looks for INFINITY_API_KEY set.
+          # CPU tier: t3.large has no GPU -> bge-reranker-base (matches deploy.py logic).
+          cat > .env <<'ENVEOF'
+          INFINITY_API_KEY=${InfinityApiKey}
+          RERANK_MODEL=BAAI/bge-reranker-base
+          ENVEOF
+          # deploy.py up runs as ubuntu (see below), but this file was just written as root.
+          # Without this, any deploy.py that rewrites .env (hardware-tier detection etc.)
+          # hits a PermissionError and dies before docker compose ever runs - and the
+          # `|| true` on that step masks the crash as a clean exit.
+          chown ubuntu:ubuntu .env
+
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          # Infinity leaks memory under sustained ingestion, and the symptom is throughput
+          # quietly collapsing rather than anything erroring. This restarts it when its
+          # memory crosses a threshold. See embed-guard.sh for why it is memory-triggered
+          # rather than periodic.
+          install -m 0755 /home/ubuntu/mimir/microservices/embeddings/embed-guard.sh \
+            /usr/local/bin/mimir-embed-guard.sh
+          printf '*/10 * * * * root /usr/local/bin/mimir-embed-guard.sh\n' \
+            > /etc/cron.d/mimir-embed-guard
+          chmod 0644 /etc/cron.d/mimir-embed-guard
+
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/embeddings && python3 deploy.py up || true'
+          echo "EMBEDDINGS SETUP COMPLETE"
+
+  TranslationInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.small
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref TranslationSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20   # indictrans2-dist-200M weights + PyTorch docker image
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: mimir-translation
+        - Key: MimirRole
+          Value: translation
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/translation
+          # CPU tier: indictrans2-dist-200M (acceptable quality on t3.small).
+          cat > .env <<'ENVEOF'
+          INDICTRANS_MODEL=ai4bharat/indictrans2-indic-en-dist-200M
+          HF_TOKEN=${HfToken}
+          ENVEOF
+          chown ubuntu:ubuntu .env
+
+          # deploy.py health check hits 127.0.0.1:8001, which still resolves locally.
+          # We only need the host-side bind to be 0.0.0.0 for external access.
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          # First build compiles a PyTorch image - can take 10-15 min.
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/translation && python3 deploy.py up || true'
+          echo "TRANSLATION SETUP COMPLETE"
+
+  # Ingest-time translation: IndicTrans2-1B on t3.large.
+  # chunking.py checks INGEST_TRANSLATION_SERVICE_URL first, so ingestion routes here
+  # while query-time translation still hits the faster 200M instance.
+  IngestTranslationInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large   # 8 GB RAM; 1B model in float16 uses ~3 GB
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref IngestTranslationSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30   # 1B model weights in float16 ~2 GB + PyTorch image
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: mimir-ingest-translation
+        - Key: MimirRole
+          Value: ingest-translation
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/translation
+          # 1B model for ingestion: higher accuracy + 512-token limit covers document chunks.
+          # float16 halves RAM from ~4 GB to ~2 GB so it fits comfortably in t3.large (8 GB).
+          cat > .env <<'ENVEOF'
+          INDICTRANS_MODEL=ai4bharat/indictrans2-indic-en-1B
+          HF_TOKEN=${HfToken}
+          TRANSLATE_MAX_TOKENS=512
+          TRANSLATE_TORCH_DTYPE=float16
+          # Override the compose default (1800m, sized for the 200M model on t3.small).
+          # The 1B model in float16 is ~2 GB of weights alone and would be OOM-killed.
+          TRANSLATE_MEM_LIMIT=6g
+          ENVEOF
+          chown ubuntu:ubuntu .env
+
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          # First build compiles a PyTorch image - takes 15-20 min; 1B download adds time.
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/translation && python3 deploy.py up || true'
+          echo "INGEST TRANSLATION SETUP COMPLETE"
+
+  GenerationInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.xlarge   # 4 vCPU, 16 GB RAM -> qwen3:4b per generation/deploy.py
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref GenerationSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 40   # qwen3:4b weights ~2.5 GB + ollama overhead + docker image
+            VolumeType: gp3
+            DeleteOnTermination: true
+            Iops: 4000       # Faster model weight loading on first inference
+      Tags:
+        - Key: Name
+          Value: mimir-generation
+        - Key: MimirRole
+          Value: generation
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/generation
+          cat > .env <<'ENVEOF'
+          GEN_MODEL=${GenModel}
+          ENVEOF
+          chown ubuntu:ubuntu .env
+
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          # deploy.py up starts Ollama then pulls the model (slow on first run).
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/generation && python3 deploy.py up || true'
+          echo "GENERATION SETUP COMPLETE"
+
+  DoclingInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref DoclingSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30   # docling image is heavy
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: mimir-docling
+        - Key: MimirRole
+          Value: docling
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/mimir-setup.log 2>&1
+
+          apt-get update -y
+          apt-get install -y git python3 curl ca-certificates gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+            | tee /etc/apt/sources.list.d/docker.list
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ubuntu
+
+          # Full repo clone required: docling compose build context is ../../docling_ingestion
+          # relative to microservices/docling/ (see microservices/docling/deploy.py).
+          git clone ${GitHubRepo} /home/ubuntu/mimir
+          chown -R ubuntu:ubuntu /home/ubuntu/mimir
+
+          cd /home/ubuntu/mimir/microservices/docling
+          sed -i 's/127\.0\.0\.1:/0.0.0.0:/g' docker-compose.yml
+
+          sudo -u ubuntu bash -c \
+            'cd /home/ubuntu/mimir/microservices/docling && python3 deploy.py up || true'
+          echo "DOCLING SETUP COMPLETE"
+
+
+  # -------------------------------------------------------------
+  # Main Application Instance
+  # -------------------------------------------------------------
+  # DependsOn all microservices so CloudFormation resolves their
+  # PrivateIp values before this instance's UserData is rendered.
+  # The !Sub + mapping block at the bottom injects all private IPs
+  # into the .env file via CloudFormation intrinsic functions.
+
+  MainAppInstance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - WeaviateInstance
+      - EmbedInstance
+      - TranslationInstance
+      - IngestTranslationInstance
+      - GenerationInstance
+      - DoclingInstance
+    Properties:
+      InstanceType: t3.medium
+      CreditSpecification:
+        CPUCredits: unlimited
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref UbuntuAmi
+      SecurityGroupIds:
+        - !Ref MainAppSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30   # app + SQLite + dept_stage corpus for ingestion
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: mimir-main-app
+        - Key: MimirRole
+          Value: main-app
+      UserData:
+        # Two-argument !Sub: the second argument is a map of additional variables.
+        # ${!VAR} escapes to a literal ${VAR} in bash (CloudFormation does not expand it).
+        Fn::Base64:
+          !Sub
+            - |
+              #!/bin/bash
+              set -e
+              exec > /var/log/mimir-setup.log 2>&1
+
+              apt-get update -y
+              apt-get install -y git python3 python3-pip curl ca-certificates gnupg
+              install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+                | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              chmod a+r /etc/apt/keyrings/docker.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+                https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+                | tee /etc/apt/sources.list.d/docker.list
+              apt-get update -y
+              apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+              systemctl enable docker
+              systemctl start docker
+              usermod -aG docker ubuntu
+
+              git clone ${GitHubRepo} /home/ubuntu/mimir
+              chown -R ubuntu:ubuntu /home/ubuntu/mimir
+              cd /home/ubuntu/mimir
+
+              # -- GCP service-account key ------------------------------------------
+              # Mounted read-only into the mimir container at /app/gcp-key.json
+              # (see root docker-compose.yml volumes section).
+              cat > /home/ubuntu/mimir/gcp-key.json <<'GCPEOF'
+              ${GcpServiceAccountKeyJson}
+              GCPEOF
+              chown ubuntu:ubuntu /home/ubuntu/mimir/gcp-key.json
+              chmod 600 /home/ubuntu/mimir/gcp-key.json
+
+              # -- Caddyfile --------------------------------------------------------
+              # Override the default file (which hardcodes mimir.pushkqr.app)
+              # with whatever AppDomain parameter was set.
+              cat > /home/ubuntu/mimir/Caddyfile <<'CADDYEOF'
+              :80, ${AppDomain} {
+                  reverse_proxy mimir:8000
+              }
+              CADDYEOF
+
+              # -- .env -------------------------------------------------------------
+              # All microservice URLs use private IPs injected by CloudFormation.
+              # This file is loaded by docker-compose.yml via env_file: [.env].
+              cat > /home/ubuntu/mimir/.env <<'DOTENVEOF'
+              # -- Google Cloud / Vertex AI -----------------------------------------
+              GOOGLE_CLOUD_PROJECT=${GcpProjectId}
+              GOOGLE_CLOUD_LOCATION=${GcpLocation}
+              USE_VERTEX_AI=True
+              GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
+
+              # -- Deployment mode --------------------------------------------------
+              # sovereign: generation, PDF OCR tier-2, and ingest-time translation
+              # are all self-hosted. No query text leaves the VPC at inference time.
+              DEPLOYMENT_MODE=sovereign
+              GEN_PROVIDER=local
+              PDF_PARSE_TIER2_PROVIDER=docling
+              INGEST_TRANSLATE_PROVIDER=indictrans2
+
+              # -- Embeddings (Infinity / BGE-M3 on EmbedInstance) ------------------
+              LOCAL_EMBED_URL=http://${EmbedIp}:7997/embeddings
+              LOCAL_EMBED_API_KEY=${InfinityApiKey}
+              LOCAL_EMBED_MODEL_NAME=BAAI/bge-m3
+              LOCAL_EMBED_TIMEOUT_S=60
+              USE_AISTUDIO_FOR_EMBEDDINGS=False
+              EMBED_MODEL_NAME=BAAI/bge-m3
+              # Sized against measurement, not the library defaults. On this CPU instance one
+              # ~500-token passage embeds in ~3.4s, so the stock 64-item batch needs ~217s and
+              # cannot finish inside a 60s timeout. The failure is selective and therefore easy
+              # to miss: short-passage documents pass, and the ones that time out are the
+              # largest documents in the corpus. 16 at 300s leaves roughly a 5x margin.
+              EMBED_BATCH_SIZE=16
+              LOCAL_EMBED_BATCH_TIMEOUT_S=300
+
+              # -- Reranker (same Infinity server, /rerank endpoint) -----------------
+              LOCAL_RERANK_URL=http://${EmbedIp}:7997/rerank
+              LOCAL_RERANK_API_KEY=${InfinityApiKey}
+              LOCAL_RERANK_MODEL_NAME=BAAI/bge-reranker-base
+              LOCAL_RERANK_TIMEOUT_S=10
+
+              # -- Retrieval tuning -------------------------------------------------
+              FAST_MODE_CANDIDATE_LIMIT=20
+              FAST_MODE_RERANK_LIMIT=12
+              FAST_MODE_MAX_CHUNKS_PER_DOC=4
+              DEEP_MODE_CANDIDATE_LIMIT=150
+              DEEP_MODE_RERANK_LIMIT=12
+
+              # -- Translation (IndicTrans2) ------------------------------------------------
+              # TRANSLATION_SERVICE_URL  -> 200M instance (query-time, low latency, port 8001)
+              # INGEST_TRANSLATION_SERVICE_URL -> 1B instance (ingestion, 512-token limit)
+              # chunking.py:translate_marathi_batch_indictrans2() checks INGEST_ first.
+              TRANSLATION_SERVICE_URL=http://${TransIp}:8001/translate
+              INGEST_TRANSLATION_SERVICE_URL=http://${IngestTransIp}:8001/translate
+              TRANSLATION_TIMEOUT_S=10
+              TRANSLATE_LOCATION=global
+              # INGEST_TRANSLATE_PROVIDER is set once, in the deployment-mode block above.
+              # It was previously repeated here for clarity, which is the opposite of clear:
+              # dotenv keeps the last occurrence, so a later edit to the first one would have
+              # had no effect and nothing would have said so.
+
+              # -- Weaviate (WeaviateInstance) ---------------------------------------
+              # core/utils.py:get_weaviate_client() strips the scheme and connects to
+              # HTTP port 8080 and gRPC port WEAVIATE_GRPC_PORT on the same host.
+              WEAVIATE_URL=http://${WeaviateIp}
+              WEAVIATE_GRPC_PORT=50051
+              WEAVIATE_API_KEY=${WeaviateApiKey}
+              CORPUS_COLLECTION=GovDocsV2
+
+              # -- Generation (Ollama on GenerationInstance) ------------------------
+              # core/utils.py:local_generate_stream speaks /v1/chat/completions dialect.
+              LOCAL_GEN_URL=http://${GenIp}:11434/v1
+              LOCAL_GEN_MODEL=${GenModel}
+              LOCAL_GEN_TIMEOUT_S=120
+
+              # -- Docling PDF parser (DoclingInstance) ------------------------------
+              DOCLING_SERVICE_URL=http://${DoclingIp}:8002/parse
+              DOCLING_TIMEOUT_S=120
+
+              # -- Cerebras (optional agentic reasoning loop) -----------------------
+              # Leave blank for fully offline operation; the app falls back gracefully.
+              CEREBRAS_API_KEY=${CerebrasApiKey}
+              CEREBRAS_MODELS=gpt-oss-120b,gemma-4-31b
+              CONTEXTUALIZE_FOLLOWUPS=true
+              CONTEXTUALIZE_TIMEOUT_S=4
+
+              # -- Security / Auth --------------------------------------------------
+              MIMIR_AUTH_TOKEN=${MimirAuthToken}
+              MIMIR_ADMIN_TOKEN=${MimirAdminToken}
+              # 0.0.0.0/0 for public demo. Security Groups enforce the real perimeter.
+              # For the presentation: explain that in production this would be the VPC
+              # CIDR and the main app itself would not have a public IP at all.
+              MIMIR_ALLOWED_SUBNETS=${MimirAllowedSubnets}
+
+              # -- Model name refs (informational, used in UI labels) ----------------
+              GEN_MODEL_NAME=gemini-2.5-flash
+              SPEC_MODEL_NAME=gemini-2.5-flash
+              DOTENVEOF
+
+              chown ubuntu:ubuntu /home/ubuntu/mimir/.env
+
+              # mimir_portal.db is *.db-gitignored, so the fresh clone never has it. Without
+              # this, Docker's bind mount auto-creates a directory at this host path (since
+              # nothing exists there yet), which then fails to mount onto the file baked into
+              # the image at /app/mimir_portal.db ("not a directory" at container start).
+              touch /home/ubuntu/mimir/mimir_portal.db
+              chown ubuntu:ubuntu /home/ubuntu/mimir/mimir_portal.db
+
+              # -- Start main app (Mimir FastAPI + Caddy via root docker-compose.yml) -
+              sudo -u ubuntu bash -c \
+                'cd /home/ubuntu/mimir && docker compose up -d --build'
+              echo "MAIN APP SETUP COMPLETE"
+            - EmbedIp: !GetAtt EmbedInstance.PrivateIp
+              TransIp: !GetAtt TranslationInstance.PrivateIp
+              IngestTransIp: !GetAtt IngestTranslationInstance.PrivateIp
+              WeaviateIp: !GetAtt WeaviateInstance.PrivateIp
+              GenIp: !GetAtt GenerationInstance.PrivateIp
+              DoclingIp: !GetAtt DoclingInstance.PrivateIp
+
+  # -------------------------------------------------------------
+  # Elastic IP - static public IP for the main app
+  # -------------------------------------------------------------
+  # Point your DNS A record to this value after stack creation.
+  MainAppEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref MainAppInstance
+      Tags:
+        - Key: Name
+          Value: mimir-main-app-eip
+
+
+# =============================================================
+# OUTPUTS
+# =============================================================
+Outputs:
+
+  MainAppPublicIP:
+    Description: "Elastic IP of the main app - set your DNS A record to this."
+    Value: !Ref MainAppEIP
+    Export:
+      Name: MimirMainAppPublicIP
+
+  MainAppURL:
+    Description: "Application URL (once DNS propagates)."
+    Value: !Sub "http://${AppDomain}"
+
+  # -- Private IPs (for reference / ingestion) ------------------
+
+  WeaviatePrivateIP:
+    Description: "Weaviate private IP (HTTP :8080, gRPC :50051)."
+    Value: !GetAtt WeaviateInstance.PrivateIp
+    Export:
+      Name: MimirWeaviatePrivateIP
+
+  EmbedPrivateIP:
+    Description: "Infinity embeddings + reranker private IP (:7997)."
+    Value: !GetAtt EmbedInstance.PrivateIp
+    Export:
+      Name: MimirEmbedPrivateIP
+
+  TranslationPrivateIP:
+    Description: "IndicTrans2 private IP (:8001)."
+    Value: !GetAtt TranslationInstance.PrivateIp
+    Export:
+      Name: MimirTranslationPrivateIP
+
+  IngestTranslationPrivateIP:
+    Description: "IndicTrans2-1B ingestion private IP (:8001)."
+    Value: !GetAtt IngestTranslationInstance.PrivateIp
+    Export:
+      Name: MimirIngestTranslationPrivateIP
+
+  GenerationPrivateIP:
+    Description: "Ollama generation private IP (:11434)."
+    Value: !GetAtt GenerationInstance.PrivateIp
+    Export:
+      Name: MimirGenerationPrivateIP
+
+  DoclingPrivateIP:
+    Description: "Docling PDF parser private IP (:8002)."
+    Value: !GetAtt DoclingInstance.PrivateIp
+    Export:
+      Name: MimirDoclingPrivateIP
+
+  # -- SSH quick-reference ---------------------------------------
+
+  SSHMainApp:
+    Description: "SSH into the main app instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${MainAppEIP}"
+
+  SSHWeaviate:
+    Description: "SSH into Weaviate (via main app as bastion, or direct if AdminCidrIp is open)."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${WeaviateInstance.PrivateIp}"
+
+  SSHEmbeddings:
+    Description: "SSH into the embeddings instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${EmbedInstance.PrivateIp}"
+
+  SSHTranslation:
+    Description: "SSH into the translation instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${TranslationInstance.PrivateIp}"
+
+  SSHIngestTranslation:
+    Description: "SSH into the ingest-translation instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${IngestTranslationInstance.PrivateIp}"
+
+  SSHGeneration:
+    Description: "SSH into the generation instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${GenerationInstance.PrivateIp}"
+
+  SSHDocling:
+    Description: "SSH into the docling instance."
+    Value: !Sub "ssh -i <your-key.pem> ubuntu@${DoclingInstance.PrivateIp}"
+
+  # -- Post-deploy ingestion ------------------------------------
+
+  IngestionCommand:
+    Description: >
+      Run this on the main app instance after all services are healthy
+      to ingest scratch/dept_stage/ into Weaviate (GovDocsV2 collection).
+    Value: "cd /home/ubuntu/mimir && python -m scratch.ingest_department --full"
+
+  CheckSetupLog:
+    Description: "Check UserData bootstrap logs on any instance."
+    Value: "sudo tail -f /var/log/mimir-setup.log"
+
+  CheckDeployStatus:
+    Description: "Run python deploy.py status on the main app to verify all services are reachable."
+    Value: "cd /home/ubuntu/mimir && python deploy.py status"
