@@ -358,6 +358,24 @@ def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float =
     if options:
         payload["options"] = options
 
+    # Hybrid-reasoning models (Qwen3 among them) emit their chain of thought into a separate
+    # "reasoning" field that this stream never reads, but it is still charged against
+    # max_tokens. With LOCAL_GEN_MAX_TOKENS=450 a full-size retrieval prompt spent the entire
+    # budget thinking and returned an empty answer, which reads as a broken system rather than
+    # a slow one. The budget has to cover reasoning plus the answer, not just the answer.
+    #
+    # "low" rather than "none" is deliberate, and measured on the Q3 conflict case: with
+    # reasoning off the model answers fluently from the superseded document alone and never
+    # raises the discrepancy, which is the one behaviour this system exists to demonstrate.
+    # Off 53s but wrong, low 56s and correct, medium 91s. Neither a /no_think suffix nor
+    # chat_template_kwargs suppressed reasoning on Ollama; only reasoning_effort did.
+    #
+    # Set the variable empty to stop sending the field at all, for a server that rejects
+    # unknown keys - then size LOCAL_GEN_MAX_TOKENS to hold reasoning too (1400 sufficed).
+    reasoning_effort = os.getenv("LOCAL_GEN_REASONING_EFFORT", "low").strip()
+    if reasoning_effort:
+        payload["reasoning_effort"] = reasoning_effort
+
     logger.info(f"Generating via self-hosted model {model} at {base_url}"
                 + (f" (options: {options})" if options else ""))
     response = requests.post(
