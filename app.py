@@ -109,22 +109,26 @@ async def _auth_gate(request: Request, call_next):
     path = request.url.path
     is_admin_api = path.startswith("/api/admin/")
 
-    # The network gate applies to admin routes too. Admin endpoints verify the admin token
-    # themselves, so they skip the officer-token check below, but exempting them from the
-    # subnet allowlist would have left a hole in the zero-trust perimeter.
-    if path not in _AUTH_OPEN or is_admin_api:
-        x_forwarded_for = request.headers.get("x-forwarded-for")
-        if x_forwarded_for:
-            client_host = x_forwarded_for.split(",")[0].strip()
-        else:
-            client_host = request.client.host if request.client else ""
+    # The network gate is the outermost control, so it runs on every path - including the
+    # login page and the admin console, and regardless of _AUTH_OPEN. A device outside the
+    # permitted range should never be served the form, let alone get to submit a credential
+    # to it; being allowed to reach the door and refused at it is the weaker perimeter.
+    # /health is the sole exception, so liveness probes and scratch/preflight.py keep
+    # working; it discloses nothing beyond whether the process is up.
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        client_host = x_forwarded_for.split(",")[0].strip()
+    else:
+        client_host = request.client.host if request.client else ""
 
+    if path != "/health":
         if not _is_in_authorized_subnet(client_host):
             record_audit("auth.denied", ip=client_host, detail=f"subnet block on {path}")
             return JSONResponse({
                 "detail": "Network Access Denied. Device is outside authorized government intranet."
             }, status_code=403)
 
+    if path not in _AUTH_OPEN or is_admin_api:
         if _AUTH_TOKEN and not is_admin_api:
             if not _is_authenticated(request):
                 record_audit("auth.denied", ip=client_host, detail=f"invalid token on {path}")
