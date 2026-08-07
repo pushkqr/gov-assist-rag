@@ -384,6 +384,11 @@ def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float =
     )
     response.raise_for_status()
 
+    # iter_lines(decode_unicode=True) decodes using response.encoding, and requests falls back
+    # to ISO-8859-1 when the server sends no charset. Ollama's text/event-stream omits it, so
+    # every non-ASCII answer (i.e. every Marathi/Hindi one) came back double-encoded mojibake.
+    response.encoding = "utf-8"
+
     for raw_line in response.iter_lines(decode_unicode=True):
         if not raw_line:
             continue
