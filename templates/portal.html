@@ -763,7 +763,11 @@
      const rb=c.querySelector('button');if(rb)rb.onclick=()=>answerInto(q,hist,c,t);
    }finally{clearTimeout(to);$('bAsk').disabled=false;$('log').scrollTop=$('log').scrollHeight;}
  }
- function askAbout(name){show('triage');ask('What should I check for '+name+', and what depends on it?');}
+ // Ask something the corpus can actually answer. The previous phrasing ("what should I check
+ // for X, and what depends on it?") asked about lineage, which lives in the citation graph
+ // rather than the document text, so every click refused. The trailing "[CONF: ...]" chip
+ // label is stripped too - it is UI decoration and only dilutes the retrieval query.
+ function askAbout(name){show('triage');ask('Summarise '+String(name).replace(/\s*\[CONF:[^\]]*\]\s*$/i,'').trim()+' and list the documents it references or supersedes.');}
  const qEl=$('q');qEl.classList.add('resize-none');qEl.style.maxHeight='160px';
  function autogrow(){qEl.style.height='auto';qEl.style.height=Math.max(42,Math.min(qEl.scrollHeight,160))+'px';}
  qEl.addEventListener('input',autogrow);
