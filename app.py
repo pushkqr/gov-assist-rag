@@ -668,6 +668,51 @@ class AskRequest(BaseModel):
     history: List[Dict[str, Any]] = []
     workspace: Optional[str] = "default"
 
+def _repair_callout_prefixes(stream):
+    """Restore the '> ' blockquote prefixes on a leading [!WARNING] callout.
+
+    The conflict callout only renders as a styled box if every line starts with '> '. Smaller
+    local models (gemma3:12b measured at 0/3) reproduce the block's content and drop the
+    prefixes, which degrades the most important answer in the product to plain text. Prompt
+    emphasis did not fix it, so repair it deterministically instead.
+
+    Only the opening block is buffered, and only when the answer actually starts with the
+    marker; everything else streams through untouched.
+    """
+    buf = ""
+    deciding = True
+    for chunk in stream:
+        if not deciding:
+            yield chunk
+            continue
+        buf += chunk
+        stripped = buf.lstrip()
+        # Not a callout: flush and stop inspecting. Wait for a full first line before deciding,
+        # otherwise a marker split across chunks looks like a miss.
+        if stripped and not "[!WARNING]".startswith(stripped[:10]) and not stripped.startswith("[!WARNING]"):
+            deciding = False
+            yield buf
+            buf = ""
+            continue
+        if "\n\n" in stripped:
+            block, _, rest = stripped.partition("\n\n")
+            fixed = "\n".join(
+                ln if ln.lstrip().startswith(">") else "> " + ln
+                for ln in block.split("\n") if ln.strip()
+            )
+            deciding = False
+            yield fixed + "\n\n" + rest
+            buf = ""
+    if buf:
+        stripped = buf.lstrip()
+        if stripped.startswith("[!WARNING]"):
+            buf = "\n".join(
+                ln if ln.lstrip().startswith(">") else "> " + ln
+                for ln in stripped.split("\n") if ln.strip()
+            )
+        yield buf
+
+
 @app.post("/ask-stream")
 async def ask_stream(request: Request):
     data = await request.json()
@@ -742,7 +787,7 @@ async def ask_stream(request: Request):
             first_token_at = None
             full_answer = []
             if answer_stream:
-                for chunk in answer_stream:
+                for chunk in _repair_callout_prefixes(answer_stream):
                     if first_token_at is None:
                         first_token_at = time.perf_counter()
                     full_answer.append(chunk)
