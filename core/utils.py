@@ -309,7 +309,7 @@ def local_generate_stream(system_prompt: str, user_prompt: str, timeout: float =
     which matters because a CPU-only department server is slow enough that waiting for a
     complete response would look like a hang.
     """
-    base_url = os.getenv("LOCAL_GEN_URL", "http://localhost:11434/v1").rstrip("/")
+    base_url = os.getenv("LOCAL_GEN_URL", "http://localhost:11500/v1").rstrip("/")
     model = os.getenv("LOCAL_GEN_MODEL", "qwen3:4b")
     api_key = os.getenv("LOCAL_GEN_API_KEY", "")
     timeout = timeout if timeout is not None else float(os.getenv("LOCAL_GEN_TIMEOUT_S", "120"))
