@@ -49,6 +49,10 @@ def _docker_available():
         return False, "docker CLI not found on PATH. Install Docker first."
     result = _run(["docker", "info"], capture_output=True, text=True)
     if result.returncode != 0:
+        if "permission denied" in result.stderr.lower():
+            return False, ("permission denied talking to the Docker socket. If this account was "
+                           "just added to the docker group, that only takes effect in new "
+                           "sessions - run `newgrp docker` or start a new login shell, then retry.")
         return False, "docker daemon not reachable. Is Docker running?"
     return True, "ok"
 

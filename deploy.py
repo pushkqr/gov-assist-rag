@@ -61,7 +61,9 @@ SERVICE_PORTS = {
     "embeddings": 7997,
     "translation": 8001,
     "docling": 8002,
-    "generation": 11434,
+    # Not 11434 (Ollama's own default): any bare `ollama serve` a teammate runs on a shared
+    # host claims that port with no prompt to change it, colliding with this container.
+    "generation": 11500,
 }
 
 # Values that ship in the .env.example files and mean "not configured yet". init overwrites
@@ -379,8 +381,14 @@ def cmd_check(_args):
             print("  docker      : OK")
         else:
             docker_ok = False
-            print("  docker      : installed but the daemon is not reachable")
-            print(f"                try: sudo systemctl enable --now docker")
+            if "permission denied" in daemon.stderr.lower():
+                print("  docker      : permission denied talking to the Docker socket")
+                print("                if this account was just added to the docker group, that only")
+                print("                takes effect in new sessions - try: newgrp docker")
+                print("                (or start a new login shell), then re-run this check")
+            else:
+                print("  docker      : installed but the daemon is not reachable")
+                print(f"                try: sudo systemctl enable --now docker")
     else:
         print("  docker      : MISSING")
         print(f"                install with: {_docker_install_hint()}")
